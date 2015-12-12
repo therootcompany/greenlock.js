@@ -2,7 +2,7 @@
   "name": "letsencrypt",
   "version": "1.0.0",
   "description": "Let's Encrypt for node.js on npm",
-  "main": "le.js",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

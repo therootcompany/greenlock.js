@@ -1,120 +1,186 @@
 'use strict';
 
-module.exports.create = function (lebinpath, defaults, options) {
+module.exports.create = function (letsencrypt, defaults, options) {
   var PromiseA = require('bluebird');
   var tls = require('tls');
   var fs = PromiseA.promisifyAll(require('fs'));
-  var letsencrypt = PromiseA.promisifyAll(require('./le-exec-wrapper'));
+  var utils = require('./utils');
+  var registerAsync = PromiseA.promisify(function (args) {
+    return letsencrypt.registerAsync('certonly', args);
+  });
+  var fetchAsync = PromiseA.promisify(function (args) {
+    var hostname = args.domains[0];
+    var crtpath = defaults.configDir + defaults.fullchainTpl.replace(/:hostname/, hostname);
+    var privpath = defaults.configDir + defaults.privkeyTpl.replace(/:hostname/, hostname);
+
+    return PromiseA.all([
+      fs.readFileAsync(privpath, 'ascii')
+    , fs.readFileAsync(crtpath, 'ascii')
+      // stat the file, not the link
+    , fs.statAsync(crtpath, 'ascii')
+    ]);
+  });
 
   //var attempts = {};  // should exist in master process only
   var ipc = {};       // in-process cache
   var count = 0;
 
-  //var certTpl = "/live/:hostname/cert.pem";
-  var certTpl = "/live/:hostname/fullchain.pem";
-  var privTpl = "/live/:hostname/privkey.pem";
+  var now;
+  var le;
 
   options.cacheContextsFor = options.cacheContextsFor || (1 * 60 * 60 * 1000);
 
   defaults.webroot = true;
-  defaults.webrootPath = '/srv/www/acme-challenge';
 
-  return letsencrypt.optsAsync(lebinpath).then(function (keys) {
-    var now;
-    var le;
+  function merge(args) {
+    var copy = {};
+    Object.keys(defaults).forEach(function (key) {
+      copy[key] = defaults[key];
+    });
+    Object.keys(args).forEach(function (key) {
+      copy[key] = args[key];
+    });
+  }
 
-    le = {
-      validate: function () {
+  function sniCallback(hostname, cb) {
+    var args = merge({});
+    args.domains = [hostname];
+    le.fetch(args, function (err, cache) {
+      if (err) {
+        cb(err);
+        return;
       }
-    , argnames: keys
-    , readCerts: function (hostname) {
-        var crtpath = defaults.configDir + certTpl.replace(/:hostname/, hostname);
-        var privpath = defaults.configDir + privTpl.replace(/:hostname/, hostname);
 
-        return PromiseA.all([
-          fs.readFileAsync(privpath, 'ascii')
-        , fs.readFileAsync(crtpath, 'ascii')
-          // stat the file, not the link
-        , fs.statAsync(crtpath, 'ascii')
-        ]).then(function (arr) {
-
-
-          return arr;
+      if (!cache.context) {
+        cache.context = tls.createSecureContext({
+          key: cache.key    // privkey.pem
+        , cert: cache.cert  // fullchain.pem
+        //, ciphers         // node's defaults are great
         });
       }
-    , cacheCerts: function (hostname, certs) {
-        // assume 90 day renewals based on stat time, for now
-        ipc[hostname] = {
-          context: tls.createSecureContext({
-            key: certs[0]  // privkey.pem
-          , cert: certs[1] // fullchain.pem
-          //, ciphers // node's defaults are great
-          })
-        , updated: Date.now()
-        };
+      
+      cb(null, cache.context);
+    });
+  }
 
-        return ipc[hostname];
-      }
-    , readAndCacheCerts: function (hostname) {
-        return le.readCerts(hostname).then(function (certs) {
-          return le.cacheCerts(hostname, certs);
-        });
-      }
-    , get: function (hostname, args, opts, cb) {
-        count += 1;
+  le = {
+    validate: function () {
+    }
+  , middleware: function () {
+      var serveStatic = require('serve-static')(defaults.webrootPath);
+      var prefix = '/.well-known/acme-challenge/';
 
-        if (count >= 1000) {
-          now = Date.now();
-          count = 0;
-        }
-
-        var cached = ipc[hostname];
-        // TODO handle www and no-www together
-        if (cached && ((now - cached.updated) < options.cacheContextsFor)) {
-          cb(null, cached.context);
+      return function (req, res, next) {
+        if (0 === req.url.indexOf(prefix)) {
+          next();
           return;
         }
 
-        return le.readCerts(hostname).then(function (cached) {
-          cb(null, cached.context);
-        }, function (/*err*/) {
-          var copy = {};
-          var arr;
+        var pathname = req.url;
+        req.url = req.url.substr(prefix.length - 1);
+        serveStatic(req, res, function (err) {
+          req.url = pathname;
+          next(err);
+        });
+      };
+    }
+  , SNICallback: sniCallback
+  , sniCallback: sniCallback
+  , cacheCerts: function (args, certs) {
+      var hostname = args.domains[0];
+      // assume 90 day renewals based on stat time, for now
+      ipc[hostname] = {
+        context: tls.createSecureContext({
+          key: certs[0]  // privkey.pem
+        , cert: certs[1] // fullchain.pem
+        //, ciphers // node's defaults are great
+        })
+      , updated: Date.now()
+      };
 
-          // TODO validate domains and such
-          Object.keys(defaults).forEach(function (key) {
-            copy[key] = defaults[key];
-          });
-          Object.keys(args).forEach(function (key) {
-            copy[key] = args[key];
-          });
+      return ipc[hostname];
+    }
+  , readAndCacheCerts: function (args) {
+      return fetchAsync(args).then(function (certs) {
+        return le.cacheCerts(args, certs);
+      });
+    }
+  , register: function (args) {
+      // TODO validate domains and such
 
-          arr = letsencrypt.objToArr(keys, copy);
-          // TODO validate domains empirically before trying le
-          return letsencrypt.execAsync(lebinpath, arr, opts).then(function () {
-            // wait at least n minutes
-            return le.readCerts(hostname).then(function (cached) {
-              // success
-              cb(null, cached.context);
-            }, function (err) {
-              // still couldn't read the certs after success... that's weird
-              cb(err);
-            });
-          }, function (err) {
-            console.error("[Error] Let's Encrypt failed:");
-            console.error(err.stack || new Error(err.message || err.toString()));
+      var copy = merge(args);
 
-            // wasn't successful with lets encrypt, don't try again for n minutes
-            ipc[hostname] = {
-              context: null
-            , updated: Date.now()
-            };
-            cb(null, ipc[hostname]);
-          });
+      if (!utils.isValidDomain(args.domains[0])) {
+        return PromiseA.reject({
+          message: "invalid domain"
+        , code: "INVALID_DOMAIN"
         });
       }
-    };
 
-    return le;
-  });
+      return le.validate(args.domains).then(function () {
+        return registerAsync(copy).then(function () {
+          return fetchAsync(args);
+        });
+      });
+    }
+  , fetch: function (args, cb) {
+      var hostname = args.domains[0];
+
+      count += 1;
+
+      if (count >= 1000) {
+        now = Date.now();
+        count = 0;
+      }
+
+      var cached = ipc[hostname];
+      // TODO handle www and no-www together
+      if (cached && ((now - cached.updated) < options.cacheContextsFor)) {
+        cb(null, cached.context);
+        return;
+      }
+
+      return fetchAsync(args).then(function (cached) {
+        cb(null, cached.context);
+      }, cb);
+    }
+  , fetchOrRegister: function (args, cb) {
+      le.fetch(args, function (err, hit) {
+        var hostname = args.domains[0];
+
+        if (err) {
+          cb(err);
+          return;
+        }
+        else if (hit) {
+          cb(null, hit);
+          return;
+        }
+
+        // TODO validate domains empirically before trying le
+        return registerAsync(args/*, opts*/).then(function () {
+          // wait at least n minutes
+          return fetchAsync(args).then(function (cached) {
+            // success
+            cb(null, cached.context);
+          }, function (err) {
+            // still couldn't read the certs after success... that's weird
+            cb(err);
+          });
+        }, function (err) {
+          console.error("[Error] Let's Encrypt failed:");
+          console.error(err.stack || new Error(err.message || err.toString()));
+
+          // wasn't successful with lets encrypt, don't try again for n minutes
+          ipc[hostname] = {
+            context: null
+          , updated: Date.now()
+          };
+          cb(null, ipc[hostname]);
+        });
+      });
+    }
+  };
+
+  return le;
 };

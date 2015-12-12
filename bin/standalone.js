@@ -1,7 +1,6 @@
 'use strict';
 
-var homedir = require('homedir');
-var leBinPath = homedir() + '/.local/share/letsencrypt/bin/letsencrypt';
+var leBinPath = require('homedir')() + '/.local/share/letsencrypt/bin/letsencrypt';
 var lep = require('letsencrypt-python').create(leBinPath);
 var conf = {
   domains: process.argv[2]
@@ -21,13 +20,13 @@ var bkDefaults = {
 , workDir: '/var/lib/letsencrypt'
 , text: true
 };
-var le = require('letsencrypt').create(lep, bkDefaults);
+var le = require('../').create(lep, bkDefaults);
 
 var localCerts = require('localhost.daplie.com-certificates');
 var express = require('express');
 var app = express();
 
-app.use(le.middleware);
+app.use(le.middleware());
 
 var server = require('http').createServer();
 server.on('request', app);
@@ -38,14 +37,14 @@ server.listen(80, function () {
 var tlsServer = require('https').createServer({
   key: localCerts.key
 , cert: localCerts.cert
-, SNICallback: le.SNICallback
+, SNICallback: le.sniCallback
 });
 tlsServer.on('request', app);
 tlsServer.listen(443, function () {
   console.log('Listening http', tlsServer.address());
 });
 
-le.register('certonly', {
+le.register({
   agreeTos: 'agree' === conf.agree
 , domains: conf.domains.split(',')
 , email: conf.email
