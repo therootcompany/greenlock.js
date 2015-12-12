@@ -30,15 +30,36 @@ pushd letsencrypt
 ./letsencrypt-auto
 ```
 
+Usage Examples
+========
+
+Here's a small snippet:
+
+```
+le.register({
+  domains: ['example.com', 'www.example.com']
+, email: 'user@example.com'
+, agreeTos: true
+}, function (err, certs) {
+  // do stuff
+});
+```
+
+**However**, due to the nature of what this library does, it has a few more "moving parts"
+than what makes since to show in a minimal snippet.
+
+* [commandline (standalone with "webroot")](https://github.com/Daplie/node-letsencrypt/blob/master/examples/commandline.js)
+* [expressjs (fully automatic https)](https://github.com/Daplie/node-letsencrypt/blob/master/examples/express.js)
+
 See Also
 ========
 
-* [Examples](https://github.com/Daplie/node-letsencrypt/tree/master/examples)
+* See [Examples](https://github.com/Daplie/node-letsencrypt/tree/master/examples)
 * [Let's Encrypt in (exactly) 90 seconds with Caddy](https://daplie.com/articles/lets-encrypt-in-literally-90-seconds/)
 * [lego](https://github.com/xenolf/lego): Let's Encrypt for golang 
 
-Usage
-=====
+API
+===
 
 * `LetsEncrypt.create(backend, bkDefaults, handlers)`
 * `le.middleware()`
@@ -47,7 +68,7 @@ Usage
 * `le.fetch({domains, email, agreeTos, ... }, cb)`
 * `le.validate(domains, cb)`
 
-### `LetsEncrypt.create(backend, bkDefaults, handlers);`
+### `LetsEncrypt.create(backend, bkDefaults, handlers)`
 
 #### backend
 
