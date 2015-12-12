@@ -46,7 +46,7 @@ le.register({
 ```
 
 **However**, due to the nature of what this library does, it has a few more "moving parts"
-than what makes since to show in a minimal snippet.
+than what makes sense to show in a minimal snippet.
 
 * [commandline (standalone with "webroot")](https://github.com/Daplie/node-letsencrypt/blob/master/examples/commandline.js)
 * [expressjs (fully automatic https)](https://github.com/Daplie/node-letsencrypt/blob/master/examples/express.js)
