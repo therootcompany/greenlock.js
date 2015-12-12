@@ -35,7 +35,7 @@ Usage Examples
 
 Here's a small snippet:
 
-```
+```javascript
 le.register({
   domains: ['example.com', 'www.example.com']
 , email: 'user@example.com'
@@ -165,7 +165,7 @@ server.on('request', app);
 Get certificates for a domain
 
 Example:
-```
+```javascript
 le.register({
   domains: ['example.com', 'www.example.com']
 , email: 'user@example.com'
