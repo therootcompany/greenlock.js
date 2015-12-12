@@ -32,6 +32,39 @@ pushd letsencrypt
 Usage
 =====
 
+* `Letsencrypt.create(backend, bkDefaults);`
+  * { webrootPath, configDir, fullchainTpl, privkeyTpl }
+* `le.middleware();`
+* `le.sniCallback(hostname, function (err, tlsContext) {});`
+* `le.register({ domains, email, agreeTos, ... })` returns promise
+<!-- * `le.validate(args)` -->
+<!-- * `le.fetch(args, cb)` -->
+
+```javascript
+var leBinPath = '/home/user/.local/share/letsencrypt/bin/letsencrypt';
+var lep = require('letsencrypt-python').create(leBinPath);
+
+// backend-specific defaults
+// Note: For legal reasons you should NOT set email or agreeTos as a default
+var bkDefaults = {
+  webroot: true
+, webrootPath: __dirname, '/acme-challenge'
+, fullchainTpl: '/live/:hostname/fullchain.pem'
+, privkeyTpl: '/live/:hostname/fullchain.pem'
+, configDir: '/etc/letsencrypt'
+, logsDir: '/var/log/letsencrypt'
+, workDir: '/var/lib/letsencrypt'
+, text: true
+};
+var leConfig = {
+, webrootPath: __dirname, '/acme-challenge'
+, configDir: '/etc/letsencrypt'
+};
+var le = require('letsencrypt').create(le, bkDefaults, leConfig);
+
+
+```
+
 ```javascript
 var leBinPath = '/home/user/.local/share/letsencrypt/bin/letsencrypt';
 var lep = require('letsencrypt-python').create(leBinPath);
@@ -76,7 +109,7 @@ tlsServer.listen(443, function () {
   console.log('Listening http', server.address());
 });
 
-le.register('certonly', {
+le.register({
 , domains: ['example.com']
 , agreeTos: true
 , email: 'user@example.com'
