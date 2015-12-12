@@ -91,6 +91,7 @@ look at the wrapper `backend-python.js`.
     // cb(null, null) when the registration is successful, but fetch still needs to be called
     // cb(null, cert /*see above*/) if registration can easily return the same as fetch
   }
+}
 ```
 
 #### bkDefualts 
