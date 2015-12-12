@@ -42,7 +42,7 @@ Usage
 <!-- * `le.fetch(args, cb)` -->
 
 ```javascript
-var leBinPath = '/home/user/.local/share/letsencrypt/bin/letsencrypt';
+var leBinPath = require('os').homedir() + '/.local/share/letsencrypt/bin/letsencrypt';
 var lep = require('letsencrypt-python').create(leBinPath);
 
 // backend-specific defaults
