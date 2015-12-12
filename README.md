@@ -220,8 +220,8 @@ Backends
 
 A backend must implement (or be wrapped to implement) this API:
 
-* fetch(hostname, cb) will cb(err, certs) will get registered certs or null unless there is an error
-* register(args, challengeCb, done) will register and or renew a cert
+* `fetch(hostname, cb)` will cb(err, certs) with certs from disk (or null or error)
+* `register(args, challengeCb, done)` will register and or renew a cert
   * args = `{ domains, email, agreeTos }` MUST check that agreeTos === true
   * challengeCb = `function (challenge, cb) { }` handle challenge as needed, call cb()
 
