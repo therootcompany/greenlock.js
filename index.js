@@ -50,6 +50,10 @@ module.exports.create = function (letsencrypt, defaults, options) {
     return copy;
   }
 
+  function isCurrent(cache) {
+    return cache;
+  }
+
   function sniCallback(hostname, cb) {
     var args = merge({});
     args.domains = [hostname];
@@ -59,15 +63,26 @@ module.exports.create = function (letsencrypt, defaults, options) {
         return;
       }
 
-      if (!cache.context) {
-        cache.context = tls.createSecureContext({
-          key: cache.key    // privkey.pem
-        , cert: cache.cert  // fullchain.pem
-        //, ciphers         // node's defaults are great
-        });
+      function respond(c2) {
+        cache = c2 || cache;
+
+        if (!cache.context) {
+          cache.context = tls.createSecureContext({
+            key: cache.key    // privkey.pem
+          , cert: cache.cert  // fullchain.pem
+          //, ciphers         // node's defaults are great
+          });
+        }
+        
+        cb(null, cache.context);
       }
-      
-      cb(null, cache.context);
+
+      if (isCurrent(cache)) {
+        respond();
+        return;
+      }
+
+      defaults.needsRegistration(hostname, respond);
     });
   }
 
