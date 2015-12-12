@@ -1,3 +1,7 @@
+letsencrypt.work
+letsencrypt.logs
+letsencrypt.config
+
 # Logs
 logs
 *.log

@@ -1,7 +1,9 @@
 'use strict';
 
+var PromiseA = require('bluebird');
+
 module.exports.create = function (letsencrypt, defaults, options) {
-  var PromiseA = require('bluebird');
+  letsencrypt = PromiseA.promisifyAll(letsencrypt);
   var tls = require('tls');
   var fs = PromiseA.promisifyAll(require('fs'));
   var utils = require('./utils');
@@ -28,18 +30,24 @@ module.exports.create = function (letsencrypt, defaults, options) {
   var now;
   var le;
 
-  options.cacheContextsFor = options.cacheContextsFor || (1 * 60 * 60 * 1000);
+  // TODO check certs on initial load
+  // TODO expect that certs expire every 90 days
+  // TODO check certs with setInterval?
+  //options.cacheContextsFor = options.cacheContextsFor || (1 * 60 * 60 * 1000);
 
   defaults.webroot = true;
 
   function merge(args) {
     var copy = {};
+
     Object.keys(defaults).forEach(function (key) {
       copy[key] = defaults[key];
     });
     Object.keys(args).forEach(function (key) {
       copy[key] = args[key];
     });
+
+    return copy;
   }
 
   function sniCallback(hostname, cb) {
@@ -65,21 +73,28 @@ module.exports.create = function (letsencrypt, defaults, options) {
 
   le = {
     validate: function () {
+      // TODO check dns, etc
+      return PromiseA.resolve();
     }
   , middleware: function () {
+      console.log('[DEBUG] webrootPath', defaults.webrootPath);
       var serveStatic = require('serve-static')(defaults.webrootPath);
       var prefix = '/.well-known/acme-challenge/';
 
       return function (req, res, next) {
-        if (0 === req.url.indexOf(prefix)) {
+        if (0 !== req.url.indexOf(prefix)) {
           next();
           return;
         }
 
+        console.log('[DEBUG] req.url 0', req.url);
         var pathname = req.url;
         req.url = req.url.substr(prefix.length - 1);
+        console.log('[DEBUG] req.url 1', req.url);
         serveStatic(req, res, function (err) {
+          console.log('[DEBUG] req.url 2', req.url);
           req.url = pathname;
+          console.log('[DEBUG] req.url 3', req.url);
           next(err);
         });
       };
