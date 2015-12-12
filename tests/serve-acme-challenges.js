@@ -14,6 +14,7 @@ module.exports.create = function (opts) {
 
     opts.key = fs.readFileSync(path.join(opts.configDir, 'live', domainname, 'privkey.pem'));
     opts.cert = fs.readFileSync(path.join(opts.configDir, 'live', domainname, 'cert.pem'));
+    /*
     opts.ca = fs.readFileSync(path.join(opts.configDir, 'live', domainname, 'chain.pem'), 'ascii')
       .split('-----END CERTIFICATE-----')
       .filter(function (ca) {
@@ -21,6 +22,7 @@ module.exports.create = function (opts) {
       }).map(function (ca) {
         return (ca + '-----END CERTIFICATE-----').trim();
       });
+    */
 
     cb(null, require('tls').createSecureContext(opts));
   }

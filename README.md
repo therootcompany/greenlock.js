@@ -194,6 +194,12 @@ return {
 };
 ```
 
+See Also
+========
+
+* [Let's Encrypt in (exactly) 90 seconds with Caddy](https://daplie.com/articles/lets-encrypt-in-literally-90-seconds/)
+* Let's Encrypt for golang [lego](https://github.com/xenolf/lego)
+
 
 LICENSE
 =======
