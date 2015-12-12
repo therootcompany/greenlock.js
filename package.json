@@ -32,5 +32,8 @@
   "devDependencies": {
     "express": "^4.13.3",
     "localhost.daplie.com-certificates": "^1.1.2"
+  },
+  "dependencies": {
+    "letsencrypt-python": "^1.0.3"
   }
 }

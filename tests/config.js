@@ -9,5 +9,5 @@ module.exports = {
 , webrootPath: path.join(__dirname, "acme-challenge")
 , configDir: path.join(__dirname, "letsencrypt.config")
 , workDir: path.join(__dirname, "letsencrypt.work")
-, logDir: path.join(__dirname, "letsencrypt.log")
+, logsDir: path.join(__dirname, "letsencrypt.logs")
 };
