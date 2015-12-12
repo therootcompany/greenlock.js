@@ -24,24 +24,19 @@ var bkDefaults = {
   webroot: true
 , webrootPath: path.join(__dirname, '..', 'tests', 'acme-challenge')
 , fullchainTpl: '/live/:hostname/fullchain.pem'
-, privkeyTpl: '/live/:hostname/fullchain.pem'
+, privkeyTpl: '/live/:hostname/privkey.pem'
 , configDir: path.join(__dirname, '..', 'tests', 'letsencrypt.config')
 , logsDir: path.join(__dirname, '..', 'tests', 'letsencrypt.logs')
 , workDir: path.join(__dirname, '..', 'tests', 'letsencrypt.work')
 , server: LEP.stagingServer
 , text: true
 };
-var le = require('../').create(lep, bkDefaults, {
-});
+var le = require('../').create(lep, bkDefaults, { });
 
 var localCerts = require('localhost.daplie.com-certificates');
 var express = require('express');
 var app = express();
 
-app.use('/', function (req, res, next) {
-  console.log('[DEBUG]', req.method, req.protocol, req.hostname, req.url);
-  next();
-});
 app.use('/', le.middleware());
 
 var server = require('http').createServer();

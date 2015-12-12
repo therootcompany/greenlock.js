@@ -77,8 +77,8 @@ module.exports.create = function (letsencrypt, defaults, options) {
       return PromiseA.resolve();
     }
   , middleware: function () {
-      console.log('[DEBUG] webrootPath', defaults.webrootPath);
-      var serveStatic = require('serve-static')(defaults.webrootPath);
+      //console.log('[DEBUG] webrootPath', defaults.webrootPath);
+      var serveStatic = require('serve-static')(defaults.webrootPath, { dotfiles: 'allow' });
       var prefix = '/.well-known/acme-challenge/';
 
       return function (req, res, next) {
@@ -87,16 +87,7 @@ module.exports.create = function (letsencrypt, defaults, options) {
           return;
         }
 
-        console.log('[DEBUG] req.url 0', req.url);
-        var pathname = req.url;
-        req.url = req.url.substr(prefix.length - 1);
-        console.log('[DEBUG] req.url 1', req.url);
-        serveStatic(req, res, function (err) {
-          console.log('[DEBUG] req.url 2', req.url);
-          req.url = pathname;
-          console.log('[DEBUG] req.url 3', req.url);
-          next(err);
-        });
+        serveStatic(req, res, next);
       };
     }
   , SNICallback: sniCallback
