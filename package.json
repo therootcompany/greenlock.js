@@ -1,0 +1,32 @@
+{
+  "name": "letsencrypt",
+  "version": "1.0.0",
+  "description": "Let's Encrypt for node.js on npm",
+  "main": "le.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Daplie/node-letsencrypt.git"
+  },
+  "keywords": [
+    "letsencrypt",
+    "letsencrypt.org",
+    "le",
+    "Let's Encrypt",
+    "lejs",
+    "le.js",
+    "acme",
+    "node",
+    "nodejs",
+    "node.js",
+    "client"
+  ],
+  "author": "AJ ONeal <coolaj86@gmail.com> (https://coolaj86.com/)",
+  "license": "(MIT OR Apache-2.0)",
+  "bugs": {
+    "url": "https://github.com/Daplie/node-letsencrypt/issues"
+  },
+  "homepage": "https://github.com/Daplie/node-letsencrypt#readme"
+}
