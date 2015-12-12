@@ -158,7 +158,7 @@ the new certificates, or call `fetch` a final time.
 
 Example:
 ```javascript
-var server = require('https').createServer({ SNICallback: le.sniCallback });
+var server = require('https').createServer({ SNICallback: le.sniCallback, cert: '...', key: '...' });
 server.on('request', app);
 ```
 
