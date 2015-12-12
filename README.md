@@ -30,120 +30,162 @@ pushd letsencrypt
 ./letsencrypt-auto
 ```
 
+See Also
+========
+
+* [Examples](https://github.com/Daplie/node-letsencrypt/tree/master/examples)
+* [Let's Encrypt in (exactly) 90 seconds with Caddy](https://daplie.com/articles/lets-encrypt-in-literally-90-seconds/)
+* [lego](https://github.com/xenolf/lego): Let's Encrypt for golang 
+
 Usage
 =====
 
-* `Letsencrypt.create(backend, bkDefaults);`
-  * { webrootPath, configDir, fullchainTpl, privkeyTpl }
-* `le.middleware();`
-* `le.sniCallback(hostname, function (err, tlsContext) {});`
-* `le.register({ domains, email, agreeTos, ... })` returns promise
-<!-- * `le.validate(args)` -->
-<!-- * `le.fetch(args, cb)` -->
+* `LetsEncrypt.create(backend, bkDefaults, handlers)`
+* `le.middleware()`
+* `le.sniCallback(hostname, function (err, tlsContext) {})`
+* `le.register({ domains, email, agreeTos, ... }, cb)`
+* `le.fetch({domains, email, agreeTos, ... }, cb)`
+* `le.validate(domains, cb)`
 
+### `LetsEncrypt.create(backend, bkDefaults, handlers);`
+
+#### backend
+
+Currently only `letsencrypt-python` is supported, but we plan to work on
+native javascript support in February or so (when ECDSA keys are available).
+
+If you'd like to help with that, see **how to write a backend** below and also
+look at the wrapper `backend-python.js`.
+
+**Example**:
 ```javascript
-var leBinPath = '/home/user/.local/share/letsencrypt/bin/letsencrypt';
-var lep = require('letsencrypt-python').create(leBinPath);
-
-// backend-specific defaults
-// Note: For legal reasons you should NOT set email or agreeTos as a default
-var bkDefaults = {
-  webroot: true
-, webrootPath: __dirname, '/acme-challenge'
-, fullchainTpl: '/live/:hostname/fullchain.pem'
-, privkeyTpl: '/live/:hostname/fullchain.pem'
-, configDir: '/etc/letsencrypt'
-, logsDir: '/var/log/letsencrypt'
-, workDir: '/var/lib/letsencrypt'
-, text: true
-};
-var leConfig = {
-, webrootPath: __dirname, '/acme-challenge'
-, configDir: '/etc/letsencrypt'
-};
-var le = require('letsencrypt').create(le, bkDefaults, leConfig);
-
-
-```
-
-```javascript
-var leBinPath = '/home/user/.local/share/letsencrypt/bin/letsencrypt';
-var lep = require('letsencrypt-python').create(leBinPath);
-
-// backend-specific defaults
-// Note: For legal reasons you should NOT set email or agreeTos as a default
-var bkDefaults = {
-  webroot: true
-, webrootPath: __dirname, '/acme-challenge'
-, fullchainTpl: '/live/:hostname/fullchain.pem'
-, privkeyTpl: '/live/:hostname/fullchain.pem'
-, configDir: '/etc/letsencrypt'
-, logsDir: '/var/log/letsencrypt'
-, workDir: '/var/lib/letsencrypt'
-, text: true
-};
-var leConfig = {
-, webrootPath: __dirname, '/acme-challenge'
-, configDir: '/etc/letsencrypt'
-};
-var le = require('letsencrypt').create(le, bkDefaults, leConfig);
-
-var localCerts = require('localhost.daplie.com-certificates');
-var express = require('express');
-var app = express();
-
-app.use(le.middleware);
-
-server = require('http').createServer();
-server.on('request', app);
-server.listen(80, function () {
-  console.log('Listening http', server.address());
-});
-
-tlsServer = require('https').createServer({
-  key: localCerts.key
-, cert: localCerts.cert
-, SNICallback: le.SNICallback
-});
-tlsServer.on('request', app);
-tlsServer.listen(443, function () {
-  console.log('Listening http', server.address());
-});
-
-le.register({
-, domains: ['example.com']
-, agreeTos: true
-, email: 'user@example.com'
-}).then(function () {
-  server.close();
-  tlsServer.close();
-});
-```
-
-```
-lep.register('certonly', {
-, domains: ['example.com']
-, agreeTos: true
-, email: 'user@example.com'
-
-, configDir: '/etc/letsencrypt'
-, logsDir: '/var/log/letsencrypt'
-, workDir: '/var/lib/letsencrypt'
-, text: true
-});
-```
-
-```
-// if you would like to register new domains on-the-fly
-// you can use this function to return the user to which
-// it should be registered (or null if none)
-, needsRegistration: function (hostname, cb) {
-    cb(null, {
-      agreeTos: true
-    , email:  'user@example.com'
-    });
+{ fetch: function (args, cb) {
+    // cb(err) when there is an actual error (db, fs, etc)
+    // cb(null, null) when the certificate was NOT available on disk
+    // cb(null, { cert: '<fullchain.pem>', key: '<privkey.pem>', renewedAt: 0, duration: 0 }) cert + meta
+  }
+, register: function (args, setChallenge, cb) {
+    // setChallenge(hostnames, key, value, cb) when a challenge needs to be set
+    // cb(err) when there is an error
+    // cb(null, null) when the registration is successful, but fetch still needs to be called
+    // cb(null, cert /*see above*/) if registration can easily return the same as fetch
   }
 ```
+
+#### bkDefualts 
+
+The arguments passed here (typically `webpathRoot`, `configDir`, etc) will be merged with
+any `args` (typically `domains`, `email`, and `agreeTos`) bassed to the backend.
+
+Typically the backend wrapper will already merge any necessary backend-specific arguments.
+
+**Example**:
+```javascript
+{ webrootPath: __dirname, '/acme-challenge'
+, fullchainTpl: '/live/:hostname/fullchain.pem'
+, privkeyTpl: '/live/:hostname/fullchain.pem'
+, configDir: '/etc/letsencrypt'
+}
+```
+
+#### handlers *optional*
+
+`h.setChallenge(hostnames, name, value, cb)`:
+
+default is to write to fs
+
+`h.getChallenge(hostnames, value cb)`
+
+default is to read from fs
+
+`h.sniRegisterCallback(args, currentCerts, cb)`
+
+The default is to immediately call `cb(null, null)` and register (or renew) in the background
+during the `SNICallback` phase. Right now it isn't reasonable to renew during SNICallback,
+but around February when it is possible to use ECDSA keys (as opposed to RSA at present),
+registration will take very little time.
+
+This will not be called while another registration is already in progress.
+
+**SECURITY WARNING**: If you use this option with a custom `h.validate()`, make sure that `args.domains`
+refers to domains you expect, otherwise an attacker will spoof SNI and cause your server to rate-limit
+letsencrypt.org and get blocked. Note that `le.validate()` will check A records before attempting to
+register to help prevent such possible attacks.
+
+`h.validate(domains, cb)`
+
+When specified this will override `le.validate()`. You will need to do this if the ip address of this
+server is not one specified in the A records for your domain.
+
+### `le.middleware()`
+
+An express handler for `/.well-known/acme-challenge/<challenge>`.
+Will call `getChallenge([hostname], key, cb)` if present or otherwise read `challenge` from disk.
+
+Example:
+```javascript
+app.use('/', le.middleware())
+```
+
+### `le.sniCallback(hostname, function (err, tlsContext) {});`
+
+Will call `fetch`. If fetch does not return certificates or returns expired certificates
+it will call `sniRegisterCallback(args, currentCerts, cb)` and then return the error,
+the new certificates, or call `fetch` a final time.
+
+Example:
+```javascript
+var server = require('https').createServer({ SNICallback: le.sniCallback });
+server.on('request', app);
+```
+
+### `le.register({ domains, email, agreeTos, ... }, cb)`
+
+Get certificates for a domain
+
+Example:
+```
+le.register({
+  domains: ['example.com', 'www.example.com']
+, email: 'user@example.com'
+, agreeTos: true
+}, function (err, certs) {
+  // err is some error
+
+  console.log(certs);
+  /*
+  { cert: "contents of fullchain.pem"
+  , key: "contents of privkey.pem"
+  , renewedAt: <date in milliseconds>
+  , duration: <duration in milliseconds (90-days)>
+  }
+  */
+});
+```
+
+### `le.isValidDomain(hostname)`
+
+returns `true` if `hostname` is a valid ascii or punycode domain name.
+
+(also exposed on the main exported module as `LetsEncrypt.isValidDomain()`)
+
+### `le.validate(args, cb)`
+
+Used internally, but exposed for convenience. Checks `LetsEncrypt.isValidDomain()`
+and then checks to see that the current server 
+
+Called before `backend.register()` to validate the following:
+
+  * the hostnames don't use any illegal characters
+  * the server's actual public ip (via api.apiify.org)
+  * the A records for said hostnames 
+
+### `le.fetch(args, cb)`
+
+Used internally, but exposed for convenience.
+
+Checks in-memory cache of certificates for `args.domains` and calls then calls `backend.fetch(args, cb)`
+**after** merging `args` if necessary.
 
 Backends
 --------
@@ -204,7 +246,7 @@ return {
       cert: "/*contcatonated certs in pem format: cert + intermediate*/"
     , key: "/*private keypair in pem format*/"
     , renewedAt: new Date()       // fs.stat cert.pem should also work
-    , expiresIn: 90 * 60          // assumes 90-days unless specified
+    , duration: 90 * 24 * 60 * 60 * 1000  // assumes 90-days unless specified
     });
   }
 , register: function (args, challengeCallback, completeCallback) {
@@ -220,20 +262,13 @@ return {
     }
 
     function continueRegistration() {
-      // it is not neccessary to to return the certificates here
+      // it is not necessary to to return the certificates here
       // the client will call fetch() when it needs them
       completeCallback(err);
     }
   }
 };
 ```
-
-See Also
-========
-
-* [Let's Encrypt in (exactly) 90 seconds with Caddy](https://daplie.com/articles/lets-encrypt-in-literally-90-seconds/)
-* Let's Encrypt for golang [lego](https://github.com/xenolf/lego)
-
 
 LICENSE
 =======
