@@ -37,7 +37,7 @@ app.use('/', function (req, res, next) {
 // handle static requests to /.well-known/acme-challenge
 app.use(
   '/.well-known/acme-challenge'
-, express.static(path.join(__dirname, 'acme-challenge'), { dotfiles: undefined })
+, express.static(config.webrootPath, { dotfiles: undefined })
 );
 
 
