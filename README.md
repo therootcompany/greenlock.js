@@ -8,7 +8,8 @@ This allows you to get Free SSL Certificates for Automatic HTTPS.
 NOT YET PUBLISHED
 ============
 
-Dec 12 2015: almost done
+Dec 12 2015: gettin' really close
+Dec 11 2015: almost done
 
 Install
 =======
