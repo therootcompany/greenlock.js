@@ -7,4 +7,7 @@ module.exports = {
 , tlsSni01Port: 5001
 , http01Port: 80
 , webrootPath: path.join(__dirname, "acme-challenge")
+, configDir: path.join(__dirname, "letsencrypt.config")
+, workDir: path.join(__dirname, "letsencrypt.work")
+, logDir: path.join(__dirname, "letsencrypt.log")
 };
