@@ -29,6 +29,12 @@ pushd letsencrypt
 ./letsencrypt-auto
 ```
 
+### python-free version
+
+There are a few partially written javascript implementation, but they use `forge` instead of using node's native `crypto` and `ursa` - so their performance is outright horrific (especially on Rasbperry Pi et al). For the moment it's faster to use the wrapped python version.
+
+Once the `forge` crud is gutted away it should slide right in without a problem. Ping me if you'd like to help.
+
 Usage Examples
 ========
 
@@ -390,7 +396,7 @@ Backends
 --------
 
 * [`letsencrypt-python`](https://github.com/Daplie/node-letsencrypt-python) (complete)
-* [`lejs`](https://github.com/Daplie/node-lejs) (in progress)
+* [`letiny`](https://github.com/Daplie/node-letiny) (in progress)
 
 #### How to write a backend
 
