@@ -11,6 +11,12 @@ Automatic [Let's Encrypt](https://lettsencrypt.org) HTTPS Certificates for node.
   * Free SSL (HTTPS Certificates for TLS)
   * [90-day certificates](https://letsencrypt.org/2015/11/09/why-90-days.html)
 
+**See Also**
+
+* See the node-letsencrypt [Examples](https://github.com/Daplie/node-letsencrypt/tree/master/examples)
+* [Let's Encrypt in (exactly) 90 seconds with Caddy](https://daplie.com/articles/lets-encrypt-in-literally-90-seconds/)
+* [lego](https://github.com/xenolf/lego): Let's Encrypt for golang
+
 Install
 =======
 
@@ -19,7 +25,7 @@ npm install --save letsencrypt
 ```
 
 Right now this uses [`letsencrypt-python`](https://github.com/Daplie/node-letsencrypt-python),
-but it's built to be able to use a pure javasript version (in progress).
+but it's built to be able to use a node-only javasript version (in progress).
 
 ```bash
 # install the python client (takes 2 minutes normally, 20 on a rasberry pi)
@@ -35,36 +41,54 @@ There are a few partially written javascript implementation, but they use `forge
 
 Once the `forge` crud is gutted away it should slide right in without a problem. Ping [@coolaj86](https://coolaj86.com) if you'd like to help.
 
-Usage Examples
-========
+Usage
+=====
 
-Here's a small snippet:
+Here's a simple snippet:
 
-```javascript
+```
+var config = require('./examples/config-minimal');
+
+config.le.webrootPath = __dirname + './tests/acme-challenge';
+
+var le = require('letsencrypt').create(config.backend, config.le);
 le.register({
-  domains: ['example.com', 'www.example.com']
-, email: 'user@example.com'
-, agreeTos: true
-, webrootPath: '/srv/www/example.com/public'
-}, function (err, certs) {
-  // do stuff
+  agreeTos: true
+, domains: ['example.com']          // CHANGE TO YOUR DOMAIN
+, email: 'user@email.com'           // CHANGE TO YOUR EMAIL
+}, function (err) {
+  if (err) {
+    console.error('[Error]: node-letsencrypt/examples/standalone');
+    console.error(err.stack);
+  } else {
+    console.log('success');
+  }
+
+  plainServer.close();
+  tlsServer.close();
 });
+
+// IMPORTANT
+// you also need BOTH an http AND https server
+//
+// app.use('/', express.static(config.le.webrootPath))
 ```
 
 **However**, due to the nature of what this library does, it has a few more "moving parts"
 than what makes sense to show in a minimal snippet.
 
-### One Time Registration
+Examples
+========
 
-* [commandline (standalone with "webroot")](https://github.com/Daplie/node-letsencrypt/blob/master/examples/commandline.js)
+### One-Time Registration
 
-```bash
-# manual standalone registration via commandline
-# (runs against testing server on tls port 5001)
-node examples/commandline.js example.com,www.example.com user@example.net agree
-```
+Register a 90-day certificate manually, on a whim
+
+#### Snippets
 
 [`commandline-minimal`](https://github.com/Daplie/node-letsencrypt/blob/master/examples/commandline-minimal.js):
+
+**Part 1: the Let's Encrypt client**:
 ```javascript
 'use strict';
 
@@ -95,8 +119,10 @@ le.register({
   plainServer.close();
   tlsServer.close();
 });
+```
 
-
+**Part 2: Express Web Server**:
+```javascript
 //
 // Express App
 //
@@ -121,9 +147,21 @@ var tlsServer = require('https').createServer({
 });
 ```
 
+#### Runnable Demo
+
+* [commandline (standalone with "webroot")](https://github.com/Daplie/node-letsencrypt/blob/master/examples/commandline.js)
+
+```bash
+# manual standalone registration via commandline
+# (runs against testing server on tls port 5001)
+node examples/commandline.js example.com,www.example.com user@example.net agree
+```
+
 ### Express
 
 Fully Automatic HTTPS with ExpressJS using Free SSL certificates from Let's Encrypt
+
+#### Snippets
 
 * [Minimal ExpressJS Example](https://github.com/Daplie/node-letsencrypt/blob/master/examples/express-minimal.js)
 
@@ -190,6 +228,8 @@ require('https').createServer({
 });
 ```
 
+#### Runnable Example
+
 * [Full ExpressJS Example](https://github.com/Daplie/node-letsencrypt/blob/master/examples/express.js)
 
 ```bash
@@ -225,23 +265,18 @@ and then make sure to set all of of the following to a directory that your user 
 * `logsDir` (python backend only)
 
 
-See Also
-========
-
-* See [Examples](https://github.com/Daplie/node-letsencrypt/tree/master/examples)
-* [Let's Encrypt in (exactly) 90 seconds with Caddy](https://daplie.com/articles/lets-encrypt-in-literally-90-seconds/)
-* [lego](https://github.com/xenolf/lego): Let's Encrypt for golang
-
 API
 ===
 
-* `LetsEncrypt.create(backend, bkDefaults, handlers)`
-* `le.middleware()`
-* `le.sniCallback(hostname, function (err, tlsContext) {})`
-* `le.register({ domains, email, agreeTos, ... }, cb)`
-* `le.fetch({domains, email, agreeTos, ... }, cb)`
-* `le.validate(domains, cb)`
-* `le.registrationFailureCallback(err, args, certInfo, cb)`
+```javascript
+LetsEncrypt.create(backend, bkDefaults, handlers)
+le.middleware()
+le.sniCallback(hostname, function (err, tlsContext) {})
+le.register({ domains, email, agreeTos, ... }, cb)
+le.fetch({domains, email, agreeTos, ... }, cb)
+le.validate(domains, cb)
+le.registrationFailureCallback(err, args, certInfo, cb)
+```
 
 ### `LetsEncrypt.create(backend, bkDefaults, handlers)`
 
