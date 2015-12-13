@@ -69,7 +69,9 @@ le.register({
 });
 
 // IMPORTANT
-// you also need BOTH an http AND https server
+// you also need BOTH an http AND https server that serve directly
+// from webrootPath, which might as well be a special folder reserved
+// only for acme/letsencrypt challenges
 //
 // app.use('/', express.static(config.le.webrootPath))
 ```
@@ -269,13 +271,15 @@ API
 ===
 
 ```javascript
-LetsEncrypt.create(backend, bkDefaults, handlers)
-le.middleware()
-le.sniCallback(hostname, function (err, tlsContext) {})
-le.register({ domains, email, agreeTos, ... }, cb)
-le.fetch({domains, email, agreeTos, ... }, cb)
-le.validate(domains, cb)
-le.registrationFailureCallback(err, args, certInfo, cb)
+LetsEncrypt.create(backend, bkDefaults, handlers)          // wraps a given "backend" (the python client)
+LetsEncrypt.stagingServer                                  // string of staging server for testing
+
+le.middleware()                                            // middleware for serving webrootPath to /.well-known/acme-challenge
+le.sniCallback(hostname, function (err, tlsContext) {})    // uses fetch (below) and formats for https.SNICallback
+le.register({ domains, email, agreeTos, ... }, cb)         // registers or renews certs for a domain
+le.fetch({domains, email, agreeTos, ... }, cb)             // fetches certs from in-memory cache, occassionally refreshes from disk
+le.validate(domains, cb)                                   // do some sanity checks before attemping to register
+le.registrationFailureCallback(err, args, certInfo, cb)    // called when registration fails (not implemented yet)
 ```
 
 ### `LetsEncrypt.create(backend, bkDefaults, handlers)`
