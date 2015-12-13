@@ -19,7 +19,7 @@ npm install --save letsencrypt
 ```
 
 Right now this uses [`letsencrypt-python`](https://github.com/Daplie/node-letsencrypt-python),
-but it's built to be able to use a pure javasript version.
+but it's built to be able to use a pure javasript version (in progress).
 
 ```bash
 # install the python client (takes 2 minutes normally, 20 on a rasberry pi)
