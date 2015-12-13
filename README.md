@@ -5,8 +5,7 @@ Let's Encrypt for node.js
 
 This allows you to get Free SSL Certificates for Automatic HTTPS.
 
-NOT YET PUBLISHED
-============
+#### NOT YET PUBLISHED
 
 * Dec 12 2015: gettin' really close
 * Dec 11 2015: almost done (node-letsencrypt-python complete)
