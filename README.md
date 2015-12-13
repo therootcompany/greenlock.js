@@ -51,6 +51,25 @@ than what makes sense to show in a minimal snippet.
 * [commandline (standalone with "webroot")](https://github.com/Daplie/node-letsencrypt/blob/master/examples/commandline.js)
 * [expressjs (fully automatic https)](https://github.com/Daplie/node-letsencrypt/blob/master/examples/express.js)
 
+### non-root
+
+If you want to run this as non-root, you can.
+
+You just have to set node to be allowed to use root ports
+
+```
+# node
+sudo setcap cap_net_bind_service=+ep /usr/local/bin/node
+```
+
+and then make sure to set all of of the following to a directory that your user is permitted to write to
+
+* `webrootPath`
+* `configDir`
+* `workDir` (python backend only)
+* `logsDir` (python backend only)
+
+
 See Also
 ========
 

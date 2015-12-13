@@ -95,6 +95,18 @@ LE.create = function (backend, defaults, handlers) {
         return;
       }
 
+      //
+      // IMPORTANT
+      //
+      // Before attempting a dynamic registration you need to validate that
+      //
+      //   * these are hostnames that you expected to exist on the system
+      //   * their A records currently point to this ip
+      //   * this system's ip hasn't changed
+      //
+      //  If you do not check these things, then someone could attack you
+      //  and cause you, in return, to have your ip be rate-limit blocked
+      //
       console.warn("[SECURITY WARNING]: node-letsencrypt: validate(hostnames, cb) NOT IMPLEMENTED");
       cb(null, true);
     }
