@@ -4,8 +4,9 @@ var PromiseA = require('bluebird');
 var fs = PromiseA.promisifyAll(require('fs'));
 
 module.exports.create = function (leBinPath, defaults) {
-  defaults.webroot = true;
+  defaults.webroot = true;        // standalone should not be set to true
   defaults.renewByDefault = true;
+  defaults.text = true;
 
   var LEP = require('letsencrypt-python');
   var lep = PromiseA.promisifyAll(LEP.create(leBinPath, { debug: true }));

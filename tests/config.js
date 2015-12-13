@@ -10,4 +10,5 @@ module.exports = {
 , configDir: path.join(__dirname, "letsencrypt.config")
 , workDir: path.join(__dirname, "letsencrypt.work")
 , logsDir: path.join(__dirname, "letsencrypt.logs")
+, allowedDomains: ['example.com']
 };

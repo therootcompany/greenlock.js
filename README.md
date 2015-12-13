@@ -3,13 +3,11 @@ letsencrypt
 
 Let's Encrypt for node.js
 
-This enables you to get Free SSL Certificates for Automatic HTTPS.
-
-#### NOT YET PUBLISHED
-
-* Dec 12 2015: gettin' really close
-* Dec 11 2015: almost done (node-letsencrypt-python complete)
-* Dec 10 2015: began tinkering
+  * Automatic HTTPS with Express
+  * Automatic renewal (in-process)
+  * safe for use with node cluster
+  * configurable for automatic registration (in-process)
+  * usable via commandline as well
 
 Install
 =======
@@ -49,6 +47,19 @@ le.register({
 than what makes sense to show in a minimal snippet.
 
 * [commandline (standalone with "webroot")](https://github.com/Daplie/node-letsencrypt/blob/master/examples/commandline.js)
+
+```bash
+# manual standalone registration via commandline
+# (runs against testing server on tls port 5001)
+node examples/commandline.js example.com,www.example.com user@example.net agree
+```
+
+```bash
+# automatic registration and renewal (certs install as you visit the site for the first time)
+# (runs against testing server on tls port 5001)
+node examples/commandline.js example.com,www.example.com user@example.net agree
+```
+
 * [expressjs (fully automatic https)](https://github.com/Daplie/node-letsencrypt/blob/master/examples/express.js)
 
 ### non-root
