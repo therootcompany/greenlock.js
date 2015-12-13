@@ -308,7 +308,7 @@ look at the wrapper `backend-python.js`.
 }
 ```
 
-#### bkDefualts
+#### bkDefaults
 
 The arguments passed here (typically `webpathRoot`, `configDir`, etc) will be merged with
 any `args` (typically `domains`, `email`, and `agreeTos`) and passed to the backend whenever
