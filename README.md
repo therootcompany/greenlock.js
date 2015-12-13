@@ -46,7 +46,7 @@ Usage
 
 Here's a simple snippet:
 
-```
+```javascript
 var config = require('./examples/config-minimal');
 
 config.le.webrootPath = __dirname + './tests/acme-challenge';
@@ -516,6 +516,11 @@ return {
   }
 };
 ```
+
+Change History
+==============
+
+v1.0.0 Thar be dragons
 
 LICENSE
 =======
