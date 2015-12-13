@@ -1,28 +1,15 @@
 'use strict';
 
+// TODO handle www and no-www together somehow?
+
 var PromiseA = require('bluebird');
+var crypto = require('crypto');
 var tls = require('tls');
 
 var LE = module.exports;
 
-LE.cacheCertInfo = function (args, certInfo, ipc, handlers) {
-  // Randomize by +(0% to 25%) to prevent all caches expiring at once
-  var rnd = (require('crypto').randomBytes(1)[0] / 255);
-  var memorizeFor = Math.floor(handlers.memorizeFor + ((handlers.memorizeFor / 4) * rnd));
-  var hostname = args.domains[0];
-
-  certInfo.context = tls.createSecureContext({
-    key: certInfo.key
-  , cert: certInfo.cert
-  //, ciphers // node's defaults are great
-  });
-  certInfo.duration = certInfo.duration || handlers.duration;
-  certInfo.loadedAt = Date.now();
-  certInfo.memorizeFor = memorizeFor;
-
-  ipc[hostname] = certInfo;
-  return ipc[hostname];
-};
+LE.liveServer = "https://acme-v01.api.letsencrypt.org/directory";
+LE.stagingServer = "https://acme-staging.api.letsencrypt.org/directory";
 
 LE.merge = function merge(defaults, args) {
   var copy = {};
@@ -37,39 +24,19 @@ LE.merge = function merge(defaults, args) {
   return copy;
 };
 
-LE.create = function (letsencrypt, defaults, handlers) {
+LE.create = function (backend, defaults, handlers) {
   if (!handlers) { handlers = {}; }
-  if (!handlers.duration) { handlers.duration = 90 * 24 * 60 * 60 * 1000; }
-  if (!handlers.renewIn) { handlers.renewIn = 80 * 24 * 60 * 60 * 1000; }
+  if (!handlers.lifetime) { handlers.lifetime = 90 * 24 * 60 * 60 * 1000; }
+  if (!handlers.renewWithin) { handlers.renewWithin = 3 * 24 * 60 * 60 * 1000; }
   if (!handlers.memorizeFor) { handlers.memorizeFor = 1 * 24 * 60 * 60 * 1000; }
-  letsencrypt = PromiseA.promisifyAll(letsencrypt);
-  var fs = PromiseA.promisifyAll(require('fs'));
+  if (!handlers.sniRegisterCallback) {
+    handlers.sniRegisterCallback = function (args, cache, cb) {
+      // TODO when we have ECDSA, just do this automatically
+      cb(null, null);
+    };
+  }
+  backend = PromiseA.promisifyAll(backend);
   var utils = require('./utils');
-
-  // TODO move to backend-python.js
-  var registerAsync = PromiseA.promisify(function (args) {
-    return letsencrypt.registerAsync('certonly', args);
-  });
-  var fetchAsync = PromiseA.promisify(function (args) {
-    var hostname = args.domains[0];
-    var crtpath = defaults.configDir + defaults.fullchainTpl.replace(/:hostname/, hostname);
-    var privpath = defaults.configDir + defaults.privkeyTpl.replace(/:hostname/, hostname);
-
-    return PromiseA.all([
-      fs.readFileAsync(privpath, 'ascii')
-    , fs.readFileAsync(crtpath, 'ascii')
-      // stat the file, not the link
-    , fs.statAsync(crtpath, 'ascii')
-    ]).then(function (arr) {
-      return {
-        key: arr[0]  // privkey.pem
-      , cert: arr[1] // fullchain.pem
-        // TODO parse centificate
-      , renewedAt: arr[2].mtime.valueOf()
-      };
-    });
-  });
-  defaults.webroot = true;
 
   //var attempts = {};  // should exist in master process only
   var ipc = {};       // in-process cache
@@ -79,10 +46,6 @@ LE.create = function (letsencrypt, defaults, handlers) {
   // TODO expect that certs expire every 90 days
   // TODO check certs with setInterval?
   //options.cacheContextsFor = options.cacheContextsFor || (1 * 60 * 60 * 1000);
-
-  function isCurrent(cache) {
-    return cache;
-  }
 
   function sniCallback(hostname, cb) {
     var args = LE.merge(defaults, {});
@@ -114,7 +77,7 @@ LE.create = function (letsencrypt, defaults, handlers) {
         cb(null, cache.context);
       }
 
-      if (isCurrent(cache)) {
+      if (cache) {
         vazhdo();
         return;
       }
@@ -151,7 +114,7 @@ LE.create = function (letsencrypt, defaults, handlers) {
     }
   , SNICallback: sniCallback
   , sniCallback: sniCallback
-  , register: function (args, cb) {
+  , _registerHelper: function (args, cb) {
       var copy = LE.merge(defaults, args);
       var err;
 
@@ -168,40 +131,83 @@ LE.create = function (letsencrypt, defaults, handlers) {
           return;
         }
 
-        return registerAsync(copy).then(function () {
+        console.log("[NLE]: begin registration");
+        return backend.registerAsync(copy).then(function () {
+          console.log("[NLE]: end registration");
           // calls fetch because fetch calls cacheCertInfo
           return le.fetch(args, cb);
         }, cb);
       });
     }
+  , _fetchHelper: function (args, cb) {
+      return backend.fetchAsync(args).then(function (certInfo) {
+        if (!certInfo) {
+          cb(null, null);
+          return;
+        }
+
+        var now = Date.now();
+
+        // key, cert, issuedAt, lifetime, expiresAt
+        if (!certInfo.expiresAt) {
+          certInfo.expiresAt = certInfo.issuedAt + (certInfo.lifetime || handlers.lifetime);
+        }
+        if (!certInfo.lifetime) {
+          certInfo.lifetime = (certInfo.lifetime || handlers.lifetime);
+        }
+
+        // a pretty good hard buffer
+        certInfo.expiresAt -= (1 * 24 * 60 * 60 * 100);
+        certInfo = LE.cacheCertInfo(args, certInfo, ipc, handlers);
+        if (now > certInfo.bestIfUsedBy && !certInfo.timeout) {
+          // EXPIRING
+          if (now  > certInfo.expiresAt) {
+            // EXPIRED
+            certInfo.renewTimeout = Math.floor(certInfo.renewTimeout / 2);
+          }
+
+          certInfo.timeout = setTimeout(function () {
+            le.register(args, cb);
+          }, certInfo.renewTimeout);
+        }
+        cb(null, certInfo.context);
+      }, cb);
+    }
   , fetch: function (args, cb) {
       var hostname = args.domains[0];
       // TODO don't call now() every time because this is hot code
       var now = Date.now();
+      var certInfo = ipc[hostname];
 
-      // TODO handle www and no-www together somehow?
-      var cached = ipc[hostname];
+      // TODO once ECDSA is available, wait for cert renewal if its due
+      if (certInfo) {
+        if (now > certInfo.bestIfUsedBy && !certInfo.timeout) {
+          // EXPIRING
+          if (now  > certInfo.expiresAt) {
+            // EXPIRED
+            certInfo.renewTimeout = Math.floor(certInfo.renewTimeout / 2);
+          }
 
-      if (cached) {
-        cb(null, cached.context);
+          certInfo.timeout = setTimeout(function () {
+            le.register(args, cb);
+          }, certInfo.renewTimeout);
+        }
+        cb(null, certInfo.context);
 
-        if ((now - cached.loadedAt) < (cached.memorizeFor)) {
-          // not stale yet
+        if ((now - certInfo.loadedAt) < (certInfo.memorizeFor)) {
+          // these aren't stale, so don't fall through
           return;
         }
       }
 
-      return fetchAsync(args).then(function (certInfo) {
-        if (certInfo) {
-          certInfo = LE.cacheCertInfo(args, certInfo, ipc, handlers);
-          cb(null, certInfo.context);
-        } else {
-          cb(null, null);
-        }
-      }, cb);
+      le._fetchHelper(args, cb);
     }
-  , fetchOrRegister: function (args, cb) {
-      le.fetch(args, function (err, hit) {
+  , register: function (args, cb) {
+      // this may be run in a cluster environment
+      // in that case it should NOT check the cache
+      // but ensure that it has the most fresh copy
+      // before attempting a renew
+      le._fetchHelper(args, function (err, hit) {
         var hostname = args.domains[0];
 
         if (err) {
@@ -213,10 +219,13 @@ LE.create = function (letsencrypt, defaults, handlers) {
           return;
         }
 
-        // TODO validate domains empirically before trying le
-        return registerAsync(args/*, opts*/).then(function () {
-          // wait at least n minutes
-          le.fetch(args, function (err, cache) {
+        return le._registerHelper(args, function (err) {
+          if (err) {
+            cb(err);
+            return;
+          }
+
+          le._fetchHelper(args, function (err, cache) {
             if (cache) {
               cb(null, cache.context);
               return;
@@ -229,18 +238,54 @@ LE.create = function (letsencrypt, defaults, handlers) {
           console.error("[Error] Let's Encrypt failed:");
           console.error(err.stack || new Error(err.message || err.toString()).stack);
 
-          // wasn't successful with lets encrypt, don't try again for n minutes
+          // wasn't successful with lets encrypt, don't automatically try again for 12 hours
+          // TODO what's the better way to handle this?
+          // failure callback?
           ipc[hostname] = {
-            context: null
-          , renewedAt: Date.now()
-          , duration: (5 * 60 * 1000)
+            context: null // TODO default context
+          , issuedAt: Date.now()
+          , lifetime: (12 * 60 * 60 * 1000)
+          // , expiresAt: generated in next step
           };
 
-          cb(null, ipc[hostname]);
+          cb(err, ipc[hostname]);
         });
       });
     }
   };
 
   return le;
+};
+
+LE.cacheCertInfo = function (args, certInfo, ipc, handlers) {
+  // TODO IPC via process and worker to guarantee no races
+  // rather than just "really good odds"
+
+  var hostname = args.domains[0];
+  var now = Date.now();
+
+  // Stagger randomly by plus 0% to 25% to prevent all caches expiring at once
+  var rnd1 = (crypto.randomBytes(1)[0] / 255);
+  var memorizeFor = Math.floor(handlers.memorizeFor + ((handlers.memorizeFor / 4) * rnd1));
+  // Stagger randomly to renew between n and 2n days before renewal is due
+  // this *greatly* reduces the risk of multiple cluster processes renewing the same domain at once
+  var rnd2 = (crypto.randomBytes(1)[0] / 255);
+  var bestIfUsedBy = certInfo.expiresAt - (handlers.renewWithin + Math.floor(handlers.renewWithin * rnd2));
+  // Stagger randomly by plus 0 to 5 min to reduce risk of multiple cluster processes
+  // renewing at once on boot when the certs have expired
+  var rnd3 = (crypto.randomBytes(1)[0] / 255);
+  var renewTimeout = Math.floor((5 * 60 * 1000) * rnd3);
+
+  certInfo.context = tls.createSecureContext({
+    key: certInfo.key
+  , cert: certInfo.cert
+  //, ciphers // node's defaults are great
+  });
+  certInfo.loadedAt = now;
+  certInfo.memorizeFor = memorizeFor;
+  certInfo.bestIfUsedBy = bestIfUsedBy;
+  certInfo.renewTimeout = renewTimeout;
+
+  ipc[hostname] = certInfo;
+  return ipc[hostname];
 };

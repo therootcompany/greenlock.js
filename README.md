@@ -3,7 +3,7 @@ letsencrypt
 
 Let's Encrypt for node.js
 
-This allows you to get Free SSL Certificates for Automatic HTTPS.
+This enables you to get Free SSL Certificates for Automatic HTTPS.
 
 #### NOT YET PUBLISHED
 
@@ -67,6 +67,7 @@ API
 * `le.register({ domains, email, agreeTos, ... }, cb)`
 * `le.fetch({domains, email, agreeTos, ... }, cb)`
 * `le.validate(domains, cb)`
+* `le.registrationFailureCallback(err, args, certInfo, cb)`
 
 ### `LetsEncrypt.create(backend, bkDefaults, handlers)`
 
@@ -213,6 +214,10 @@ Used internally, but exposed for convenience.
 
 Checks in-memory cache of certificates for `args.domains` and calls then calls `backend.fetch(args, cb)`
 **after** merging `args` if necessary.
+
+### `le.registrationFailureCallback(err, args, certInfo, cb)`
+
+Not yet implemented
 
 Backends
 --------

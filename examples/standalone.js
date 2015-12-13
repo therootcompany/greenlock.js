@@ -1,9 +1,5 @@
 'use strict';
 
-var path = require('path');
-var leBinPath = require('homedir')() + '/.local/share/letsencrypt/bin/letsencrypt';
-var LEP = require('letsencrypt-python');
-var lep = LEP.create(leBinPath, { debug: true });
 var conf = {
   domains: process.argv[2]
 , email: process.argv[3]
@@ -18,29 +14,39 @@ if (!conf.domains || !conf.email || !conf.agree) {
   return;
 }
 
-// backend-specific defaults
-// Note: For legal reasons you should NOT set email or agreeTos as a default
+var LE = require('../');
+var path = require('path');
+// backend-specific defaults will be passed through
+// Note: Since agreeTos is a legal agreement, I would suggest not accepting it by default
 var bkDefaults = {
-  webroot: true
-, webrootPath: path.join(__dirname, '..', 'tests', 'acme-challenge')
+  webrootPath: path.join(__dirname, '..', 'tests', 'acme-challenge')
 , fullchainTpl: '/live/:hostname/fullchain.pem'
 , privkeyTpl: '/live/:hostname/privkey.pem'
 , configDir: path.join(__dirname, '..', 'tests', 'letsencrypt.config')
 , logsDir: path.join(__dirname, '..', 'tests', 'letsencrypt.logs')
 , workDir: path.join(__dirname, '..', 'tests', 'letsencrypt.work')
-, server: LEP.stagingServer
+, server: LE.stagingServer
 , text: true
 };
-var le = require('../').create(lep, bkDefaults, {
+
+var leBinPath = require('homedir')() + '/.local/share/letsencrypt/bin/letsencrypt';
+var LEB = require('../backends-python');
+var backend = LEB.create(leBinPath, bkDefaults, { debug: true });
+
+var le = LE.create(backend, bkDefaults, {
 /*
-  setChallenge: function () {
+  setChallenge: function (hostnames, key, value, cb) {
     // the python backend needs fs.watch implemented
     // before this would work (and even then it would be difficult)
-, getChallenge: function () {
+  }
+, getChallenge: function (hostnames, key, cb) {
     // 
   }
+, sniRegisterCallback: function (args, certInfo, cb) {
+    
   }
-, sniRegisterCallback: function () {
+, registrationFailureCallback: function (args, certInfo, cb) {
+    what do to when a backgrounded registration fails
   }
 */
 });
