@@ -29,7 +29,7 @@ pushd letsencrypt
 ./letsencrypt-auto
 ```
 
-### python-free version
+**moving towards a python-free version**
 
 There are a few partially written javascript implementation, but they use `forge` instead of using node's native `crypto` and `ursa` - so their performance is outright horrific (especially on Rasbperry Pi et al). For the moment it's faster to use the wrapped python version.
 
