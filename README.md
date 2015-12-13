@@ -56,13 +56,21 @@ than what makes sense to show in a minimal snippet.
 node examples/commandline.js example.com,www.example.com user@example.net agree
 ```
 
+* [expressjs (fully automatic https)](https://github.com/Daplie/node-letsencrypt/blob/master/examples/express.js)
+
 ```bash
+# clear out the certificates
+rm -rf tests/letsencrypt.*
+
 # automatic registration and renewal (certs install as you visit the site for the first time)
 # (runs against testing server on tls port 5001)
-node examples/commandline.js example.com,www.example.com user@example.net agree
+node examples/express.js example.com,www.example.com user@example.net agree
 ```
 
-* [expressjs (fully automatic https)](https://github.com/Daplie/node-letsencrypt/blob/master/examples/express.js)
+```bash
+# this will take a moment because it won't respond to the tls sni header until it gets the certs
+curl https://example.com/
+```
 
 ### non-root
 
