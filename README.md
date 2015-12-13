@@ -58,6 +58,13 @@ than what makes sense to show in a minimal snippet.
 
 * [commandline (standalone with "webroot")](https://github.com/Daplie/node-letsencrypt/blob/master/examples/commandline.js)
 
+```bash
+# manual standalone registration via commandline
+# (runs against testing server on tls port 5001)
+node examples/commandline.js example.com,www.example.com user@example.net agree
+```
+
+[`commandline-minimal`](https://github.com/Daplie/node-letsencrypt/blob/master/examples/commandline-minimal.js):
 ```javascript
 'use strict';
 
@@ -112,12 +119,6 @@ var tlsServer = require('https').createServer({
 }, app).listen(config.tlsPort, function () {
   console.log('Listening http', this.address());
 });
-```
-
-```bash
-# manual standalone registration via commandline
-# (runs against testing server on tls port 5001)
-node examples/commandline.js example.com,www.example.com user@example.net agree
 ```
 
 ### Express
