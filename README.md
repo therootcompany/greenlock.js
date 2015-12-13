@@ -162,7 +162,7 @@ var le = LE.create(config.backend, config.le, {
     }
 
     // register / renew the certificate in the background
-    le.register(args, function () {});
+    le.register(args, cb);
   }
 });
 
