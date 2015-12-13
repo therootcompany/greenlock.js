@@ -28,7 +28,7 @@ var bkDefaults = {
 , server: LE.stagingServer
 };
 
-var leBinPath = require('homedir')() + '/.local/share/letsencrypt/bin/letsencrypt';
+var leBinPath = require('os').homedir() + '/.local/share/letsencrypt/bin/letsencrypt';
 var LEB = require('../backends-python');
 var backend = LEB.create(leBinPath, bkDefaults, { debug: true });
 

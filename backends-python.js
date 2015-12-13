@@ -3,13 +3,13 @@
 var PromiseA = require('bluebird');
 var fs = PromiseA.promisifyAll(require('fs'));
 
-module.exports.create = function (leBinPath, defaults) {
-  defaults.webroot = true;        // standalone should not be set to true
+module.exports.create = function (leBinPath, defaults, opts) {
+  defaults.webroot = true;
   defaults.renewByDefault = true;
   defaults.text = true;
 
   var LEP = require('letsencrypt-python');
-  var lep = PromiseA.promisifyAll(LEP.create(leBinPath, { debug: true }));
+  var lep = PromiseA.promisifyAll(LEP.create(leBinPath, opts));
   var wrapped = {
     registerAsync: function (args) {
       return lep.registerAsync('certonly', args);
@@ -28,7 +28,7 @@ module.exports.create = function (leBinPath, defaults) {
         return {
           key: arr[0]  // privkey.pem
         , cert: arr[1] // fullchain.pem
-          // TODO parse centificate
+          // TODO parse centificate for lifetime / expiresAt
         , issuedAt: arr[2].mtime.valueOf()
         };
       }, function () {
@@ -38,4 +38,4 @@ module.exports.create = function (leBinPath, defaults) {
   };
 
   return wrapped;
-}
+};

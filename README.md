@@ -5,11 +5,11 @@ Automatic [Let's Encrypt](https://lettsencrypt.org) HTTPS Certificates for node.
 
   * Automatic HTTPS with ExpressJS
   * Automatic live renewal (in-process)
-  * safe for use with node's cluster module
-  * configurable for automatic registration (in-process)
+  * On-the-fly HTTPS certificates for Dynamic DNS (in-process, no server restart)
+  * Works with node cluster out of the box
   * usable via commandline as well
-  * [90-day certificates](https://letsencrypt.org/2015/11/09/why-90-days.html)
   * Free SSL (HTTPS Certificates for TLS)
+  * [90-day certificates](https://letsencrypt.org/2015/11/09/why-90-days.html)
 
 Install
 =======
@@ -48,7 +48,65 @@ le.register({
 **However**, due to the nature of what this library does, it has a few more "moving parts"
 than what makes sense to show in a minimal snippet.
 
+### One Time Registration
+
 * [commandline (standalone with "webroot")](https://github.com/Daplie/node-letsencrypt/blob/master/examples/commandline.js)
+
+```javascript
+'use strict';
+
+var LE = require('letsencrypt');
+var config = require('./config-minimal');
+
+// Note: you should make this special dir in your product and leave it empty
+config.le.webrootPath = __dirname + '/../tests/acme-challenge';
+config.le.server = LE.stagingServer;
+
+
+//
+// Manual Registration
+//
+var le = LE.create(config.backend, config.le);
+le.register({
+  agreeTos: true
+, domains: ['example.com']          // CHANGE TO YOUR DOMAIN
+, email: 'user@email.com'           // CHANGE TO YOUR EMAIL
+}, function (err) {
+  if (err) {
+    console.error('[Error]: node-letsencrypt/examples/standalone');
+    console.error(err.stack);
+  } else {
+    console.log('success');
+  }
+
+  plainServer.close();
+  tlsServer.close();
+});
+
+
+//
+// Express App
+//
+var app = require('express')();
+app.use('/', le.middleware());
+
+
+//
+// HTTP & HTTPS servers
+// (required for domain validation)
+//
+var plainServer = require('http').createServer(app).listen(config.plainPort, function () {
+  console.log('Listening http', this.address());
+});
+
+var tlsServer = require('https').createServer({
+  key: config.tlsKey
+, cert: config.tlsCert
+, SNICallback: le.sniCallback
+}, app).listen(config.tlsPort, function () {
+  console.log('Listening http', this.address());
+});
+```
 
 ```bash
 # manual standalone registration via commandline
@@ -56,7 +114,76 @@ than what makes sense to show in a minimal snippet.
 node examples/commandline.js example.com,www.example.com user@example.net agree
 ```
 
-* [expressjs (fully automatic https)](https://github.com/Daplie/node-letsencrypt/blob/master/examples/express.js)
+### Express
+
+Fully Automatic HTTPS with ExpressJS using Free SSL certificates from Let's Encrypt
+
+* [Minimal ExpressJS Example](https://github.com/Daplie/node-letsencrypt/blob/master/examples/express-minimal.js)
+
+```javascript
+'use strict';
+
+var LE = require('letsencrypt');
+var config = require('./config-minimal');
+
+// Note: you should make this special dir in your product and leave it empty
+config.le.webrootPath = __dirname + '/../tests/acme-challenge';
+config.le.server = LE.stagingServer;
+
+//
+// Automatically Register / Renew Domains
+//
+var le = LE.create(config.backend, config.le, {
+  sniRegisterCallback: function (args, expiredCert, cb) {
+    // Security: check that this is actually a subdomain we allow
+    // (otherwise an attacker can cause you to rate limit against the LE server)
+
+    var hostname = args.domains[0];
+    if (!/\.example\.com$/.test(hostname)) {
+      console.error("bad domain '" + hostname + "', not a subdomain of example.com");
+      cb(nul, null);
+    }
+
+    // agree to the LE TOS for this domain
+    args.agreeTos = true;
+    args.email = 'user@example.com';
+
+    // use the cert even though it's expired
+    if (expiredCert) {
+      cb(null, expiredCert);
+      cb = function () { /*ignore*/ };
+    }
+
+    // register / renew the certificate in the background
+    le.register(args, function () {});
+  }
+});
+
+
+//
+// Express App
+//
+var app = require('express')();
+app.use('/', le.middleware());
+
+
+//
+// HTTP & HTTPS servers
+//
+require('http').createServer(app).listen(config.plainPort, function () {
+  console.log('Listening http', this.address());
+});
+
+require('https').createServer({
+  key: config.tlsKey
+, cert: config.tlsCert
+, SNICallback: le.sniCallback
+}, app).listen(config.tlsPort, function () {
+  console.log('Listening http', this.address());
+});
+```
+
+* [Full ExpressJS Example](https://github.com/Daplie/node-letsencrypt/blob/master/examples/express.js)
 
 ```bash
 # clear out the certificates
