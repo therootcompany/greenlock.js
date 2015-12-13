@@ -31,7 +31,19 @@ var bkDefaults = {
 , server: LEP.stagingServer
 , text: true
 };
-var le = require('../').create(lep, bkDefaults, { });
+var le = require('../').create(lep, bkDefaults, {
+/*
+  setChallenge: function () {
+    // the python backend needs fs.watch implemented
+    // before this would work (and even then it would be difficult)
+, getChallenge: function () {
+    // 
+  }
+  }
+, sniRegisterCallback: function () {
+  }
+*/
+});
 
 var localCerts = require('localhost.daplie.com-certificates');
 var express = require('express');
@@ -59,11 +71,14 @@ le.register({
   agreeTos: 'agree' === conf.agree
 , domains: conf.domains.split(',')
 , email: conf.email
-}).then(function () {
-  console.log('success');
 }, function (err) {
-  console.error(err.stack);
-}).then(function () {
+  if (err) {
+    console.error('[Error]: node-letsencrypt/examples/standalone');
+    console.error(err.stack);
+  } else {
+    console.log('success');
+  }
+
   server.close();
   tlsServer.close();
 });

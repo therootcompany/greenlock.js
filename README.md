@@ -40,6 +40,7 @@ le.register({
   domains: ['example.com', 'www.example.com']
 , email: 'user@example.com'
 , agreeTos: true
+, webrootPath: '/srv/www/example.com/public'
 }, function (err, certs) {
   // do stuff
 });
@@ -111,6 +112,9 @@ Typically the backend wrapper will already merge any necessary backend-specific 
 }
 ```
 
+Note: `webrootPath` can be set as a default, semi-locally with `webrootPathTpl`, or per
+regesitration as `webrootPath` (which overwrites `defaults.webrootPath`).
+
 #### handlers *optional*
 
 `h.setChallenge(hostnames, name, value, cb)`:
@@ -171,6 +175,7 @@ Example:
 le.register({
   domains: ['example.com', 'www.example.com']
 , email: 'user@example.com'
+, webrootPath: '/srv/www/example.com/public'
 , agreeTos: true
 }, function (err, certs) {
   // err is some error
@@ -233,7 +238,9 @@ This is what `args` looks like:
 , agreeTos: true
 , configDir: '/etc/letsencrypt'
 , fullchainTpl: '/live/:hostname/fullchain.pem'  // :hostname will be replaced with the domainname
-, privkeyTpl: '/live/:hostname/privkey.pem'    // :hostname
+, privkeyTpl: '/live/:hostname/privkey.pem'
+, webrootPathTpl: '/srv/www/:hostname/public'
+, webrootPath: '/srv/www/example.com/public'    // templated from webrootPathTpl
 }
 ```
 

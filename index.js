@@ -1,12 +1,52 @@
 'use strict';
 
 var PromiseA = require('bluebird');
+var tls = require('tls');
 
-module.exports.create = function (letsencrypt, defaults, options) {
+var LE = module.exports;
+
+LE.cacheCertInfo = function (args, certInfo, ipc, handlers) {
+  // Randomize by +(0% to 25%) to prevent all caches expiring at once
+  var rnd = (require('crypto').randomBytes(1)[0] / 255);
+  var memorizeFor = Math.floor(handlers.memorizeFor + ((handlers.memorizeFor / 4) * rnd));
+  var hostname = args.domains[0];
+
+  certInfo.context = tls.createSecureContext({
+    key: certInfo.key
+  , cert: certInfo.cert
+  //, ciphers // node's defaults are great
+  });
+  certInfo.duration = certInfo.duration || handlers.duration;
+  certInfo.loadedAt = Date.now();
+  certInfo.memorizeFor = memorizeFor;
+
+  ipc[hostname] = certInfo;
+  return ipc[hostname];
+};
+
+LE.merge = function merge(defaults, args) {
+  var copy = {};
+
+  Object.keys(defaults).forEach(function (key) {
+    copy[key] = defaults[key];
+  });
+  Object.keys(args).forEach(function (key) {
+    copy[key] = args[key];
+  });
+
+  return copy;
+};
+
+LE.create = function (letsencrypt, defaults, handlers) {
+  if (!handlers) { handlers = {}; }
+  if (!handlers.duration) { handlers.duration = 90 * 24 * 60 * 60 * 1000; }
+  if (!handlers.renewIn) { handlers.renewIn = 80 * 24 * 60 * 60 * 1000; }
+  if (!handlers.memorizeFor) { handlers.memorizeFor = 1 * 24 * 60 * 60 * 1000; }
   letsencrypt = PromiseA.promisifyAll(letsencrypt);
-  var tls = require('tls');
   var fs = PromiseA.promisifyAll(require('fs'));
   var utils = require('./utils');
+
+  // TODO move to backend-python.js
   var registerAsync = PromiseA.promisify(function (args) {
     return letsencrypt.registerAsync('certonly', args);
   });
@@ -20,14 +60,19 @@ module.exports.create = function (letsencrypt, defaults, options) {
     , fs.readFileAsync(crtpath, 'ascii')
       // stat the file, not the link
     , fs.statAsync(crtpath, 'ascii')
-    ]);
+    ]).then(function (arr) {
+      return {
+        key: arr[0]  // privkey.pem
+      , cert: arr[1] // fullchain.pem
+        // TODO parse centificate
+      , renewedAt: arr[2].mtime.valueOf()
+      };
+    });
   });
+  defaults.webroot = true;
 
   //var attempts = {};  // should exist in master process only
   var ipc = {};       // in-process cache
-  var count = 0;
-
-  var now;
   var le;
 
   // TODO check certs on initial load
@@ -35,35 +80,27 @@ module.exports.create = function (letsencrypt, defaults, options) {
   // TODO check certs with setInterval?
   //options.cacheContextsFor = options.cacheContextsFor || (1 * 60 * 60 * 1000);
 
-  defaults.webroot = true;
-
-  function merge(args) {
-    var copy = {};
-
-    Object.keys(defaults).forEach(function (key) {
-      copy[key] = defaults[key];
-    });
-    Object.keys(args).forEach(function (key) {
-      copy[key] = args[key];
-    });
-
-    return copy;
-  }
-
   function isCurrent(cache) {
     return cache;
   }
 
   function sniCallback(hostname, cb) {
-    var args = merge({});
+    var args = LE.merge(defaults, {});
     args.domains = [hostname];
+
     le.fetch(args, function (err, cache) {
       if (err) {
         cb(err);
         return;
       }
 
-      function respond(c2) {
+      // vazhdo is Albanian for 'continue'
+      function vazhdo(err, c2) {
+        if (err) {
+          cb(err);
+          return;
+        }
+
         cache = c2 || cache;
 
         if (!cache.context) {
@@ -78,18 +115,25 @@ module.exports.create = function (letsencrypt, defaults, options) {
       }
 
       if (isCurrent(cache)) {
-        respond();
+        vazhdo();
         return;
       }
 
-      defaults.needsRegistration(hostname, respond);
+      var args = LE.merge(defaults, { domains: [hostname] });
+      handlers.sniRegisterCallback(args, cache, vazhdo);
     });
   }
 
   le = {
-    validate: function () {
+    validate: function (hostnames, cb) {
       // TODO check dns, etc
-      return PromiseA.resolve();
+      if ((!hostnames.length && hostnames.every(le.isValidDomain))) {
+        cb(new Error("node-letsencrypt: invalid hostnames: " + hostnames.join(',')));
+        return;
+      }
+
+      console.warn("[SECURITY WARNING]: node-letsencrypt: validate(hostnames, cb) NOT IMPLEMENTED");
+      cb(null, true);
     }
   , middleware: function () {
       //console.log('[DEBUG] webrootPath', defaults.webrootPath);
@@ -107,62 +151,53 @@ module.exports.create = function (letsencrypt, defaults, options) {
     }
   , SNICallback: sniCallback
   , sniCallback: sniCallback
-  , cacheCerts: function (args, certs) {
-      var hostname = args.domains[0];
-      // assume 90 day renewals based on stat time, for now
-      ipc[hostname] = {
-        context: tls.createSecureContext({
-          key: certs[0]  // privkey.pem
-        , cert: certs[1] // fullchain.pem
-        //, ciphers // node's defaults are great
-        })
-      , updated: Date.now()
-      };
-
-      return ipc[hostname];
-    }
-  , readAndCacheCerts: function (args) {
-      return fetchAsync(args).then(function (certs) {
-        return le.cacheCerts(args, certs);
-      });
-    }
-  , register: function (args) {
-      // TODO validate domains and such
-
-      var copy = merge(args);
+  , register: function (args, cb) {
+      var copy = LE.merge(defaults, args);
+      var err;
 
       if (!utils.isValidDomain(args.domains[0])) {
-        return PromiseA.reject({
-          message: "invalid domain"
-        , code: "INVALID_DOMAIN"
-        });
+        err = new Error("invalid domain");
+        err.code = "INVALID_DOMAIN";
+        cb(err);
+        return;
       }
 
-      return le.validate(args.domains).then(function () {
+      return le.validate(args.domains, function (err) {
+        if (err) {
+          cb(err);
+          return;
+        }
+
         return registerAsync(copy).then(function () {
-          return fetchAsync(args);
-        });
+          // calls fetch because fetch calls cacheCertInfo
+          return le.fetch(args, cb);
+        }, cb);
       });
     }
   , fetch: function (args, cb) {
       var hostname = args.domains[0];
+      // TODO don't call now() every time because this is hot code
+      var now = Date.now();
 
-      count += 1;
-
-      if (count >= 1000) {
-        now = Date.now();
-        count = 0;
-      }
-
+      // TODO handle www and no-www together somehow?
       var cached = ipc[hostname];
-      // TODO handle www and no-www together
-      if (cached && ((now - cached.updated) < options.cacheContextsFor)) {
+
+      if (cached) {
         cb(null, cached.context);
-        return;
+
+        if ((now - cached.loadedAt) < (cached.memorizeFor)) {
+          // not stale yet
+          return;
+        }
       }
 
-      return fetchAsync(args).then(function (cached) {
-        cb(null, cached.context);
+      return fetchAsync(args).then(function (certInfo) {
+        if (certInfo) {
+          certInfo = LE.cacheCertInfo(args, certInfo, ipc, handlers);
+          cb(null, certInfo.context);
+        } else {
+          cb(null, null);
+        }
       }, cb);
     }
   , fetchOrRegister: function (args, cb) {
@@ -181,22 +216,26 @@ module.exports.create = function (letsencrypt, defaults, options) {
         // TODO validate domains empirically before trying le
         return registerAsync(args/*, opts*/).then(function () {
           // wait at least n minutes
-          return fetchAsync(args).then(function (cached) {
-            // success
-            cb(null, cached.context);
-          }, function (err) {
+          le.fetch(args, function (err, cache) {
+            if (cache) {
+              cb(null, cache.context);
+              return;
+            }
+
             // still couldn't read the certs after success... that's weird
-            cb(err);
+            cb(err, null);
           });
         }, function (err) {
           console.error("[Error] Let's Encrypt failed:");
-          console.error(err.stack || new Error(err.message || err.toString()));
+          console.error(err.stack || new Error(err.message || err.toString()).stack);
 
           // wasn't successful with lets encrypt, don't try again for n minutes
           ipc[hostname] = {
             context: null
-          , updated: Date.now()
+          , renewedAt: Date.now()
+          , duration: (5 * 60 * 1000)
           };
+
           cb(null, ipc[hostname]);
         });
       });
