@@ -1,13 +1,15 @@
 letsencrypt
 ===========
 
-Let's Encrypt for node.js
+Automatic [Let's Encrypt](https://lettsencrypt.org) HTTPS Certificates for node.js
 
-  * Automatic HTTPS with Express
-  * Automatic renewal (in-process)
-  * safe for use with node cluster
+  * Automatic HTTPS with ExpressJS
+  * Automatic live renewal (in-process)
+  * safe for use with node's cluster module
   * configurable for automatic registration (in-process)
   * usable via commandline as well
+  * [90-day certificates](https://letsencrypt.org/2015/11/09/why-90-days.html)
+  * Free SSL (HTTPS Certificates for TLS)
 
 Install
 =======
@@ -86,7 +88,7 @@ See Also
 
 * See [Examples](https://github.com/Daplie/node-letsencrypt/tree/master/examples)
 * [Let's Encrypt in (exactly) 90 seconds with Caddy](https://daplie.com/articles/lets-encrypt-in-literally-90-seconds/)
-* [lego](https://github.com/xenolf/lego): Let's Encrypt for golang 
+* [lego](https://github.com/xenolf/lego): Let's Encrypt for golang
 
 API
 ===
@@ -125,7 +127,7 @@ look at the wrapper `backend-python.js`.
 }
 ```
 
-#### bkDefualts 
+#### bkDefualts
 
 The arguments passed here (typically `webpathRoot`, `configDir`, etc) will be merged with
 any `args` (typically `domains`, `email`, and `agreeTos`) and passed to the backend whenever
@@ -230,13 +232,13 @@ returns `true` if `hostname` is a valid ascii or punycode domain name.
 ### `le.validate(args, cb)`
 
 Used internally, but exposed for convenience. Checks `LetsEncrypt.isValidDomain()`
-and then checks to see that the current server 
+and then checks to see that the current server
 
 Called before `backend.register()` to validate the following:
 
   * the hostnames don't use any illegal characters
   * the server's actual public ip (via api.apiify.org)
-  * the A records for said hostnames 
+  * the A records for said hostnames
 
 ### `le.fetch(args, cb)`
 
