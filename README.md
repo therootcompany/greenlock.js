@@ -25,10 +25,10 @@ npm install --save letsencrypt
 ```
 
 Right now this uses [`letsencrypt-python`](https://github.com/Daplie/node-letsencrypt-python),
-but it's built to be able to use a node-only javasript version (in progress).
+but it's built to be able to use a node-only javascript version (in progress).
 
 ```bash
-# install the python client (takes 2 minutes normally, 20 on a rasberry pi)
+# install the python client (takes 2 minutes normally, 20 on a raspberry pi)
 git clone https://github.com/letsencrypt/letsencrypt
 pushd letsencrypt
 
@@ -37,7 +37,7 @@ pushd letsencrypt
 
 **moving towards a python-free version**
 
-There are a few partially written javascript implementation, but they use `forge` instead of using node's native `crypto` and `ursa` - so their performance is outright horrific (especially on Rasbperry Pi et al). For the moment it's faster to use the wrapped python version.
+There are a few partially written javascript implementation, but they use `forge` instead of using node's native `crypto` and `ursa` - so their performance is outright horrific (especially on Raspberry Pi et al). For the moment it's faster to use the wrapped python version.
 
 Once the `forge` crud is gutted away it should slide right in without a problem. Ping [@coolaj86](https://coolaj86.com) if you'd like to help.
 
@@ -277,8 +277,8 @@ LetsEncrypt.stagingServer                                  // string of staging 
 le.middleware()                                            // middleware for serving webrootPath to /.well-known/acme-challenge
 le.sniCallback(hostname, function (err, tlsContext) {})    // uses fetch (below) and formats for https.SNICallback
 le.register({ domains, email, agreeTos, ... }, cb)         // registers or renews certs for a domain
-le.fetch({domains, email, agreeTos, ... }, cb)             // fetches certs from in-memory cache, occassionally refreshes from disk
-le.validate(domains, cb)                                   // do some sanity checks before attemping to register
+le.fetch({domains, email, agreeTos, ... }, cb)             // fetches certs from in-memory cache, occasionally refreshes from disk
+le.validate(domains, cb)                                   // do some sanity checks before attempting to register
 le.registrationFailureCallback(err, args, certInfo, cb)    // called when registration fails (not implemented yet)
 ```
 
@@ -326,7 +326,7 @@ Typically the backend wrapper will already merge any necessary backend-specific 
 ```
 
 Note: `webrootPath` can be set as a default, semi-locally with `webrootPathTpl`, or per
-regesitration as `webrootPath` (which overwrites `defaults.webrootPath`).
+registration as `webrootPath` (which overwrites `defaults.webrootPath`).
 
 #### handlers *optional*
 
