@@ -1,7 +1,7 @@
 letsencrypt
 ===========
 
-Automatic [Let's Encrypt](https://lettsencrypt.org) HTTPS Certificates for node.js
+Automatic [Let's Encrypt](https://letsencrypt.org) HTTPS Certificates for node.js
 
   * Automatic HTTPS with ExpressJS
   * Automatic live renewal (in-process)
