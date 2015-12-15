@@ -23,16 +23,17 @@ var bkDefaults = {
 , fullchainTpl: '/live/:hostname/fullchain.pem'
 , privkeyTpl: '/live/:hostname/privkey.pem'
 , configDir: path.join(__dirname, '..', 'tests', 'letsencrypt.config')
+, server: LE.stagingServer
+
+// python-specific
 , logsDir: path.join(__dirname, '..', 'tests', 'letsencrypt.logs')
 , workDir: path.join(__dirname, '..', 'tests', 'letsencrypt.work')
-, server: LE.stagingServer
+, pythonClientPath: require('os').homedir() + '/.local/share/letsencrypt/bin/letsencrypt'
 };
 
-var leBinPath = require('os').homedir() + '/.local/share/letsencrypt/bin/letsencrypt';
-var LEB = require('../backends-python');
-var backend = LEB.create(leBinPath, bkDefaults, { debug: true });
+var LEP = require('../backends/python');
 
-var le = LE.create(backend, bkDefaults, {
+var le = LE.create(LEP, bkDefaults, {
   sniRegisterCallback: function (args, certInfo, cb) {
     var allowedDomains = conf.domains; // require('../tests/config').allowedDomains;
 
@@ -62,7 +63,7 @@ var le = LE.create(backend, bkDefaults, {
     // before this would work (and even then it would be difficult)
   }
 , getChallenge: function (hostnames, key, cb) {
-    // 
+    //
   }
 , registrationFailureCallback: function (args, certInfo, cb) {
     what do to when a backgrounded registration fails

@@ -5,11 +5,15 @@
 var PromiseA = require('bluebird');
 var crypto = require('crypto');
 var tls = require('tls');
+var path = require('path');
 
 var LE = module.exports;
 
 LE.liveServer = "https://acme-v01.api.letsencrypt.org/directory";
 LE.stagingServer = "https://acme-staging.api.letsencrypt.org/directory";
+LE.configDir = "/etc/letsencrypt/";
+LE.logsDir = "/var/log/letsencrypt/";
+LE.workDir = "/var/lib/letsencrypt/";
 
 LE.merge = function merge(defaults, args) {
   var copy = {};
@@ -25,6 +29,18 @@ LE.merge = function merge(defaults, args) {
 };
 
 LE.create = function (backend, defaults, handlers) {
+  if ('function' === typeof backend.create) {
+    backend.create(defaults, handlers);
+  }
+  else if ('string' === typeof backend) {
+    // TODO I'll probably regret this
+    // I don't like dynamic requires because they cause build / minification issues.
+    backend = require(path.join('backends', backend)).create(defaults, handlers);
+  }
+  else {
+    // ignore
+    // this backend was created the v1.0.0 way
+  }
   if (!handlers) { handlers = {}; }
   if (!handlers.lifetime) { handlers.lifetime = 90 * 24 * 60 * 60 * 1000; }
   if (!handlers.renewWithin) { handlers.renewWithin = 3 * 24 * 60 * 60 * 1000; }
@@ -73,7 +89,7 @@ LE.create = function (backend, defaults, handlers) {
           //, ciphers         // node's defaults are great
           });
         }
-        
+
         cb(null, cache.context);
       }
 

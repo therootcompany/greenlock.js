@@ -23,27 +23,28 @@ var bkDefaults = {
 , fullchainTpl: '/live/:hostname/fullchain.pem'
 , privkeyTpl: '/live/:hostname/privkey.pem'
 , configDir: path.join(__dirname, '..', 'tests', 'letsencrypt.config')
+, server: LE.stagingServer
+
+// backend-specific
 , logsDir: path.join(__dirname, '..', 'tests', 'letsencrypt.logs')
 , workDir: path.join(__dirname, '..', 'tests', 'letsencrypt.work')
-, server: LE.stagingServer
 , text: true
+, pythonClientPath: require('os').homedir() + '/.local/share/letsencrypt/bin/letsencrypt'
 };
 
-var leBinPath = require('os').homedir() + '/.local/share/letsencrypt/bin/letsencrypt';
-var LEB = require('../backends-python');
-var backend = LEB.create(leBinPath, bkDefaults, { debug: true });
+var LEP = require('../backends/python');
 
-var le = LE.create(backend, bkDefaults, {
+var le = LE.create(LEP, bkDefaults, {
 /*
   setChallenge: function (hostnames, key, value, cb) {
     // the python backend needs fs.watch implemented
     // before this would work (and even then it would be difficult)
   }
 , getChallenge: function (hostnames, key, cb) {
-    // 
+    //
   }
 , sniRegisterCallback: function (args, certInfo, cb) {
-    
+
   }
 , registrationFailureCallback: function (args, certInfo, cb) {
     what do to when a backgrounded registration fails

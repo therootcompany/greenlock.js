@@ -33,9 +33,16 @@
     "express": "^4.13.3",
     "localhost.daplie.com-certificates": "^1.1.2"
   },
+  "optionalDependencies": {
+    "letsencrypt-python": "^1.0.3",
+    "letsencrypt-forge": "file:letsencrypt-forge",
+    "letsencrypt-ursa": "file:letsencrypt-ursa",
+    "node-forge": "^0.6.38",
+    "ursa": "^0.9.1"
+    "letiny": "0.0.4-beta",
+  },
   "dependencies": {
     "bluebird": "^3.0.6",
-    "letsencrypt-python": "^1.0.3",
-    "serve-static": "^1.10.0"
+    "serve-static": "^1.10.0",
   }
 }

@@ -3,11 +3,12 @@
 var PromiseA = require('bluebird');
 var fs = PromiseA.promisifyAll(require('fs'));
 
-module.exports.create = function (leBinPath, defaults, opts) {
+module.exports.create = function (defaults, opts) {
   defaults.webroot = true;
   defaults.renewByDefault = true;
   defaults.text = true;
 
+  var leBinPath = defaults.pythonClientPath;
   var LEP = require('letsencrypt-python');
   var lep = PromiseA.promisifyAll(LEP.create(leBinPath, opts));
   var wrapped = {
