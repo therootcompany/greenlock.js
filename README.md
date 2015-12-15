@@ -49,7 +49,7 @@ Here's a simple snippet:
 ```javascript
 var config = require('./examples/config-minimal');
 
-config.le.webrootPath = __dirname + './tests/acme-challenge';
+config.le.webrootPath = __dirname + '/tests/acme-challenge';
 
 var le = require('letsencrypt').create(config.backend, config.le);
 le.register({
