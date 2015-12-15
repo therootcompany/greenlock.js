@@ -22,14 +22,26 @@ function getAcmeUrls(args) {
 
   return requestAsync({
     url: args.server
-  }).then(function (data) {
+  }).then(function (resp) {
+    var data = resp.body;
+
+    if ('string' === typeof data) {
+      try {
+        data = JSON.parse(data);
+      } catch(e) {
+        return PromiseA.reject(e);
+      }
+    }
+
     if (4 !== Object.keys(data).length) {
       console.warn("This Let's Encrypt / ACME server has been updated with urls that this client doesn't understand");
+      console.warn(data);
     }
     if (!knownUrls.every(function (url) {
       return data[url];
     })) {
       console.warn("This Let's Encrypt / ACME server is missing urls that this client may need.");
+      console.warn(data);
     }
 
     ipc.acmeUrlsUpdatedAt = Date.now();
@@ -56,7 +68,7 @@ function createAccount(args, handlers) {
 
     return lef.registerNewAccountAsync({
       email: args.email
-    , newReg: args.server
+    , newReg: args._acmeUrls.newReg
     , debug: args.debug || handlers.debug
     , agreeToTerms: function (tosUrl, agree) {
         // args.email = email; // already there
@@ -173,7 +185,7 @@ module.exports.create = function (defaults, handlers) {
       args.renewalDir = args.renewalDir || path.join(configDir, 'renewal', args.domains[0] + '.conf');
       args.accountsDir = args.accountsDir || path.join(configDir, 'accounts', acmeHostname, 'directory');
 
-      pyconf.readFileAsync(args.renewalDir).then(function (renewal) {
+      return pyconf.readFileAsync(args.renewalDir).then(function (renewal) {
         return renewal.account;
       }, function (err) {
         if ("EENOENT" === err.code) {
@@ -189,7 +201,7 @@ module.exports.create = function (defaults, handlers) {
           if (accountId) {
             return getAccount(accountId, args, handlers);
           } else {
-            return createAccount(args);
+            return createAccount(args, handlers);
           }
         });
       }).then(function (account) {
