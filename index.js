@@ -57,7 +57,7 @@ LE.create = function (backend, defaults, handlers) {
     if (defaults.agreeTos) {
       console.warn("[WARN] Agreeing to terms by default is risky business...");
     }
-    handlers.removeChallenge = require('lib/default-handlers').agreeToTerms;
+    handlers.removeChallenge = require('./lib/default-handlers').agreeToTerms;
   }
   if ('function' === typeof backend.create) {
     backend = backend.create(defaults, handlers);
@@ -119,7 +119,8 @@ LE.create = function (backend, defaults, handlers) {
   }
 
   le = {
-    validate: function (hostnames, cb) {
+    backend: backend
+  , validate: function (hostnames, cb) {
       // TODO check dns, etc
       if ((!hostnames.length && hostnames.every(le.isValidDomain))) {
         cb(new Error("node-letsencrypt: invalid hostnames: " + hostnames.join(',')));

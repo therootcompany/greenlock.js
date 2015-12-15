@@ -2,7 +2,7 @@
 
 var path = require('path');
 
-var binpath = require('os').homedir() + '/.local/share/letsencrypt/bin/letsencrypt';
+var binpath = require('homedir') + '/.local/share/letsencrypt/bin/letsencrypt';
 
 var config = {
 

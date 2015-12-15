@@ -123,6 +123,7 @@ function createAccount(args, handlers) {
 }
 
 function getAccount(args, accountId) {
+  console.log(args.accountsDir, accountId);
   var accountDir = path.join(args.accountsDir, accountId);
   var files = {};
   var configs = ['meta.json', 'private_key.json', 'regr.json'];
@@ -174,7 +175,7 @@ function getAccountByEmail(args) {
 }
 
 module.exports.create = function (defaults, opts) {
-  var LE = require('./');
+  var LE = require('../');
   var pyconf = PromiseA.promisifyAll(require('pyconf'));
 
   if (!opts) {
@@ -191,10 +192,10 @@ module.exports.create = function (defaults, opts) {
   var wrapped = {
     registerAsync: function (args) {
       args.server = args.server || defaults.server || LE.liveServer; // https://acme-v01.api.letsencrypt.org/directory
-      var hostname = require('url').parse(args.server).hostname;
+      var acmeHostname = require('url').parse(args.server).hostname;
       var configDir = args.configDir || defaults.configDir || LE.configDir;
-      args.renewalDir = args.renewalDir || path.join(configDir, 'renewal', hostname + '.conf');
-      args.accountsDir = args.accountsDir || path.join(configDir, 'accounts', hostname, 'directory');
+      args.renewalDir = args.renewalDir || path.join(configDir, 'renewal', args.domains[0] + '.conf');
+      args.accountsDir = args.accountsDir || path.join(configDir, 'accounts', acmeHostname, 'directory');
 
       pyconf.readFileAsync(args.renewalDir).then(function (renewal) {
         return renewal.account;
@@ -203,7 +204,7 @@ module.exports.create = function (defaults, opts) {
           return getAccountByEmail(args);
         }
 
-        return err;
+        return PromiseA.reject(err);
       }).then(function (accountId) {
         // Note: the ACME urls are always fetched fresh on purpose
         return getAcmeUrls(args).then(function (urls) {
@@ -216,6 +217,7 @@ module.exports.create = function (defaults, opts) {
           }
         });
       }).then(function (account) {
+        console.log(account);
         throw new Error("IMPLEMENTATION NOT COMPLETE");
       });
 /*
