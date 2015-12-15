@@ -38,11 +38,12 @@
     "letsencrypt-forge": "file:letsencrypt-forge",
     "letsencrypt-ursa": "file:letsencrypt-ursa",
     "node-forge": "^0.6.38",
-    "ursa": "^0.9.1"
     "letiny": "0.0.4-beta",
+    "ursa": "^0.9.1"
   },
   "dependencies": {
     "bluebird": "^3.0.6",
-    "serve-static": "^1.10.0",
+    "safe-replace": "^1.0.0",
+    "serve-static": "^1.10.0"
   }
 }
