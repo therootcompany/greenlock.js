@@ -51,7 +51,7 @@ LE.create = function (backend, defaults, handlers) {
       // GET /.well-known/acme-challenge/{{challengeKey}} should return {{tokenValue}}
       throw new Error("handlers.setChallenge or defaults.webrootPath must be set");
     }
-    handlers.removeChallenge = require('./lib/default-handlers').remove-Challenge;
+    handlers.removeChallenge = require('./lib/default-handlers').removeChallenge;
   }
   if (!handlers.agreeToTerms) {
     if (defaults.agreeTos) {
