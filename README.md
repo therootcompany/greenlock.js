@@ -35,13 +35,13 @@ pushd letsencrypt
 ./letsencrypt-auto
 ```
 
-**pure node version**
+### Great News:
 
-A pure node version is now underway and will probably be complete by Wed Dec 16.
+The pure node `ursa` and `forge` branches are almost complete (and completely compatible with the official client directory and file structure)! `ursa` will be fast and work on Raspberry Pi. `forge` will be slow, but it will work on Windows.
 
-There are a few partially written javascript implementation, but they use `forge` instead of using node's native `crypto` and `ursa` - so their performance is outright horrific (especially on Raspberry Pi et al). For the moment it's faster to use the wrapped python version.
+* https://github.com/Daplie/node-letsencrypt/tree/ursa
 
-Once the `forge` crud is gutted away it should slide right in without a problem. Ping [@coolaj86](https://coolaj86.com) if you'd like to help.
+Ping [@coolaj86](https://coolaj86.com) if you'd like to help.
 
 Usage
 =====
