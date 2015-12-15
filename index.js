@@ -29,18 +29,6 @@ LE.merge = function merge(defaults, args) {
 };
 
 LE.create = function (backend, defaults, handlers) {
-  if ('function' === typeof backend.create) {
-    backend.create(defaults, handlers);
-  }
-  else if ('string' === typeof backend) {
-    // TODO I'll probably regret this
-    // I don't like dynamic requires because they cause build / minification issues.
-    backend = require(path.join('backends', backend)).create(defaults, handlers);
-  }
-  else {
-    // ignore
-    // this backend was created the v1.0.0 way
-  }
   if (!handlers) { handlers = {}; }
   if (!handlers.lifetime) { handlers.lifetime = 90 * 24 * 60 * 60 * 1000; }
   if (!handlers.renewWithin) { handlers.renewWithin = 3 * 24 * 60 * 60 * 1000; }
@@ -51,9 +39,36 @@ LE.create = function (backend, defaults, handlers) {
       cb(null, null);
     };
   }
+  if (!handlers.setChallenge) {
+    if (!defaults.webrootPath) {
+      // GET /.well-known/acme-challenge/{{challengeKey}} should return {{tokenValue}}
+      throw new Error("handlers.setChallenge or defaults.webrootPath must be set");
+    }
+    handlers.setChallenge = require('lib/default-set-challenge');
+  }
+  if (!handlers.removeChallenge) {
+    if (!defaults.webrootPath) {
+      // GET /.well-known/acme-challenge/{{challengeKey}} should return {{tokenValue}}
+      throw new Error("handlers.setChallenge or defaults.webrootPath must be set");
+    }
+    handlers.removeChallenge = require('lib/default-remove-challenge');
+  }
+  if (!handlers.agreeToTerms) {
+    if (defaults.agreeTos) {
+      console.warn("[WARN] Agreeing to terms by default is risky business...");
+    }
+    handlers.removeChallenge = require('lib/default-handlers').agreeToTerms;
+  }
+  if ('function' === typeof backend.create) {
+    backend = backend.create(defaults, handlers);
+  }
+  else {
+    // ignore
+    // this backend was created the v1.0.0 way
+  }
   backend = PromiseA.promisifyAll(backend);
-  var utils = require('./utils');
 
+  var utils = require('./utils');
   //var attempts = {};  // should exist in master process only
   var ipc = {};       // in-process cache
   var le;
