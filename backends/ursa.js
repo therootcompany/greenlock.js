@@ -3,15 +3,17 @@
 var PromiseA = require('bluebird');
 var path = require('path');
 var fs = PromiseA.promisifyAll(require('fs'));
-var cutils = PromiseA.promisifyAll(require('../lib/crypto-utils-ursa'));
-//var futils = require('letsencrypt-forge/lib/crypto-utils');
 var requestAsync = PromiseA.promisify(require('request'));
-var lef = PromiseA.promisifyAll(require('letsencrypt-forge'));
+
+var LE = require('../');
 var knownUrls = ['new-authz', 'new-cert', 'new-reg', 'revoke-cert'];
+var ucrypto = PromiseA.promisifyAll(require('../lib/crypto-utils-ursa'));
+//var fcrypto = PromiseA.promisifyAll(require('../lib/crypto-utils-forge'));
+var lef = PromiseA.promisifyAll(require('letsencrypt-forge'));
+var fetchFromConfigLiveDir = require('./common').fetchFromDisk;
 
 var ipc = {}; // in-process cache
 
-//function noop() {}
 function getAcmeUrls(args) {
   var now = Date.now();
 
@@ -63,7 +65,7 @@ function createAccount(args, handlers) {
 
   // TODO support ECDSA
   // arg.rsaBitLength args.rsaExponent
-  return cutils.generateRsaKeypairAsync(args.rsaBitLength, args.rsaExponent).then(function (pems) {
+  return ucrypto.generateRsaKeypairAsync(args.rsaBitLength, args.rsaExponent).then(function (pems) {
     /* pems = { privateKeyPem, privateKeyJwk, publicKeyPem, publicKeyMd5 } */
 
     return lef.registerNewAccountAsync({
@@ -153,7 +155,7 @@ function getAccount(accountId, args, handlers) {
       return createAccount(args, handlers);
     }
 
-    return cutils.parseAccountPrivateKeyAsync(files.private_key).then(function (keypair) {
+    return ucrypto.parseAccountPrivateKeyAsync(files.private_key).then(function (keypair) {
       files.accountId = accountId;                  // md5sum(publicKeyPem)
       files.publicKeyMd5 = accountId;               // md5sum(publicKeyPem)
       files.publicKeyPem = keypair.publicKeyPem;    // ascii PEM: ----BEGIN...
@@ -174,86 +176,186 @@ function getAccountByEmail(args) {
   return PromiseA.resolve(null);
 }
 
-module.exports.create = function (defaults, handlers) {
-  var LE = require('../');
+function getCertificateAsync(account, args, defaults, handlers) {
   var pyconf = PromiseA.promisifyAll(require('pyconf'));
 
+  return ucrypto.generateRsaKeypairAsync(args.rsaBitLength, args.rsaExponent).then(function (domain) {
+    return lef.getCertificateAsync({
+      domains: args.domains
+    , accountPrivateKeyPem: account.privateKeyPem
+    , domainPrivateKeyPem: domain.privateKeyPem
+    , setChallenge: function (domain, key, value, done) {
+        args.domains = [domain];
+        args.webrootPath = args.webrootPath || defaults.webrootPath;
+        handlers.setChallenge(args, key, value, done);
+      }
+    , removeChallenge: function (domain, key, done) {
+        args.domains = [domain];
+        args.webrootPath = args.webrootPath || defaults.webrootPath;
+        handlers.removeChallenge(args, key, done);
+      }
+    , newAuthorizationUrl: args._acmeUrls.newAuthz
+    , newCertificateUrl: args._acmeUrls.newCert
+    }).then(function (result) {
+      console.log(result);
+      throw new Error("IMPLEMENTATION NOT COMPLETE");
+    });
+  });
+}
+
+function registerWithAcme(args, defaults, handlers) {
+  var pyconf = PromiseA.promisifyAll(require('pyconf'));
+  var server = args.server || defaults.server || LE.liveServer; // https://acme-v01.api.letsencrypt.org/directory
+  var acmeHostname = require('url').parse(server).hostname;
+  var configDir = args.configDir || defaults.configDir || LE.configDir;
+
+  args.server = server;
+  args.renewalDir = args.renewalDir || path.join(configDir, 'renewal', args.domains[0] + '.conf');
+  args.accountsDir = args.accountsDir || path.join(configDir, 'accounts', acmeHostname, 'directory');
+
+  return pyconf.readFileAsync(args.renewalDir).then(function (renewal) {
+    var accountId = renewal.account;
+    renewal = renewal.account;
+
+    return accountId;
+  }, function (err) {
+    if ("EENOENT" === err.code) {
+      return getAccountByEmail(args, handlers);
+    }
+
+    return PromiseA.reject(err);
+  }).then(function (accountId) {
+    // Note: the ACME urls are always fetched fresh on purpose
+    return getAcmeUrls(args).then(function (urls) {
+      args._acmeUrls = urls;
+
+      if (accountId) {
+        return getAccount(accountId, args, handlers);
+      } else {
+        return createAccount(args, handlers);
+      }
+    });
+  }).then(function (account) {
+    /*
+    if (renewal.account !== account) {
+      // the account has become corrupt, re-register
+      return;
+    }
+    */
+
+    console.log(account);
+    return fetchFromConfigLiveDir(args, defaults).then(function (certs) {
+      // if nothing, register and save
+      // if something, check date (don't register unless 30+ days)
+      // if good, don't bother registering
+      // (but if we get to the point that we're actually calling
+      // this function, that shouldn't be the case, right?)
+      console.log(certs);
+      if (!certs) {
+        // no certs, seems like a good time to get some
+        return getCertificateAsync(account, args, defaults, handlers);
+      }
+      else if (certs.issuedAt > (27 * 24 * 60 * 60 * 1000)) {
+        // cert is at least 27 days old we can renew that
+        return getCertificateAsync(account, args, defaults, handlers);
+      }
+      else if (args.force) {
+        // YOLO! I be gettin' fresh certs 'erday! Yo!
+        return getCertificateAsync(account, args, defaults, handlers);
+      }
+      else {
+        console.warn('[WARN] Ignoring renewal attempt for certificate less than 27 days old. Use args.force to force.');
+        // We're happy with what we have
+        return certs;
+      }
+    });
+
+    /*
+    cert = /home/aj/node-letsencrypt/tests/letsencrypt.config/live/lds.io/cert.pem
+    privkey = /home/aj/node-letsencrypt/tests/letsencrypt.config/live/lds.io/privkey.pem
+    chain = /home/aj/node-letsencrypt/tests/letsencrypt.config/live/lds.io/chain.pem
+    fullchain = /home/aj/node-letsencrypt/tests/letsencrypt.config/live/lds.io/fullchain.pem
+
+    # Options and defaults used in the renewal process
+    [renewalparams]
+    apache_enmod = a2enmod
+    no_verify_ssl = False
+    ifaces = None
+    apache_dismod = a2dismod
+    register_unsafely_without_email = False
+    uir = None
+    installer = none
+    config_dir = /home/aj/node-letsencrypt/tests/letsencrypt.config
+    text_mode = True
+    func = <function obtain_cert at 0x7f46af0f02a8>
+    prepare = False
+    work_dir = /home/aj/node-letsencrypt/tests/letsencrypt.work
+    tos = True
+    init = False
+    http01_port = 80
+    duplicate = False
+    key_path = None
+    nginx = False
+    fullchain_path = /home/aj/node-letsencrypt/chain.pem
+    email = coolaj86@gmail.com
+    csr = None
+    agree_dev_preview = None
+    redirect = None
+    verbose_count = -3
+    config_file = None
+    renew_by_default = True
+    hsts = False
+    authenticator = webroot
+    domains = lds.io,
+    rsa_key_size = 2048
+    checkpoints = 1
+    manual_test_mode = False
+    apache = False
+    cert_path = /home/aj/node-letsencrypt/cert.pem
+    webroot_path = /home/aj/node-letsencrypt/examples/../tests/acme-challenge,
+    strict_permissions = False
+    apache_server_root = /etc/apache2
+    account = 1c41c64dfaf10d511db8aef0cc33b27f
+    manual_public_ip_logging_ok = False
+    chain_path = /home/aj/node-letsencrypt/chain.pem
+    standalone = False
+    manual = False
+    server = https://acme-staging.api.letsencrypt.org/directory
+    standalone_supported_challenges = "http-01,tls-sni-01"
+    webroot = True
+    apache_init_script = None
+    user_agent = None
+    apache_ctl = apache2ctl
+    apache_le_vhost_ext = -le-ssl.conf
+    debug = False
+    tls_sni_01_port = 443
+    logs_dir = /home/aj/node-letsencrypt/tests/letsencrypt.logs
+    configurator = None
+    [[webroot_map]]
+    lds.io = /home/aj/node-letsencrypt/examples/../tests/acme-challenge
+    */
+  });
+/*
+  return fs.readdirAsync(accountsDir, function (nodes) {
+    return PromiseA.all(nodes.map(function (node) {
+      var reMd5 = /[a-f0-9]{32}/i;
+      if (reMd5.test(node)) {
+      }
+    }));
+  });
+*/
+}
+
+module.exports.create = function (defaults, handlers) {
   defaults.server = defaults.server || LE.liveServer;
 
   var wrapped = {
     registerAsync: function (args) {
-      args.server = args.server || defaults.server || LE.liveServer; // https://acme-v01.api.letsencrypt.org/directory
-      var acmeHostname = require('url').parse(args.server).hostname;
-      var configDir = args.configDir || defaults.configDir || LE.configDir;
-      args.renewalDir = args.renewalDir || path.join(configDir, 'renewal', args.domains[0] + '.conf');
-      args.accountsDir = args.accountsDir || path.join(configDir, 'accounts', acmeHostname, 'directory');
-
-      return pyconf.readFileAsync(args.renewalDir).then(function (renewal) {
-        return renewal.account;
-      }, function (err) {
-        if ("EENOENT" === err.code) {
-          return getAccountByEmail(args, handlers);
-        }
-
-        return PromiseA.reject(err);
-      }).then(function (accountId) {
-        // Note: the ACME urls are always fetched fresh on purpose
-        return getAcmeUrls(args).then(function (urls) {
-          args._acmeUrls = urls;
-
-          if (accountId) {
-            return getAccount(accountId, args, handlers);
-          } else {
-            return createAccount(args, handlers);
-          }
-        });
-      }).then(function (account) {
-      /*
-        , domains: Array.isArray(args.domains) || (args.domains||'').split(',')
-        , webroot: args.webrootPath
-        , accountPrivateKeyPem: obj.privateKeyPem
-        , setChallenge: function (domain, key, value, done) {
-            args.domains = [domain];
-            handlers.setChallenge(args, key, value, done);
-          }
-        , removeChallenge: function (domain, key, done) {
-            args.domains = [domain];
-            handlers.removeChallenge(args, key, done);
-          }
-      */
-        console.log(account);
-        throw new Error("IMPLEMENTATION NOT COMPLETE");
-      });
-/*
-      return fs.readdirAsync(accountsDir, function (nodes) {
-        return PromiseA.all(nodes.map(function (node) {
-          var reMd5 = /[a-f0-9]{32}/i;
-          if (reMd5.test(node)) {
-          }
-        }));
-      });
-*/
+      //require('./common').registerWithAcme(args, defaults, handlers);
+      return registerWithAcme(args, defaults, handlers);
     }
   , fetchAsync: function (args) {
-      var hostname = args.domains[0];
-      var crtpath = defaults.configDir + defaults.fullchainTpl.replace(/:hostname/, hostname);
-      var privpath = defaults.configDir + defaults.privkeyTpl.replace(/:hostname/, hostname);
-
-      return PromiseA.all([
-        fs.readFileAsync(privpath, 'ascii')
-      , fs.readFileAsync(crtpath, 'ascii')
-        // stat the file, not the link
-      , fs.statAsync(crtpath)
-      ]).then(function (arr) {
-        return {
-          key: arr[0]  // privkey.pem
-        , cert: arr[1] // fullchain.pem
-          // TODO parse centificate for lifetime / expiresAt
-        , issuedAt: arr[2].mtime.valueOf()
-        };
-      }, function () {
-        return null;
-      });
+      return fetchFromConfigLiveDir(args, defaults);
     }
   };
 
