@@ -35,7 +35,9 @@ pushd letsencrypt
 ./letsencrypt-auto
 ```
 
-**moving towards a python-free version**
+**pure node version**
+
+A pure node version is now underway and will probably be complete by Wed Dec 16.
 
 There are a few partially written javascript implementation, but they use `forge` instead of using node's native `crypto` and `ursa` - so their performance is outright horrific (especially on Raspberry Pi et al). For the moment it's faster to use the wrapped python version.
 
