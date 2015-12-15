@@ -12,20 +12,22 @@ config.le.server = LE.stagingServer;
 // Manual Registration
 //
 var le = LE.create(require('../backends/ursa'), config.le);
-le.register({
+le.backend.registerAsync({
   agreeTos: true
-, domains: ['example.com']          // CHANGE TO YOUR DOMAIN
-, email: 'user@email.com'           // CHANGE TO YOUR EMAIL
-}, function (err) {
+, domains: ['example.com']            // CHANGE TO YOUR DOMAIN
+, email: 'user@example.com'           // CHANGE TO YOUR EMAIL
+}, function (err, body) {
   if (err) {
     console.error('[Error]: node-letsencrypt/examples/ursa');
     console.error(err.stack);
   } else {
-    console.log('success');
+    console.log('success', body);
   }
 
   plainServer.close();
   tlsServer.close();
+}).then(function () {}, function (err) {
+  console.error(err.stack);
 });
 
 //
