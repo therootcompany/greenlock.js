@@ -43,7 +43,9 @@
   },
   "dependencies": {
     "bluebird": "^3.0.6",
+    "mkdirp": "^0.5.1",
     "pyconf": "^1.0.0",
+    "request": "^2.67.0",
     "safe-replace": "^1.0.0",
     "serve-static": "^1.10.0"
   }

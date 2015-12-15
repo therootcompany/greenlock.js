@@ -44,14 +44,14 @@ LE.create = function (backend, defaults, handlers) {
       // GET /.well-known/acme-challenge/{{challengeKey}} should return {{tokenValue}}
       throw new Error("handlers.setChallenge or defaults.webrootPath must be set");
     }
-    handlers.setChallenge = require('lib/default-set-challenge');
+    handlers.setChallenge = require('./lib/default-handlers').setChallenge;
   }
   if (!handlers.removeChallenge) {
     if (!defaults.webrootPath) {
       // GET /.well-known/acme-challenge/{{challengeKey}} should return {{tokenValue}}
       throw new Error("handlers.setChallenge or defaults.webrootPath must be set");
     }
-    handlers.removeChallenge = require('lib/default-remove-challenge');
+    handlers.removeChallenge = require('./lib/default-handlers').remove-Challenge;
   }
   if (!handlers.agreeToTerms) {
     if (defaults.agreeTos) {
