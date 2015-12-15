@@ -51,42 +51,19 @@ function createAccount(args, handlers) {
 
   // TODO support ECDSA
   // arg.rsaBitLength args.rsaExponent
-  return cutils.generateRsaKeypairAsync(args.rsaBitLength, args.rsaExponent).then(function (obj) {
-    /* obj = { privateKeyPem, publicKeyPem, publicKeyMd5 } */
+  return cutils.generateRsaKeypairAsync(args.rsaBitLength, args.rsaExponent).then(function (pems) {
+    /* pems = { privateKeyPem, privateKeyJwk, publicKeyPem, publicKeyMd5 } */
 
-    var accountId = obj.publicKeyMd5; // I would have chosen sha1 or sha2... but whatever
-    var accountDir = path.join(args.accountsDir, accountId);
-    var isoDate = new Date().toISOString();
-
-    /*
-      files.accountId = accountId;                  // md5sum(publicKeyPem)
-      files.publicKeyPem = keypair.publicKeyPem;    // ascii PEM: ----BEGIN...
-      files.privateKeyPem = keypair.privateKeyPem;  // ascii PEM: ----BEGIN...
-      files.privateKeyJson = keypair.private_key;   // json { n: ..., e: ..., iq: ..., etc }
-    */
-
-    // TODO register
     return lef.registerNewAccountAsync({
       email: args.email
-    , domains: Array.isArray(args.domains) || (args.domains||'').split(',')
     , newReg: args.server
     , debug: args.debug || handlers.debug
-    , webroot: args.webrootPath
-    , setChallenge: function (domain, key, value, done) {
-        args.domains = [domain];
-        handlers.setChallenge(args, key, value, done);
-      }
-    , removeChallenge: function (domain, key, done) {
-        args.domains = [domain];
-        handlers.removeChallenge(args, key, done);
-      }
     , agreeToTerms: function (tosUrl, agree) {
-        // args.email = email;
+        // args.email = email; // already there
         args.tosUrl = tosUrl;
         handlers.agreeToTerms(args, agree);
       }
-      // TODO send either privateKeyPem or privateKeyJson or privateKeyJwk (?)
-    , privateKeyPem: obj.privateKeyPem
+    , accountPrivateKeyPem: pems.privateKeyPem
     }).then(function (body) {
       if ('string' === typeof body) {
         try {
@@ -95,34 +72,41 @@ function createAccount(args, handlers) {
           // ignore
         }
       }
+
       return mkdirpAsync(args.accountDir, function () {
-        var jwk = cutils.toAcmePrivateKey(obj.privateKeyPem);
+
+        var accountDir = path.join(args.accountsDir, pems.publicKeyMd5);
+        var isoDate = new Date().toISOString();
+        var accountMeta = {
+          creation_host: localname
+        , creation_dt: isoDate
+        };
+
         // meta.json {"creation_host": "ns1.redirect-www.org", "creation_dt": "2015-12-11T04:14:38Z"}
         // private_key.json { "e", "d", "n", "q", "p", "kty", "qi", "dp", "dq" }
-        // regr.json { "body" }
+        // regr.json:
         /*
         { body:
         { contact: [ 'mailto:coolaj86@gmail.com' ],
          agreement: 'https://letsencrypt.org/documents/LE-SA-v1.0.1-July-27-2015.pdf',
-         key:
-          { e: 'AQAB',
-            kty: 'RSA',
-            n: '...' } },
+         key: { e: 'AQAB', kty: 'RSA', n: '...' } },
           uri: 'https://acme-v01.api.letsencrypt.org/acme/reg/71272',
           new_authzr_uri: 'https://acme-v01.api.letsencrypt.org/acme/new-authz',
           terms_of_service: 'https://letsencrypt.org/documents/LE-SA-v1.0.1-July-27-2015.pdf' }
          */
         return PromiseA.all([
-          fs.writeFileAsync(path.join(accountDir, 'meta.json'), JSON.stringify({ creation_host: localname, creation_dt: isoDate }), 'utf8')
-        , fs.writeFileAsync(path.join(accountDir, 'private_key.json'), JSON.stringify(jwk), 'utf8')
+          fs.writeFileAsync(path.join(accountDir, 'meta.json'), JSON.stringify(accountMeta), 'utf8')
+        , fs.writeFileAsync(path.join(accountDir, 'private_key.json'), JSON.stringify(pems.privateKeyJwk), 'utf8')
         , fs.writeFileAsync(path.join(accountDir, 'regr.json'), JSON.stringify({ body: body }), 'utf8')
-        ]);
+        ]).then(function () {
+          return pems;
+        });
       });
     });
   });
 }
 
-function getAccount(args, accountId) {
+function getAccount(accountId, args, handlers) {
   console.log(args.accountsDir, accountId);
   var accountDir = path.join(args.accountsDir, accountId);
   var files = {};
@@ -143,7 +127,7 @@ function getAccount(args, accountId) {
 
       files[keyname] = data;
     }, function (err) {
-      files[keyname] = err;
+      files[keyname] = { error: err };
     });
   })).then(function () {
 
@@ -151,11 +135,12 @@ function getAccount(args, accountId) {
       return !files[key].error;
     })) {
       console.warn("Account '" + accountId + "' was currupt. No big deal (I think?). Creating a new one...");
-      return createAccount(args);
+      return createAccount(args, handlers);
     }
 
     return cutils.parseAccountPrivateKeyAsync(files.private_key).then(function (keypair) {
       files.accountId = accountId;                  // md5sum(publicKeyPem)
+      files.publicKeyMd5 = accountId;               // md5sum(publicKeyPem)
       files.publicKeyPem = keypair.publicKeyPem;    // ascii PEM: ----BEGIN...
       files.privateKeyPem = keypair.privateKeyPem;  // ascii PEM: ----BEGIN...
       files.privateKeyJson = keypair.private_key;   // json { n: ..., e: ..., iq: ..., etc }
@@ -174,19 +159,10 @@ function getAccountByEmail(args) {
   return PromiseA.resolve(null);
 }
 
-module.exports.create = function (defaults, opts) {
+module.exports.create = function (defaults, handlers) {
   var LE = require('../');
   var pyconf = PromiseA.promisifyAll(require('pyconf'));
 
-  if (!opts) {
-    opts = {};
-  }
-
-  /*
-  defaults.webroot = true;
-  defaults.renewByDefault = true;
-  defaults.text = true;
-  */
   defaults.server = defaults.server || LE.liveServer;
 
   var wrapped = {
@@ -201,7 +177,7 @@ module.exports.create = function (defaults, opts) {
         return renewal.account;
       }, function (err) {
         if ("EENOENT" === err.code) {
-          return getAccountByEmail(args);
+          return getAccountByEmail(args, handlers);
         }
 
         return PromiseA.reject(err);
@@ -211,12 +187,25 @@ module.exports.create = function (defaults, opts) {
           args._acmeUrls = urls;
 
           if (accountId) {
-            return getAccount(args, accountId);
+            return getAccount(accountId, args, handlers);
           } else {
             return createAccount(args);
           }
         });
       }).then(function (account) {
+      /*
+        , domains: Array.isArray(args.domains) || (args.domains||'').split(',')
+        , webroot: args.webrootPath
+        , accountPrivateKeyPem: obj.privateKeyPem
+        , setChallenge: function (domain, key, value, done) {
+            args.domains = [domain];
+            handlers.setChallenge(args, key, value, done);
+          }
+        , removeChallenge: function (domain, key, done) {
+            args.domains = [domain];
+            handlers.removeChallenge(args, key, done);
+          }
+      */
         console.log(account);
         throw new Error("IMPLEMENTATION NOT COMPLETE");
       });
