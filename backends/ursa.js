@@ -77,6 +77,9 @@ function createAccount(args, handlers) {
       }
     , accountPrivateKeyPem: pems.privateKeyPem
     }).then(function (body) {
+      if (body instanceof Buffer) {
+        body = body.toString('utf8');
+      }
       if ('string' === typeof body) {
         try {
           body = JSON.parse(body);
@@ -85,9 +88,10 @@ function createAccount(args, handlers) {
         }
       }
 
-      return mkdirpAsync(args.accountDir, function () {
+      var accountDir = path.join(args.accountsDir, pems.publicKeyMd5);
 
-        var accountDir = path.join(args.accountsDir, pems.publicKeyMd5);
+      return mkdirpAsync(accountDir).then(function () {
+
         var isoDate = new Date().toISOString();
         var accountMeta = {
           creation_host: localname
@@ -119,7 +123,6 @@ function createAccount(args, handlers) {
 }
 
 function getAccount(accountId, args, handlers) {
-  console.log(args.accountsDir, accountId);
   var accountDir = path.join(args.accountsDir, accountId);
   var files = {};
   var configs = ['meta.json', 'private_key.json', 'regr.json'];
