@@ -57,7 +57,7 @@ LE.create = function (backend, defaults, handlers) {
     if (defaults.agreeTos) {
       console.warn("[WARN] Agreeing to terms by default is risky business...");
     }
-    handlers.removeChallenge = require('./lib/default-handlers').agreeToTerms;
+    handlers.agreeToTerms = require('./lib/default-handlers').agreeToTerms;
   }
   if ('function' === typeof backend.create) {
     backend = backend.create(defaults, handlers);
