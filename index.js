@@ -39,6 +39,22 @@ LE.create = function (backend, defaults, handlers) {
       cb(null, null);
     };
   }
+  if (!handlers.getChallenge) {
+    if (!defaults.webrootPath) {
+      // GET /.well-known/acme-challenge/{{challengeKey}} should return {{tokenValue}}
+      throw new Error("handlers.getChallenge or defaults.webrootPath must be set");
+    }
+    handlers.getChallenge = function (hostname, key, done) {
+      // TODO associate by hostname?
+      // hmm... I don't think there's a direct way to associate this with
+      // the request it came from... it's kinda stateless in that way
+      // but realistically there only needs to be one handler and one
+      // "directory" for this. It's not that big of a deal.
+      var defaultos = LE.merge(defaults, {});
+      defaultos.domains = [hostname];
+      require('./lib/default-handlers').getChallenge(defaultos, key, done);
+    };
+  }
   if (!handlers.setChallenge) {
     if (!defaults.webrootPath) {
       // GET /.well-known/acme-challenge/{{challengeKey}} should return {{tokenValue}}
@@ -49,7 +65,7 @@ LE.create = function (backend, defaults, handlers) {
   if (!handlers.removeChallenge) {
     if (!defaults.webrootPath) {
       // GET /.well-known/acme-challenge/{{challengeKey}} should return {{tokenValue}}
-      throw new Error("handlers.setChallenge or defaults.webrootPath must be set");
+      throw new Error("handlers.removeChallenge or defaults.webrootPath must be set");
     }
     handlers.removeChallenge = require('./lib/default-handlers').removeChallenge;
   }
@@ -143,17 +159,25 @@ LE.create = function (backend, defaults, handlers) {
       cb(null, true);
     }
   , middleware: function () {
-      //console.log('[DEBUG] webrootPath', defaults.webrootPath);
-      var serveStatic = require('serve-static')(defaults.webrootPath, { dotfiles: 'allow' });
       var prefix = '/.well-known/acme-challenge/';
 
       return function (req, res, next) {
         if (0 !== req.url.indexOf(prefix)) {
+          console.log('[LE middleware]: pass');
           next();
           return;
         }
 
-        serveStatic(req, res, next);
+        //args.domains = [req.hostname];
+        console.log('[LE middleware]:', req.hostname, req.url, req.url.slice(prefix.length));
+        handlers.getChallenge(req.hostname, req.url.slice(prefix.length), function (err, token) {
+          if (err) {
+            res.send("Error: These aren't the tokens you're looking for. Move along.");
+            return;
+          }
+
+          res.send(token);
+        });
       };
     }
   , SNICallback: sniCallback

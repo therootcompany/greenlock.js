@@ -184,6 +184,11 @@ function getCertificateAsync(account, args, defaults, handlers) {
       domains: args.domains
     , accountPrivateKeyPem: account.privateKeyPem
     , domainPrivateKeyPem: domain.privateKeyPem
+    , getChallenge: function (domain, key, done) {
+        args.domains = [domain];
+        args.webrootPath = args.webrootPath || defaults.webrootPath;
+        handlers.getChallenge(args, key, done);
+      }
     , setChallenge: function (domain, key, value, done) {
         args.domains = [domain];
         args.webrootPath = args.webrootPath || defaults.webrootPath;
