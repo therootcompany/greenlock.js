@@ -43,6 +43,7 @@
   },
   "dependencies": {
     "bluebird": "^3.0.6",
+    "pyconf": "^1.0.0",
     "safe-replace": "^1.0.0",
     "serve-static": "^1.10.0"
   }
