@@ -6,7 +6,7 @@ var PromiseA = require('bluebird');
 var crypto = require('crypto');
 var tls = require('tls');
 var path = require('path');
-var leCore = require('./backends/letiny-core');
+var leCore = require('./lib/letiny-core');
 
 var LE = module.exports;
 LE.productionServerUrl = leCore.productionServerUrl;
