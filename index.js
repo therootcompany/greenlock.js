@@ -86,7 +86,7 @@ LE.create = function (defaults, handlers, backend) {
     };
   }
   if (!handlers.getChallenge) {
-    if (!defaults.webrootPath) {
+    if (!defaults.manual && !defaults.webrootPath) {
       // GET /.well-known/acme-challenge/{{challengeKey}} should return {{tokenValue}}
       throw new Error("handlers.getChallenge or defaults.webrootPath must be set");
     }
@@ -209,13 +209,13 @@ LE.create = function (defaults, handlers, backend) {
 
       return function (req, res, next) {
         if (0 !== req.url.indexOf(prefix)) {
-          console.log('[LE middleware]: pass');
+          //console.log('[LE middleware]: pass');
           next();
           return;
         }
 
         //args.domains = [req.hostname];
-        console.log('[LE middleware]:', req.hostname, req.url, req.url.slice(prefix.length));
+        //console.log('[LE middleware]:', req.hostname, req.url, req.url.slice(prefix.length));
         handlers.getChallenge(req.hostname, req.url.slice(prefix.length), function (err, token) {
           if (err) {
             res.send("Error: These aren't the tokens you're looking for. Move along.");
@@ -245,9 +245,9 @@ LE.create = function (defaults, handlers, backend) {
           return;
         }
 
-        console.log("[NLE]: begin registration");
+        //console.log("[NLE]: begin registration");
         return backend.registerAsync(copy).then(function () {
-          console.log("[NLE]: end registration");
+          //console.log("[NLE]: end registration");
           // calls fetch because fetch calls cacheCertInfo
           return le.fetch(args, cb);
         }, cb);
@@ -317,6 +317,10 @@ LE.create = function (defaults, handlers, backend) {
       le._fetchHelper(args, cb);
     }
   , register: function (args, cb) {
+      if (!Array.isArray(args.domains)) {
+        cb(new Error('args.domains should be an array of domains'));
+        return;
+      }
       // this may be run in a cluster environment
       // in that case it should NOT check the cache
       // but ensure that it has the most fresh copy
