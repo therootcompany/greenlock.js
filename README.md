@@ -24,38 +24,23 @@ Install
 npm install --save letsencrypt
 ```
 
-Right now this uses [`letsencrypt-python`](https://github.com/Daplie/node-letsencrypt-python),
-but it's built to be able to use a node-only javascript version (in progress).
-
-```bash
-# install the python client (takes 2 minutes normally, 20 on a raspberry pi)
-git clone https://github.com/letsencrypt/letsencrypt
-pushd letsencrypt
-
-./letsencrypt-auto
-```
-
-**moving towards a python-free version**
-
-There are a few partially written javascript implementation, but they use `forge` instead of using node's native `crypto` and `ursa` - so their performance is outright horrific (especially on Raspberry Pi et al). For the moment it's faster to use the wrapped python version.
-
-Once the `forge` crud is gutted away it should slide right in without a problem. Ping [@coolaj86](https://coolaj86.com) if you'd like to help.
-
 Usage
 =====
 
-Here's a simple snippet:
+See [letsencrypt-cli](https://github.com/Daplie/node-letsencrypt-cli)
+and [letsencrypt-express](https://github.com/Daplie/letsencrypt-express)
 
 ```javascript
 var config = require('./examples/config-minimal');
 
 config.le.webrootPath = __dirname + '/tests/acme-challenge';
 
-var le = require('letsencrypt').create(config.backend, config.le);
+var le = require('letsencrypt').create(config.le);
 le.register({
   agreeTos: true
 , domains: ['example.com']          // CHANGE TO YOUR DOMAIN
 , email: 'user@email.com'           // CHANGE TO YOUR EMAIL
+, standalone: true
 }, function (err) {
   if (err) {
     console.error('[Error]: node-letsencrypt/examples/standalone');
@@ -407,20 +392,6 @@ Checks in-memory cache of certificates for `args.domains` and calls then calls `
 
 Not yet implemented
 
-Backends
---------
-
-* [`letsencrypt-python`](https://github.com/Daplie/node-letsencrypt-python) (complete)
-* [`letiny`](https://github.com/Daplie/node-letiny) (in progress)
-
-#### How to write a backend
-
-A backend must implement (or be wrapped to implement) this API:
-
-* `fetch(hostname, cb)` will cb(err, certs) with certs from disk (or null or error)
-* `register(args, challengeCb, done)` will register and or renew a cert
-  * args = `{ domains, email, agreeTos }` MUST check that agreeTos === true
-  * challengeCb = `function (challenge, cb) { }` handle challenge as needed, call cb()
 
 This is what `args` looks like:
 
@@ -441,61 +412,12 @@ This is what the implementation should look like:
 (it's expected that the client will follow the same conventions as
 the python client, but it's not necessary)
 
-```javascript
-return {
-  fetch: function (args, cb) {
-    // NOTE: should return an error if args.domains cannot be satisfied with a single cert
-    // (usually example.com and www.example.com will be handled on the same cert, for example)
-    if (errorHappens) {
-      // return an error if there is an actual error (db, etc)
-      cb(err);
-      return;
-    }
-    // return null if there is no error, nor a certificate
-    else if (!cert) {
-      cb(null, null);
-      return;
-    }
-
-    // NOTE: if the certificate is available but expired it should be
-    // returned and the calling application will decide to renew when
-    // it is convenient
-
-    // NOTE: the application should handle caching, not the library
-
-    // return the cert with metadata
-    cb(null, {
-      cert: "/*contcatonated certs in pem format: cert + intermediate*/"
-    , key: "/*private keypair in pem format*/"
-    , renewedAt: new Date()       // fs.stat cert.pem should also work
-    , duration: 90 * 24 * 60 * 60 * 1000  // assumes 90-days unless specified
-    });
-  }
-, register: function (args, challengeCallback, completeCallback) {
-    // **MUST** reject if args.agreeTos is not true
-
-    // once you're ready for the caller to know the challenge
-    if (challengeCallback) {
-      challengeCallback(challenge, function () {
-        continueRegistration();
-      })
-    } else {
-      continueRegistration();
-    }
-
-    function continueRegistration() {
-      // it is not necessary to to return the certificates here
-      // the client will call fetch() when it needs them
-      completeCallback(err);
-    }
-  }
-};
-```
-
 Change History
 ==============
 
-v1.0.0 Thar be dragons
+* v1.1.0 Added letiny-core, removed node-letsencrypt-python
+* v1.0.2 Works with node-letsencrypt-python
+* v1.0.0 Thar be dragons
 
 LICENSE
 =======
