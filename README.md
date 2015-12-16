@@ -49,6 +49,8 @@ TODO
 
 See more at [letsencrypt-express](https://github.com/Daplie/letsencrypt-express)
 
+### letsencrypt (the library)
+
 ```javascript
 var config = require('./examples/config-minimal');
 
