@@ -22,13 +22,32 @@ Install
 
 ```bash
 npm install --save letsencrypt
+npm install --global letsencrypt-cli
 ```
 
 Usage
 =====
 
-See [letsencrypt-cli](https://github.com/Daplie/node-letsencrypt-cli)
-and [letsencrypt-express](https://github.com/Daplie/letsencrypt-express)
+### letsencrypt-cli
+
+See more at [letsencrypt-cli](https://github.com/Daplie/node-letsencrypt-cli)
+
+```bash
+letsencrypt certonly \
+  --agree-tos --email user@example.com \
+  --standalone \
+  --domains example.com,www.example.com \
+  --config-dir ~/letsencrypt/etc \
+  --server https://acme-staging.api.letsencrypt.org/directory \
+
+ls ~/letsencrypt/etc/live
+```
+
+### letsencrypt-express
+
+TODO
+
+See more at [letsencrypt-express](https://github.com/Daplie/letsencrypt-express)
 
 ```javascript
 var config = require('./examples/config-minimal');
