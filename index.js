@@ -5,13 +5,14 @@
 var PromiseA = require('bluebird');
 var crypto = require('crypto');
 var tls = require('tls');
-var path = require('path');
 var leCore = require('./lib/letiny-core');
 
 var LE = module.exports;
 LE.productionServerUrl = leCore.productionServerUrl;
 LE.stagingServer = leCore.stagingServerUrl;
 LE.configDir = leCore.configDir;
+LE.logsDir = leCore.logsDir;
+LE.workDir = leCore.workDir;
 LE.acmeChallengPrefix = leCore.acmeChallengPrefix;
 LE.knownEndpoints = leCore.knownEndpoints;
 
@@ -204,7 +205,7 @@ LE.create = function (defaults, handlers, backend) {
       cb(null, true);
     }
   , middleware: function () {
-      var prefix = '/.well-known/acme-challenge/';
+      var prefix = leCore.acmeChallengePrefix;
 
       return function (req, res, next) {
         if (0 !== req.url.indexOf(prefix)) {
