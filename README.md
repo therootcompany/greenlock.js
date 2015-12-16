@@ -24,40 +24,23 @@ Install
 npm install --save letsencrypt
 ```
 
-Right now this uses [`letsencrypt-python`](https://github.com/Daplie/node-letsencrypt-python),
-but it's built to be able to use a node-only javascript version (in progress).
-
-```bash
-# install the python client (takes 2 minutes normally, 20 on a raspberry pi)
-git clone https://github.com/letsencrypt/letsencrypt
-pushd letsencrypt
-
-./letsencrypt-auto
-```
-
-### Great News:
-
-The pure node `ursa` and `forge` branches are almost complete (and completely compatible with the official client directory and file structure)! `ursa` will be fast and work on Raspberry Pi. `forge` will be slow, but it will work on Windows.
-
-* https://github.com/Daplie/node-letsencrypt/tree/ursa
-
-Ping [@coolaj86](https://coolaj86.com) if you'd like to help.
-
 Usage
 =====
 
-Here's a simple snippet:
+See [letsencrypt-cli](https://github.com/Daplie/node-letsencrypt-cli)
+and [letsencrypt-express](https://github.com/Daplie/letsencrypt-express)
 
 ```javascript
 var config = require('./examples/config-minimal');
 
 config.le.webrootPath = __dirname + '/tests/acme-challenge';
 
-var le = require('letsencrypt').create(config.backend, config.le);
+var le = require('letsencrypt').create(config.le);
 le.register({
   agreeTos: true
 , domains: ['example.com']          // CHANGE TO YOUR DOMAIN
 , email: 'user@email.com'           // CHANGE TO YOUR EMAIL
+, standalone: true
 }, function (err) {
   if (err) {
     console.error('[Error]: node-letsencrypt/examples/standalone');
@@ -265,52 +248,27 @@ and then make sure to set all of of the following to a directory that your user 
 
 * `webrootPath`
 * `configDir`
-* `workDir` (python backend only)
-* `logsDir` (python backend only)
 
 
 API
 ===
 
 ```javascript
-LetsEncrypt.create(backend, bkDefaults, handlers)          // wraps a given "backend" (the python client)
-LetsEncrypt.stagingServer                                  // string of staging server for testing
+LetsEncrypt.init(leConfig, handlers)                      // wraps a given
+LetsEncrypt.create(backend, leConfig, handlers)           // wraps a given "backend" (the python or node client)
+LetsEncrypt.stagingServer                                 // string of staging server for testing
 
-le.middleware()                                            // middleware for serving webrootPath to /.well-known/acme-challenge
-le.sniCallback(hostname, function (err, tlsContext) {})    // uses fetch (below) and formats for https.SNICallback
-le.register({ domains, email, agreeTos, ... }, cb)         // registers or renews certs for a domain
-le.fetch({domains, email, agreeTos, ... }, cb)             // fetches certs from in-memory cache, occasionally refreshes from disk
-le.validate(domains, cb)                                   // do some sanity checks before attempting to register
-le.registrationFailureCallback(err, args, certInfo, cb)    // called when registration fails (not implemented yet)
+le.middleware()                                           // middleware for serving webrootPath to /.well-known/acme-challenge
+le.sniCallback(hostname, function (err, tlsContext) {})   // uses fetch (below) and formats for https.SNICallback
+le.register({ domains, email, agreeTos, ... }, cb)        // registers or renews certs for a domain
+le.fetch({domains, email, agreeTos, ... }, cb)            // fetches certs from in-memory cache, occasionally refreshes from disk
+le.validate(domains, cb)                                  // do some sanity checks before attempting to register
+le.registrationFailureCallback(err, args, certInfo, cb)   // called when registration fails (not implemented yet)
 ```
 
-### `LetsEncrypt.create(backend, bkDefaults, handlers)`
+### `LetsEncrypt.create(backend, leConfig, handlers)`
 
-#### backend
-
-Currently only `letsencrypt-python` is supported, but we plan to work on
-native javascript support in February or so (when ECDSA keys are available).
-
-If you'd like to help with that, see **how to write a backend** below and also
-look at the wrapper `backend-python.js`.
-
-**Example**:
-```javascript
-{ fetch: function (args, cb) {
-    // cb(err) when there is an actual error (db, fs, etc)
-    // cb(null, null) when the certificate was NOT available on disk
-    // cb(null, { cert: '<fullchain.pem>', key: '<privkey.pem>', renewedAt: 0, duration: 0 }) cert + meta
-  }
-, register: function (args, setChallenge, cb) {
-    // setChallenge(hostnames, key, value, cb) when a challenge needs to be set
-    // cb(err) when there is an error
-    // cb(null, null) when the registration is successful, but fetch still needs to be called
-    // cb(null, cert /*see above*/) if registration can easily return the same as fetch
-  }
-}
-```
-
-#### bkDefaults
+#### leConfig
 
 The arguments passed here (typically `webpathRoot`, `configDir`, etc) will be merged with
 any `args` (typically `domains`, `email`, and `agreeTos`) and passed to the backend whenever
@@ -328,7 +286,7 @@ Typically the backend wrapper will already merge any necessary backend-specific 
 ```
 
 Note: `webrootPath` can be set as a default, semi-locally with `webrootPathTpl`, or per
-registration as `webrootPath` (which overwrites `defaults.webrootPath`).
+registration as `webrootPath` (which overwrites `leConfig.webrootPath`).
 
 #### handlers *optional*
 
@@ -434,20 +392,6 @@ Checks in-memory cache of certificates for `args.domains` and calls then calls `
 
 Not yet implemented
 
-Backends
---------
-
-* [`letsencrypt-python`](https://github.com/Daplie/node-letsencrypt-python) (complete)
-* [`letiny`](https://github.com/Daplie/node-letiny) (in progress)
-
-#### How to write a backend
-
-A backend must implement (or be wrapped to implement) this API:
-
-* `fetch(hostname, cb)` will cb(err, certs) with certs from disk (or null or error)
-* `register(args, challengeCb, done)` will register and or renew a cert
-  * args = `{ domains, email, agreeTos }` MUST check that agreeTos === true
-  * challengeCb = `function (challenge, cb) { }` handle challenge as needed, call cb()
 
 This is what `args` looks like:
 
@@ -468,61 +412,12 @@ This is what the implementation should look like:
 (it's expected that the client will follow the same conventions as
 the python client, but it's not necessary)
 
-```javascript
-return {
-  fetch: function (args, cb) {
-    // NOTE: should return an error if args.domains cannot be satisfied with a single cert
-    // (usually example.com and www.example.com will be handled on the same cert, for example)
-    if (errorHappens) {
-      // return an error if there is an actual error (db, etc)
-      cb(err);
-      return;
-    }
-    // return null if there is no error, nor a certificate
-    else if (!cert) {
-      cb(null, null);
-      return;
-    }
-
-    // NOTE: if the certificate is available but expired it should be
-    // returned and the calling application will decide to renew when
-    // it is convenient
-
-    // NOTE: the application should handle caching, not the library
-
-    // return the cert with metadata
-    cb(null, {
-      cert: "/*contcatonated certs in pem format: cert + intermediate*/"
-    , key: "/*private keypair in pem format*/"
-    , renewedAt: new Date()       // fs.stat cert.pem should also work
-    , duration: 90 * 24 * 60 * 60 * 1000  // assumes 90-days unless specified
-    });
-  }
-, register: function (args, challengeCallback, completeCallback) {
-    // **MUST** reject if args.agreeTos is not true
-
-    // once you're ready for the caller to know the challenge
-    if (challengeCallback) {
-      challengeCallback(challenge, function () {
-        continueRegistration();
-      })
-    } else {
-      continueRegistration();
-    }
-
-    function continueRegistration() {
-      // it is not necessary to to return the certificates here
-      // the client will call fetch() when it needs them
-      completeCallback(err);
-    }
-  }
-};
-```
-
 Change History
 ==============
 
-v1.0.0 Thar be dragons
+* v1.1.0 Added letiny-core, removed node-letsencrypt-python
+* v1.0.2 Works with node-letsencrypt-python
+* v1.0.0 Thar be dragons
 
 LICENSE
 =======

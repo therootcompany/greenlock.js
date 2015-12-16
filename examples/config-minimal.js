@@ -2,8 +2,6 @@
 
 var path = require('path');
 
-var binpath = require('os').homedir() + '/.local/share/letsencrypt/bin/letsencrypt';
-
 var config = {
 
   plainPort: 80
@@ -21,12 +19,8 @@ var config = {
     // these are specific to the python client and won't be needed with the purejs library
   , logsDir: path.join(__dirname, '..', 'tests', 'letsencrypt.logs')
   , workDir: path.join(__dirname, '..', 'tests', 'letsencrypt.work')
-  , pythonClientPath: binpath
   }
 
 };
-
-//config.backend = require('letsencrypt/backends/python').create(binpath, config.le);
-config.backend = require('../backends/python');
 
 module.exports = config;

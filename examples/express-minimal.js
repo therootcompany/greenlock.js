@@ -7,7 +7,7 @@ var config = require('./config-minimal');
 config.le.webrootPath = __dirname + '/../tests/acme-challenge';
 config.le.server = LE.stagingServer;
 
-var le = LE.create(config.backend, config.le, {
+var le = LE.create(config.le, {
   sniRegisterCallback: function (args, expiredCert, cb) {
     // In theory you should never get an expired certificate because
     // the certificates automatically renew in the background starting

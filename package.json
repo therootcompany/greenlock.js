@@ -34,16 +34,17 @@
     "localhost.daplie.com-certificates": "^1.1.2"
   },
   "optionalDependencies": {
-    "letsencrypt-python": "^1.0.3",
-    "letsencrypt-forge": "file:letsencrypt-forge",
-    "letsencrypt-ursa": "file:letsencrypt-ursa",
-    "node-forge": "^0.6.38",
-    "letiny": "0.0.4-beta",
     "ursa": "^0.9.1"
   },
   "dependencies": {
     "bluebird": "^3.0.6",
-    "safe-replace": "^1.0.0",
+    "homedir": "^0.6.0",
+    "letiny-core": "^1.0.1",
+    "mkdirp": "^0.5.1",
+    "node-forge": "^0.6.38",
+    "pyconf": "^1.0.0",
+    "request": "^2.67.0",
+    "safe-replace": "^1.0.2",
     "serve-static": "^1.10.0"
   }
 }

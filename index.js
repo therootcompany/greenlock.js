@@ -5,15 +5,20 @@
 var PromiseA = require('bluebird');
 var crypto = require('crypto');
 var tls = require('tls');
-var path = require('path');
+var leCore = require('./lib/letiny-core');
 
 var LE = module.exports;
+LE.productionServerUrl = leCore.productionServerUrl;
+LE.stagingServer = leCore.stagingServerUrl;
+LE.configDir = leCore.configDir;
+LE.logsDir = leCore.logsDir;
+LE.workDir = leCore.workDir;
+LE.acmeChallengPrefix = leCore.acmeChallengPrefix;
+LE.knownEndpoints = leCore.knownEndpoints;
 
-LE.liveServer = "https://acme-v01.api.letsencrypt.org/directory";
-LE.stagingServer = "https://acme-staging.api.letsencrypt.org/directory";
-LE.configDir = "/etc/letsencrypt/";
-LE.logsDir = "/var/log/letsencrypt/";
-LE.workDir = "/var/lib/letsencrypt/";
+// backwards compat
+LE.liveServer = leCore.productionServerUrl;
+LE.knownUrls = leCore.knownEndpoints;
 
 LE.merge = function merge(defaults, args) {
   var copy = {};
@@ -28,19 +33,48 @@ LE.merge = function merge(defaults, args) {
   return copy;
 };
 
-LE.create = function (backend, defaults, handlers) {
-  if ('function' === typeof backend.create) {
-    backend.create(defaults, handlers);
+LE.cacheCertInfo = function (args, certInfo, ipc, handlers) {
+  // TODO IPC via process and worker to guarantee no races
+  // rather than just "really good odds"
+
+  var hostname = args.domains[0];
+  var now = Date.now();
+
+  // Stagger randomly by plus 0% to 25% to prevent all caches expiring at once
+  var rnd1 = (crypto.randomBytes(1)[0] / 255);
+  var memorizeFor = Math.floor(handlers.memorizeFor + ((handlers.memorizeFor / 4) * rnd1));
+  // Stagger randomly to renew between n and 2n days before renewal is due
+  // this *greatly* reduces the risk of multiple cluster processes renewing the same domain at once
+  var rnd2 = (crypto.randomBytes(1)[0] / 255);
+  var bestIfUsedBy = certInfo.expiresAt - (handlers.renewWithin + Math.floor(handlers.renewWithin * rnd2));
+  // Stagger randomly by plus 0 to 5 min to reduce risk of multiple cluster processes
+  // renewing at once on boot when the certs have expired
+  var rnd3 = (crypto.randomBytes(1)[0] / 255);
+  var renewTimeout = Math.floor((5 * 60 * 1000) * rnd3);
+
+  certInfo.context = tls.createSecureContext({
+    key: certInfo.key
+  , cert: certInfo.cert
+  //, ciphers // node's defaults are great
+  });
+  certInfo.loadedAt = now;
+  certInfo.memorizeFor = memorizeFor;
+  certInfo.bestIfUsedBy = bestIfUsedBy;
+  certInfo.renewTimeout = renewTimeout;
+
+  ipc[hostname] = certInfo;
+  return ipc[hostname];
+};
+
+                    // backend, defaults, handlers
+LE.create = function (defaults, handlers, backend) {
+  var d, b, h;
+  // backwards compat for <= v1.0.2
+  if (defaults.registerAsync || defaults.create) {
+    b = defaults; d = handlers; h = backend;
+    defaults = d; handlers = h; backend = b;
   }
-  else if ('string' === typeof backend) {
-    // TODO I'll probably regret this
-    // I don't like dynamic requires because they cause build / minification issues.
-    backend = require(path.join('backends', backend)).create(defaults, handlers);
-  }
-  else {
-    // ignore
-    // this backend was created the v1.0.0 way
-  }
+  if (!backend) { backend = require('./lib/letiny-core'); }
   if (!handlers) { handlers = {}; }
   if (!handlers.lifetime) { handlers.lifetime = 90 * 24 * 60 * 60 * 1000; }
   if (!handlers.renewWithin) { handlers.renewWithin = 3 * 24 * 60 * 60 * 1000; }
@@ -51,9 +85,52 @@ LE.create = function (backend, defaults, handlers) {
       cb(null, null);
     };
   }
+  if (!handlers.getChallenge) {
+    if (!defaults.manual && !defaults.webrootPath) {
+      // GET /.well-known/acme-challenge/{{challengeKey}} should return {{tokenValue}}
+      throw new Error("handlers.getChallenge or defaults.webrootPath must be set");
+    }
+    handlers.getChallenge = function (hostname, key, done) {
+      // TODO associate by hostname?
+      // hmm... I don't think there's a direct way to associate this with
+      // the request it came from... it's kinda stateless in that way
+      // but realistically there only needs to be one handler and one
+      // "directory" for this. It's not that big of a deal.
+      var defaultos = LE.merge(defaults, {});
+      defaultos.domains = [hostname];
+      require('./lib/default-handlers').getChallenge(defaultos, key, done);
+    };
+  }
+  if (!handlers.setChallenge) {
+    if (!defaults.webrootPath) {
+      // GET /.well-known/acme-challenge/{{challengeKey}} should return {{tokenValue}}
+      throw new Error("handlers.setChallenge or defaults.webrootPath must be set");
+    }
+    handlers.setChallenge = require('./lib/default-handlers').setChallenge;
+  }
+  if (!handlers.removeChallenge) {
+    if (!defaults.webrootPath) {
+      // GET /.well-known/acme-challenge/{{challengeKey}} should return {{tokenValue}}
+      throw new Error("handlers.removeChallenge or defaults.webrootPath must be set");
+    }
+    handlers.removeChallenge = require('./lib/default-handlers').removeChallenge;
+  }
+  if (!handlers.agreeToTerms) {
+    if (defaults.agreeTos) {
+      console.warn("[WARN] Agreeing to terms by default is risky business...");
+    }
+    handlers.agreeToTerms = require('./lib/default-handlers').agreeToTerms;
+  }
+  if ('function' === typeof backend.create) {
+    backend = backend.create(defaults, handlers);
+  }
+  else {
+    // ignore
+    // this backend was created the v1.0.0 way
+  }
   backend = PromiseA.promisifyAll(backend);
-  var utils = require('./utils');
 
+  var utils = require('./utils');
   //var attempts = {};  // should exist in master process only
   var ipc = {};       // in-process cache
   var le;
@@ -104,7 +181,8 @@ LE.create = function (backend, defaults, handlers) {
   }
 
   le = {
-    validate: function (hostnames, cb) {
+    backend: backend
+  , validate: function (hostnames, cb) {
       // TODO check dns, etc
       if ((!hostnames.length && hostnames.every(le.isValidDomain))) {
         cb(new Error("node-letsencrypt: invalid hostnames: " + hostnames.join(',')));
@@ -127,17 +205,25 @@ LE.create = function (backend, defaults, handlers) {
       cb(null, true);
     }
   , middleware: function () {
-      //console.log('[DEBUG] webrootPath', defaults.webrootPath);
-      var serveStatic = require('serve-static')(defaults.webrootPath, { dotfiles: 'allow' });
-      var prefix = '/.well-known/acme-challenge/';
+      var prefix = leCore.acmeChallengePrefix;
 
       return function (req, res, next) {
         if (0 !== req.url.indexOf(prefix)) {
+          //console.log('[LE middleware]: pass');
           next();
           return;
         }
 
-        serveStatic(req, res, next);
+        //args.domains = [req.hostname];
+        //console.log('[LE middleware]:', req.hostname, req.url, req.url.slice(prefix.length));
+        handlers.getChallenge(req.hostname, req.url.slice(prefix.length), function (err, token) {
+          if (err) {
+            res.send("Error: These aren't the tokens you're looking for. Move along.");
+            return;
+          }
+
+          res.send(token);
+        });
       };
     }
   , SNICallback: sniCallback
@@ -159,9 +245,9 @@ LE.create = function (backend, defaults, handlers) {
           return;
         }
 
-        console.log("[NLE]: begin registration");
+        //console.log("[NLE]: begin registration");
         return backend.registerAsync(copy).then(function () {
-          console.log("[NLE]: end registration");
+          //console.log("[NLE]: end registration");
           // calls fetch because fetch calls cacheCertInfo
           return le.fetch(args, cb);
         }, cb);
@@ -231,6 +317,10 @@ LE.create = function (backend, defaults, handlers) {
       le._fetchHelper(args, cb);
     }
   , register: function (args, cb) {
+      if (!Array.isArray(args.domains)) {
+        cb(new Error('args.domains should be an array of domains'));
+        return;
+      }
       // this may be run in a cluster environment
       // in that case it should NOT check the cache
       // but ensure that it has the most fresh copy
@@ -283,37 +373,4 @@ LE.create = function (backend, defaults, handlers) {
   };
 
   return le;
-};
-
-LE.cacheCertInfo = function (args, certInfo, ipc, handlers) {
-  // TODO IPC via process and worker to guarantee no races
-  // rather than just "really good odds"
-
-  var hostname = args.domains[0];
-  var now = Date.now();
-
-  // Stagger randomly by plus 0% to 25% to prevent all caches expiring at once
-  var rnd1 = (crypto.randomBytes(1)[0] / 255);
-  var memorizeFor = Math.floor(handlers.memorizeFor + ((handlers.memorizeFor / 4) * rnd1));
-  // Stagger randomly to renew between n and 2n days before renewal is due
-  // this *greatly* reduces the risk of multiple cluster processes renewing the same domain at once
-  var rnd2 = (crypto.randomBytes(1)[0] / 255);
-  var bestIfUsedBy = certInfo.expiresAt - (handlers.renewWithin + Math.floor(handlers.renewWithin * rnd2));
-  // Stagger randomly by plus 0 to 5 min to reduce risk of multiple cluster processes
-  // renewing at once on boot when the certs have expired
-  var rnd3 = (crypto.randomBytes(1)[0] / 255);
-  var renewTimeout = Math.floor((5 * 60 * 1000) * rnd3);
-
-  certInfo.context = tls.createSecureContext({
-    key: certInfo.key
-  , cert: certInfo.cert
-  //, ciphers // node's defaults are great
-  });
-  certInfo.loadedAt = now;
-  certInfo.memorizeFor = memorizeFor;
-  certInfo.bestIfUsedBy = bestIfUsedBy;
-  certInfo.renewTimeout = renewTimeout;
-
-  ipc[hostname] = certInfo;
-  return ipc[hostname];
 };
