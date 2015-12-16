@@ -24,14 +24,7 @@ var bkDefaults = {
 , privkeyTpl: '/live/:hostname/privkey.pem'
 , configDir: path.join(__dirname, '..', 'tests', 'letsencrypt.config')
 , server: LE.stagingServer
-
-// python-specific
-, logsDir: path.join(__dirname, '..', 'tests', 'letsencrypt.logs')
-, workDir: path.join(__dirname, '..', 'tests', 'letsencrypt.work')
-, pythonClientPath: require('os').homedir() + '/.local/share/letsencrypt/bin/letsencrypt'
 };
-
-var LEP = require('../backends/python');
 
 var le = LE.create(LEP, bkDefaults, {
   sniRegisterCallback: function (args, certInfo, cb) {

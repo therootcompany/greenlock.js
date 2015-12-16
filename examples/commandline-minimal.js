@@ -11,7 +11,7 @@ config.le.server = LE.stagingServer;
 //
 // Manual Registration
 //
-var le = LE.create(config.backend, config.le);
+var le = LE.create(config.le);
 le.register({
   agreeTos: true
 , domains: ['example.com']      // CHANGE TO YOUR DOMAIN

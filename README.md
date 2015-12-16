@@ -263,52 +263,27 @@ and then make sure to set all of of the following to a directory that your user 
 
 * `webrootPath`
 * `configDir`
-* `workDir` (python backend only)
-* `logsDir` (python backend only)
 
 
 API
 ===
 
 ```javascript
-LetsEncrypt.create(backend, bkDefaults, handlers)          // wraps a given "backend" (the python client)
-LetsEncrypt.stagingServer                                  // string of staging server for testing
+LetsEncrypt.init(leConfig, handlers)                      // wraps a given
+LetsEncrypt.create(backend, leConfig, handlers)           // wraps a given "backend" (the python or node client)
+LetsEncrypt.stagingServer                                 // string of staging server for testing
 
-le.middleware()                                            // middleware for serving webrootPath to /.well-known/acme-challenge
-le.sniCallback(hostname, function (err, tlsContext) {})    // uses fetch (below) and formats for https.SNICallback
-le.register({ domains, email, agreeTos, ... }, cb)         // registers or renews certs for a domain
-le.fetch({domains, email, agreeTos, ... }, cb)             // fetches certs from in-memory cache, occasionally refreshes from disk
-le.validate(domains, cb)                                   // do some sanity checks before attempting to register
-le.registrationFailureCallback(err, args, certInfo, cb)    // called when registration fails (not implemented yet)
+le.middleware()                                           // middleware for serving webrootPath to /.well-known/acme-challenge
+le.sniCallback(hostname, function (err, tlsContext) {})   // uses fetch (below) and formats for https.SNICallback
+le.register({ domains, email, agreeTos, ... }, cb)        // registers or renews certs for a domain
+le.fetch({domains, email, agreeTos, ... }, cb)            // fetches certs from in-memory cache, occasionally refreshes from disk
+le.validate(domains, cb)                                  // do some sanity checks before attempting to register
+le.registrationFailureCallback(err, args, certInfo, cb)   // called when registration fails (not implemented yet)
 ```
 
-### `LetsEncrypt.create(backend, bkDefaults, handlers)`
+### `LetsEncrypt.create(backend, leConfig, handlers)`
 
-#### backend
-
-Currently only `letsencrypt-python` is supported, but we plan to work on
-native javascript support in February or so (when ECDSA keys are available).
-
-If you'd like to help with that, see **how to write a backend** below and also
-look at the wrapper `backend-python.js`.
-
-**Example**:
-```javascript
-{ fetch: function (args, cb) {
-    // cb(err) when there is an actual error (db, fs, etc)
-    // cb(null, null) when the certificate was NOT available on disk
-    // cb(null, { cert: '<fullchain.pem>', key: '<privkey.pem>', renewedAt: 0, duration: 0 }) cert + meta
-  }
-, register: function (args, setChallenge, cb) {
-    // setChallenge(hostnames, key, value, cb) when a challenge needs to be set
-    // cb(err) when there is an error
-    // cb(null, null) when the registration is successful, but fetch still needs to be called
-    // cb(null, cert /*see above*/) if registration can easily return the same as fetch
-  }
-}
-```
-
-#### bkDefaults
+#### leConfig
 
 The arguments passed here (typically `webpathRoot`, `configDir`, etc) will be merged with
 any `args` (typically `domains`, `email`, and `agreeTos`) and passed to the backend whenever
@@ -326,7 +301,7 @@ Typically the backend wrapper will already merge any necessary backend-specific 
 ```
 
 Note: `webrootPath` can be set as a default, semi-locally with `webrootPathTpl`, or per
-registration as `webrootPath` (which overwrites `defaults.webrootPath`).
+registration as `webrootPath` (which overwrites `leConfig.webrootPath`).
 
 #### handlers *optional*
 

@@ -32,9 +32,7 @@ var bkDefaults = {
 , pythonClientPath: require('os').homedir() + '/.local/share/letsencrypt/bin/letsencrypt'
 };
 
-var LEP = require('../backends/python');
-
-var le = LE.create(LEP, bkDefaults, {
+var le = LE.create(bkDefaults, {
 /*
   setChallenge: function (hostnames, key, value, cb) {
     // the python backend needs fs.watch implemented

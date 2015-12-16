@@ -26,7 +26,4 @@ var config = {
 
 };
 
-//config.backend = require('letsencrypt/backends/python').create(binpath, config.le);
-config.backend = require('../backends/python');
-
 module.exports = config;

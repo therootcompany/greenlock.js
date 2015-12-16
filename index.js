@@ -6,14 +6,18 @@ var PromiseA = require('bluebird');
 var crypto = require('crypto');
 var tls = require('tls');
 var path = require('path');
+var leCore = require('./backends/letiny-core');
 
 var LE = module.exports;
+LE.productionServerUrl = leCore.productionServerUrl;
+LE.stagingServer = leCore.stagingServerUrl;
+LE.configDir = leCore.configDir;
+LE.acmeChallengPrefix = leCore.acmeChallengPrefix;
+LE.knownEndpoints = leCore.knownEndpoints;
 
-LE.liveServer = "https://acme-v01.api.letsencrypt.org/directory";
-LE.stagingServer = "https://acme-staging.api.letsencrypt.org/directory";
-LE.configDir = "/etc/letsencrypt/";
-LE.logsDir = "/var/log/letsencrypt/";
-LE.workDir = "/var/lib/letsencrypt/";
+// backwards compat
+LE.liveServer = leCore.productionServerUrl;
+LE.knownUrls = leCore.knownEndpoints;
 
 LE.merge = function merge(defaults, args) {
   var copy = {};
@@ -28,7 +32,48 @@ LE.merge = function merge(defaults, args) {
   return copy;
 };
 
-LE.create = function (backend, defaults, handlers) {
+LE.cacheCertInfo = function (args, certInfo, ipc, handlers) {
+  // TODO IPC via process and worker to guarantee no races
+  // rather than just "really good odds"
+
+  var hostname = args.domains[0];
+  var now = Date.now();
+
+  // Stagger randomly by plus 0% to 25% to prevent all caches expiring at once
+  var rnd1 = (crypto.randomBytes(1)[0] / 255);
+  var memorizeFor = Math.floor(handlers.memorizeFor + ((handlers.memorizeFor / 4) * rnd1));
+  // Stagger randomly to renew between n and 2n days before renewal is due
+  // this *greatly* reduces the risk of multiple cluster processes renewing the same domain at once
+  var rnd2 = (crypto.randomBytes(1)[0] / 255);
+  var bestIfUsedBy = certInfo.expiresAt - (handlers.renewWithin + Math.floor(handlers.renewWithin * rnd2));
+  // Stagger randomly by plus 0 to 5 min to reduce risk of multiple cluster processes
+  // renewing at once on boot when the certs have expired
+  var rnd3 = (crypto.randomBytes(1)[0] / 255);
+  var renewTimeout = Math.floor((5 * 60 * 1000) * rnd3);
+
+  certInfo.context = tls.createSecureContext({
+    key: certInfo.key
+  , cert: certInfo.cert
+  //, ciphers // node's defaults are great
+  });
+  certInfo.loadedAt = now;
+  certInfo.memorizeFor = memorizeFor;
+  certInfo.bestIfUsedBy = bestIfUsedBy;
+  certInfo.renewTimeout = renewTimeout;
+
+  ipc[hostname] = certInfo;
+  return ipc[hostname];
+};
+
+                    // backend, defaults, handlers
+LE.create = function (defaults, handlers, backend) {
+  var d, b, h;
+  // backwards compat for <= v1.0.2
+  if (defaults.registerAsync || defaults.create) {
+    b = defaults; d = handlers; h = backend;
+    defaults = d; handlers = h; backend = b;
+  }
+  if (!backend) { backend = require('./lib/letiny-core'); }
   if (!handlers) { handlers = {}; }
   if (!handlers.lifetime) { handlers.lifetime = 90 * 24 * 60 * 60 * 1000; }
   if (!handlers.renewWithin) { handlers.renewWithin = 3 * 24 * 60 * 60 * 1000; }
@@ -323,37 +368,4 @@ LE.create = function (backend, defaults, handlers) {
   };
 
   return le;
-};
-
-LE.cacheCertInfo = function (args, certInfo, ipc, handlers) {
-  // TODO IPC via process and worker to guarantee no races
-  // rather than just "really good odds"
-
-  var hostname = args.domains[0];
-  var now = Date.now();
-
-  // Stagger randomly by plus 0% to 25% to prevent all caches expiring at once
-  var rnd1 = (crypto.randomBytes(1)[0] / 255);
-  var memorizeFor = Math.floor(handlers.memorizeFor + ((handlers.memorizeFor / 4) * rnd1));
-  // Stagger randomly to renew between n and 2n days before renewal is due
-  // this *greatly* reduces the risk of multiple cluster processes renewing the same domain at once
-  var rnd2 = (crypto.randomBytes(1)[0] / 255);
-  var bestIfUsedBy = certInfo.expiresAt - (handlers.renewWithin + Math.floor(handlers.renewWithin * rnd2));
-  // Stagger randomly by plus 0 to 5 min to reduce risk of multiple cluster processes
-  // renewing at once on boot when the certs have expired
-  var rnd3 = (crypto.randomBytes(1)[0] / 255);
-  var renewTimeout = Math.floor((5 * 60 * 1000) * rnd3);
-
-  certInfo.context = tls.createSecureContext({
-    key: certInfo.key
-  , cert: certInfo.cert
-  //, ciphers // node's defaults are great
-  });
-  certInfo.loadedAt = now;
-  certInfo.memorizeFor = memorizeFor;
-  certInfo.bestIfUsedBy = bestIfUsedBy;
-  certInfo.renewTimeout = renewTimeout;
-
-  ipc[hostname] = certInfo;
-  return ipc[hostname];
 };
