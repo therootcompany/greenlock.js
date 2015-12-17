@@ -34,39 +34,6 @@ LE.merge = function merge(defaults, args) {
   return copy;
 };
 
-LE.cacheCertInfo = function (args, certInfo, ipc, handlers) {
-  // TODO IPC via process and worker to guarantee no races
-  // rather than just "really good odds"
-
-  var hostname = args.domains[0];
-  var now = Date.now();
-
-  // Stagger randomly by plus 0% to 25% to prevent all caches expiring at once
-  var rnd1 = (crypto.randomBytes(1)[0] / 255);
-  var memorizeFor = Math.floor(handlers.memorizeFor + ((handlers.memorizeFor / 4) * rnd1));
-  // Stagger randomly to renew between n and 2n days before renewal is due
-  // this *greatly* reduces the risk of multiple cluster processes renewing the same domain at once
-  var rnd2 = (crypto.randomBytes(1)[0] / 255);
-  var bestIfUsedBy = certInfo.expiresAt - (handlers.renewWithin + Math.floor(handlers.renewWithin * rnd2));
-  // Stagger randomly by plus 0 to 5 min to reduce risk of multiple cluster processes
-  // renewing at once on boot when the certs have expired
-  var rnd3 = (crypto.randomBytes(1)[0] / 255);
-  var renewTimeout = Math.floor((5 * 60 * 1000) * rnd3);
-
-  certInfo.context = tls.createSecureContext({
-    key: certInfo.key
-  , cert: certInfo.cert
-  //, ciphers // node's defaults are great
-  });
-  certInfo.loadedAt = now;
-  certInfo.memorizeFor = memorizeFor;
-  certInfo.bestIfUsedBy = bestIfUsedBy;
-  certInfo.renewTimeout = renewTimeout;
-
-  ipc[hostname] = certInfo;
-  return ipc[hostname];
-};
-
                     // backend, defaults, handlers
 LE.create = function (defaults, handlers, backend) {
   var d, b, h;
@@ -267,21 +234,22 @@ LE.create = function (defaults, handlers, backend) {
         }
 
         //console.log("[NLE]: begin registration");
-        return backend.registerAsync(copy).then(function () {
+        return backend.registerAsync(copy).then(function (pems) {
           //console.log("[NLE]: end registration");
-          // calls fetch because fetch calls cacheCertInfo
-          return le.fetch(args, cb);
+          cb(null, pems);
+          //return le.fetch(args, cb);
         }, cb);
       });
     }
   , _fetchHelper: function (args, cb) {
       return backend.fetchAsync(args).then(function (certInfo) {
-        if (!certInfo) {
-          cb(null, null);
-          return;
+        if (args.debug) {
+          console.log('[LE] debug is on');
         }
-
-        var now = Date.now();
+        if (true || args.debug) {
+          console.log('[LE] raw fetch certs', certInfo);
+        }
+        if (!certInfo) { cb(null, null); return; }
 
         // key, cert, issuedAt, lifetime, expiresAt
         if (!certInfo.expiresAt) {
@@ -290,52 +258,18 @@ LE.create = function (defaults, handlers, backend) {
         if (!certInfo.lifetime) {
           certInfo.lifetime = (certInfo.lifetime || handlers.lifetime);
         }
-
         // a pretty good hard buffer
         certInfo.expiresAt -= (1 * 24 * 60 * 60 * 100);
-        certInfo = LE.cacheCertInfo(args, certInfo, ipc, handlers);
-        if (now > certInfo.bestIfUsedBy && !certInfo.timeout) {
-          // EXPIRING
-          if (now  > certInfo.expiresAt) {
-            // EXPIRED
-            certInfo.renewTimeout = Math.floor(certInfo.renewTimeout / 2);
-          }
 
-          certInfo.timeout = setTimeout(function () {
-            le.register(args, cb);
-          }, certInfo.renewTimeout);
-        }
-        cb(null, certInfo.context);
+        cb(null, certInfo);
       }, cb);
     }
   , fetch: function (args, cb) {
-      var hostname = args.domains[0];
-      // TODO don't call now() every time because this is hot code
-      var now = Date.now();
-      var certInfo = ipc[hostname];
-
-      // TODO once ECDSA is available, wait for cert renewal if its due
-      if (certInfo) {
-        if (now > certInfo.bestIfUsedBy && !certInfo.timeout) {
-          // EXPIRING
-          if (now  > certInfo.expiresAt) {
-            // EXPIRED
-            certInfo.renewTimeout = Math.floor(certInfo.renewTimeout / 2);
-          }
-
-          certInfo.timeout = setTimeout(function () {
-            le.register(args, cb);
-          }, certInfo.renewTimeout);
-        }
-        cb(null, certInfo.context);
-
-        if ((now - certInfo.loadedAt) < (certInfo.memorizeFor)) {
-          // these aren't stale, so don't fall through
-          return;
-        }
-      }
-
       le._fetchHelper(args, cb);
+    }
+  , renew: function (args, cb) {
+      args.duplicate = false;
+      le.register(args, cb);
     }
   , register: function (args, cb) {
       if (!Array.isArray(args.domains)) {
@@ -349,16 +283,10 @@ LE.create = function (defaults, handlers, backend) {
       le._fetchHelper(args, function (err, hit) {
         var hostname = args.domains[0];
 
-        if (err) {
-          cb(err);
-          return;
-        }
-        else if (hit) {
-          cb(null, hit);
-          return;
-        }
+        if (err) { cb(err); return; }
+        else if (hit) { cb(null, hit); return; }
 
-        return le._registerHelper(args, function (err) {
+        return le._registerHelper(args, function (err, pems) {
           if (err) {
             cb(err);
             return;
@@ -366,7 +294,7 @@ LE.create = function (defaults, handlers, backend) {
 
           le._fetchHelper(args, function (err, cache) {
             if (cache) {
-              cb(null, cache.context);
+              cb(null, cache);
               return;
             }
 
