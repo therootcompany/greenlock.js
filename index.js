@@ -117,46 +117,6 @@ LE.create = function (defaults, handlers, backend) {
   // TODO check certs with setInterval?
   //options.cacheContextsFor = options.cacheContextsFor || (1 * 60 * 60 * 1000);
 
-  function sniCallback(hostname, cb) {
-    var args = LE.merge(defaults, {});
-    args.domains = [hostname];
-
-    le.fetch(args, function (err, cache) {
-      if (err) {
-        cb(err);
-        return;
-      }
-
-      // vazhdo is Albanian for 'continue'
-      function vazhdo(err, c2) {
-        if (err) {
-          cb(err);
-          return;
-        }
-
-        cache = c2 || cache;
-
-        if (!cache.context) {
-          cache.context = tls.createSecureContext({
-            key: cache.key    // privkey.pem
-          , cert: cache.cert  // fullchain.pem
-          //, ciphers         // node's defaults are great
-          });
-        }
-
-        cb(null, cache.context);
-      }
-
-      if (cache) {
-        vazhdo();
-        return;
-      }
-
-      var args = LE.merge(defaults, { domains: [hostname] });
-      handlers.sniRegisterCallback(args, cache, vazhdo);
-    });
-  }
-
   le = {
     backend: backend
   , validate: function (hostnames, cb) {
@@ -214,8 +174,6 @@ LE.create = function (defaults, handlers, backend) {
         }
       };
     }
-  , SNICallback: sniCallback
-  , sniCallback: sniCallback
   , _registerHelper: function (args, cb) {
       var copy = LE.merge(defaults, args);
       var err;
