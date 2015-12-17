@@ -45,41 +45,84 @@ ls ~/letsencrypt/etc/live
 
 ### letsencrypt-express
 
-TODO
+```javascript
+'use strict';
+
+// Note: using staging server url, remove .testing() for production
+var lex = require('letsencrypt-express').testing();
+var express = require('express');
+var app = express();
+
+app.use('/', function (req, res) {
+  res.send({ success: true });
+});
+
+lex.create('./letsencrypt.config', app).listen([80], [443, 5001], function () {
+  console.log("ENCRYPT __ALL__ THE DOMAINS!");
+});
+```
 
 See more at [letsencrypt-express](https://github.com/Daplie/letsencrypt-express)
 
 ### letsencrypt (the library)
 
+There are **NO DEFAULTS**. A number of **constants** (such as LE.stagingServerUrl and LE.configDir)
+are exported for your convenience, but all required options must be specified by the library invoking the call.
+
+Open an issue if you need a variable for something that isn't there yet.
+
 ```javascript
-var config = require('./examples/config-minimal');
+var LE = require('letsencrypt');
 
-config.le.webrootPath = __dirname + '/tests/acme-challenge';
 
-var le = require('letsencrypt').create(config.le);
-le.register({
-  agreeTos: true
-, domains: ['example.com']          // CHANGE TO YOUR DOMAIN
-, email: 'user@email.com'           // CHANGE TO YOUR EMAIL
-, standalone: true
+var config = {
+, server: LE.stagingServerUrl                               // or LE.productionServerUrl
+
+, configDir: require('homedir')() + '/letsencrypt/etc'      // or /etc/letsencrypt or wherever
+
+, privkeyPath: ':config/live/:hostname/privkey.pem'         //
+, fullchainPath: ':config/live/:hostname/fullchain.pem'     // Note: both that :config and :hostname
+, certPath: ':config/live/:hostname/cert.pem'               //       will be templated as expected
+, chainPath: ':config/live/:hostname/chain.pem'             //
+
+, debug: false
+};
+
+
+var handlers = {
+  setChallenge: function (opts, hostname, key, val, cb) {}  // called during the ACME server handshake, before validation
+, removeChallenge: function (opts, hostname, key, cb) {}    // called after validation on both success and failure
+, getChallenge: function (opts, hostname, key, cb) {}       // this is special because it is called by the webserver
+                                                            // (see letsencrypt-cli/bin & letsencrypt-express/standalone),
+                                                            // not by the library itself
+
+, agreeToTerms: function (tosUrl, cb) {}                    // gives you an async way to expose the legal agreement
+                                                            // (terms of use) to your users before accepting
+};
+
+
+var le = LE.create(config, handlers);
+
+                                                              // checks :conf/renewal/:hostname.conf
+le.register({                                                 // and either renews or registers
+
+  domains: ['example.com']                                    // CHANGE TO YOUR DOMAIN
+, email: 'user@email.com'                                     // CHANGE TO YOUR EMAIL
+, agreeTos: false                                             // set to true to automatically accept an agreement
+                                                              // which you have pre-approved (not recommended)
 }, function (err) {
+
   if (err) {
+    // Note: you must have a webserver running
+    // and expose handlers.getChallenge to it
+    // in order to pass validation
+    // See letsencrypt-cli and or letsencrypt-express
     console.error('[Error]: node-letsencrypt/examples/standalone');
     console.error(err.stack);
   } else {
     console.log('success');
   }
-
-  plainServer.close();
-  tlsServer.close();
 });
-
-// IMPORTANT
-// you also need BOTH an http AND https server that serve directly
-// from webrootPath, which might as well be a special folder reserved
-// only for acme/letsencrypt challenges
-//
-// app.use('/', express.static(config.le.webrootPath))
 ```
 
 **However**, due to the nature of what this library does, it has a few more "moving parts"
@@ -88,9 +131,20 @@ than what makes sense to show in a minimal snippet.
 Examples
 ========
 
+The simplest example of setting up a webserver appropriately is probably `letsencrypt-cli` (~120 lines of code):
+
+* [letsencrypt-cli//lib/standalone.js](https://github.com/Daplie/node-letsencrypt-cli/blob/master/lib/standalone.js)
+
+Similary, `letsencrypt-cli`'s usage of `le.register()` is fairly simple (~75 lines of code):
+
+* [letsencrypt-cli/bin/letsencrypt.js](https://github.com/Daplie/node-letsencrypt-cli/blob/master/bin/letsencrypt.js)
+
 ### One-Time Registration
 
 Register a 90-day certificate manually, on a whim
+
+**Note**: We've been running a fast development cycle and this example may be out of date.
+The API *shouldn't* have changed much but, we probably need to come back and update it.
 
 #### Snippets
 
@@ -135,7 +189,7 @@ le.register({
 // Express App
 //
 var app = require('express')();
-app.use('/', le.middleware());
+app.use('/', le.middleware());  // TODO le.middleware was moved to letsencrypt-express, we need to update the docs here
 
 
 //
