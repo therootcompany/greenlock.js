@@ -10,7 +10,6 @@ var leCore = require('letiny-core');
 var LE = module.exports;
 LE.productionServerUrl = leCore.productionServerUrl;
 LE.stagingServerUrl = leCore.stagingServerUrl;
-console.log('stagingUrl', Object.keys(leCore));
 LE.configDir = leCore.configDir;
 LE.logsDir = leCore.logsDir;
 LE.workDir = leCore.workDir;
