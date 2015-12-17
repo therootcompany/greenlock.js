@@ -97,8 +97,17 @@ LE.create = function (defaults, handlers, backend) {
       // but realistically there only needs to be one handler and one
       // "directory" for this. It's not that big of a deal.
       var defaultos = LE.merge(defaults, {});
+      var getChallenge = require('./lib/default-handlers').getChallenge;
       defaultos.domains = [hostname];
-      require('./lib/default-handlers').getChallenge(defaultos, key, done);
+      if (3 === getChallenge.length) {
+        getChallenge(defaultos, key, done);
+      }
+      else if (4 === getChallenge.length) {
+        getChallenge(defaultos, hostname, key, done);
+      }
+      else {
+        done(new Error("handlers.getChallenge [1] receives the wrong number of arguments"));
+      }
     };
   }
   if (!handlers.setChallenge) {
@@ -216,14 +225,25 @@ LE.create = function (defaults, handlers, backend) {
 
         //args.domains = [req.hostname];
         //console.log('[LE middleware]:', req.hostname, req.url, req.url.slice(prefix.length));
-        handlers.getChallenge(req.hostname, req.url.slice(prefix.length), function (err, token) {
+        function done(err, token) {
           if (err) {
             res.send("Error: These aren't the tokens you're looking for. Move along.");
             return;
           }
 
           res.send(token);
-        });
+        }
+
+        if (3 === handlers.getChallenge.length) {
+          handlers.getChallenge(req.hostname, req.url.slice(prefix.length), done);
+        }
+        else if (4 === handlers.getChallenge.length) {
+          handlers.getChallenge(defaults, req.hostname, req.url.slice(prefix.length), done);
+        }
+        else {
+          console.error("handlers.getChallenge [2] receives the wrong number of arguments");
+          done(new Error("handlers.getChallenge [2] receives the wrong number of arguments"));
+        }
       };
     }
   , SNICallback: sniCallback
