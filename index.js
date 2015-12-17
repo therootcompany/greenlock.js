@@ -3,9 +3,9 @@
 // TODO handle www and no-www together somehow?
 
 var PromiseA = require('bluebird');
-var crypto = require('crypto');
-var tls = require('tls');
 var leCore = require('letiny-core');
+var merge = require('./lib/common').merge;
+var tplHostname = require('./lib/common').tplHostname;
 
 var LE = module.exports;
 LE.productionServerUrl = leCore.productionServerUrl;
@@ -21,18 +21,8 @@ LE.stagingServer = leCore.stagingServerUrl;
 LE.liveServer = leCore.productionServerUrl;
 LE.knownUrls = leCore.knownEndpoints;
 
-LE.merge = function merge(defaults, args) {
-  var copy = {};
-
-  Object.keys(defaults).forEach(function (key) {
-    copy[key] = defaults[key];
-  });
-  Object.keys(args).forEach(function (key) {
-    copy[key] = args[key];
-  });
-
-  return copy;
-};
+LE.merge = require('./lib/common').merge;
+LE.tplConfigDir = require('./lib/common').tplConfigDir;
 
                     // backend, defaults, handlers
 LE.create = function (defaults, handlers, backend) {
@@ -66,7 +56,11 @@ LE.create = function (defaults, handlers, backend) {
       // "directory" for this. It's not that big of a deal.
       var defaultos = LE.merge(defaults, {});
       var getChallenge = require('./lib/default-handlers').getChallenge;
+      var copy = merge(defaults, { domains: [hostname] });
+
+      tplHostname(hostname, copy);
       defaultos.domains = [hostname];
+
       if (3 === getChallenge.length) {
         getChallenge(defaultos, key, done);
       }
@@ -105,11 +99,16 @@ LE.create = function (defaults, handlers, backend) {
     // ignore
     // this backend was created the v1.0.0 way
   }
+
+  // replaces strings of workDir, certPath, etc
+  // if they have :config/etc/live or :conf/etc/archive
+  // to instead have the path of the configDir
+  LE.tplConfigDir(defaults.configDir, defaults);
+
   backend = PromiseA.promisifyAll(backend);
 
-  var utils = require('./utils');
+  var utils = require('./lib/utils');
   //var attempts = {};  // should exist in master process only
-  var ipc = {};       // in-process cache
   var le;
 
   // TODO check certs on initial load
@@ -141,39 +140,6 @@ LE.create = function (defaults, handlers, backend) {
       console.warn("[SECURITY WARNING]: node-letsencrypt: validate(hostnames, cb) NOT IMPLEMENTED");
       cb(null, true);
     }
-  , middleware: function () {
-      var prefix = leCore.acmeChallengePrefix;
-
-      return function (req, res, next) {
-        if (0 !== req.url.indexOf(prefix)) {
-          //console.log('[LE middleware]: pass');
-          next();
-          return;
-        }
-
-        //args.domains = [req.hostname];
-        //console.log('[LE middleware]:', req.hostname, req.url, req.url.slice(prefix.length));
-        function done(err, token) {
-          if (err) {
-            res.send("Error: These aren't the tokens you're looking for. Move along.");
-            return;
-          }
-
-          res.send(token);
-        }
-
-        if (3 === handlers.getChallenge.length) {
-          handlers.getChallenge(req.hostname, req.url.slice(prefix.length), done);
-        }
-        else if (4 === handlers.getChallenge.length) {
-          handlers.getChallenge(defaults, req.hostname, req.url.slice(prefix.length), done);
-        }
-        else {
-          console.error("handlers.getChallenge [2] receives the wrong number of arguments");
-          done(new Error("handlers.getChallenge [2] receives the wrong number of arguments"));
-        }
-      };
-    }
   , _registerHelper: function (args, cb) {
       var copy = LE.merge(defaults, args);
       var err;
@@ -202,10 +168,7 @@ LE.create = function (defaults, handlers, backend) {
   , _fetchHelper: function (args, cb) {
       return backend.fetchAsync(args).then(function (certInfo) {
         if (args.debug) {
-          console.log('[LE] debug is on');
-        }
-        if (true || args.debug) {
-          console.log('[LE] raw fetch certs', certInfo);
+          console.log('[LE] raw fetch certs', certInfo && Object.keys(certInfo));
         }
         if (!certInfo) { cb(null, null); return; }
 
@@ -239,42 +202,38 @@ LE.create = function (defaults, handlers, backend) {
       // but ensure that it has the most fresh copy
       // before attempting a renew
       le._fetchHelper(args, function (err, hit) {
-        var hostname = args.domains[0];
+        var now = Date.now();
 
-        if (err) { cb(err); return; }
-        else if (hit) { cb(null, hit); return; }
+        if (err) {
+          // had a bad day
+          cb(err);
+          return;
+        }
+        else if (hit) {
+          if ((now - hit.issuedAt) < ((hit.lifetime || handlers.lifetime) * 0.65)) {
+            console.warn("tried to renew a certificate with over 1/3 of its lifetime left, ignoring");
+            cb(null, hit);
+            return;
+          }
+        }
 
-        return le._registerHelper(args, function (err, pems) {
+        return le._registerHelper(args, function (err/*, pems*/) {
           if (err) {
             cb(err);
             return;
           }
 
-          le._fetchHelper(args, function (err, cache) {
-            if (cache) {
-              cb(null, cache);
+          // Sanity Check
+          le._fetchHelper(args, function (err, pems) {
+            if (pems) {
+              cb(null, pems);
               return;
             }
 
             // still couldn't read the certs after success... that's weird
             cb(err, null);
           });
-        }, function (err) {
-          console.error("[Error] Let's Encrypt failed:");
-          console.error(err.stack || new Error(err.message || err.toString()).stack);
-
-          // wasn't successful with lets encrypt, don't automatically try again for 12 hours
-          // TODO what's the better way to handle this?
-          // failure callback?
-          ipc[hostname] = {
-            context: null // TODO default context
-          , issuedAt: Date.now()
-          , lifetime: (12 * 60 * 60 * 1000)
-          // , expiresAt: generated in next step
-          };
-
-          cb(err, ipc[hostname]);
-        });
+        }, cb);
       });
     }
   };
