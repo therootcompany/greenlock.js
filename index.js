@@ -137,7 +137,8 @@ LE.create = function (defaults, handlers, backend) {
       //  If you do not check these things, then someone could attack you
       //  and cause you, in return, to have your ip be rate-limit blocked
       //
-      console.warn("[SECURITY WARNING]: node-letsencrypt: validate(hostnames, cb) NOT IMPLEMENTED");
+      console.warn("\n[TODO]: node-letsencrypt: `validate(hostnames, cb)` needs to be implemented");
+      console.warn("(it'll work fine without it, but for security - and convenience - it should be implemented\n");
       cb(null, true);
     }
   , _registerHelper: function (args, cb) {
@@ -210,8 +211,9 @@ LE.create = function (defaults, handlers, backend) {
           return;
         }
         else if (hit) {
-          if ((now - hit.issuedAt) < ((hit.lifetime || handlers.lifetime) * 0.65)) {
-            console.warn("tried to renew a certificate with over 1/3 of its lifetime left, ignoring");
+          if (!args.duplicate && (now - hit.issuedAt) < ((hit.lifetime || handlers.lifetime) * 0.65)) {
+            console.warn("\ntried to renew a certificate with over 1/3 of its lifetime left, ignoring");
+            console.warn("(use --duplicate or opts.duplicate to override\n");
             cb(null, hit);
             return;
           }
