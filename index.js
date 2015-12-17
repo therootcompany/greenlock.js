@@ -5,11 +5,12 @@
 var PromiseA = require('bluebird');
 var crypto = require('crypto');
 var tls = require('tls');
-var leCore = require('./lib/letiny-core');
+var leCore = require('letiny-core');
 
 var LE = module.exports;
 LE.productionServerUrl = leCore.productionServerUrl;
-LE.stagingServer = leCore.stagingServerUrl;
+LE.stagingServerUrl = leCore.stagingServerUrl;
+console.log('stagingUrl', Object.keys(leCore));
 LE.configDir = leCore.configDir;
 LE.logsDir = leCore.logsDir;
 LE.workDir = leCore.workDir;
@@ -17,6 +18,7 @@ LE.acmeChallengPrefix = leCore.acmeChallengPrefix;
 LE.knownEndpoints = leCore.knownEndpoints;
 
 // backwards compat
+LE.stagingServer = leCore.stagingServerUrl;
 LE.liveServer = leCore.productionServerUrl;
 LE.knownUrls = leCore.knownEndpoints;
 
