@@ -107,7 +107,7 @@ LE.create = function (defaults, handlers, backend) {
 
   backend = PromiseA.promisifyAll(backend);
 
-  var utils = require('./lib/utils');
+  var utils = require('./lib/common');
   //var attempts = {};  // should exist in master process only
   var le;
 
