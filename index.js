@@ -32,7 +32,7 @@ LE.create = function (defaults, handlers, backend) {
     b = defaults; d = handlers; h = backend;
     defaults = d; handlers = h; backend = b;
   }
-  if (!backend) { backend = require('./lib/letiny-core'); }
+  if (!backend) { backend = require('./lib/core'); }
   if (!handlers) { handlers = {}; }
   if (!handlers.lifetime) { handlers.lifetime = 90 * 24 * 60 * 60 * 1000; }
   if (!handlers.renewWithin) { handlers.renewWithin = 3 * 24 * 60 * 60 * 1000; }
