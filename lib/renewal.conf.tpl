@@ -39,7 +39,8 @@ hsts = False
 authenticator = webroot
 domains = :hostnames #comma,delimited,list
 rsa_key_size = :rsa_key_size
-checkpoints = 1
+# starts at 0 and increments at every renewal
+checkpoints = :checkpoint_count
 manual_test_mode = False
 apache = False
 cert_path = :cert_path
