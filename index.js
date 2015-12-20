@@ -16,6 +16,11 @@ LE.workDir = leCore.workDir;
 LE.acmeChallengPrefix = leCore.acmeChallengPrefix;
 LE.knownEndpoints = leCore.knownEndpoints;
 
+LE.privkeyPath = ':config/live/:hostname/privkey.pem';
+LE.fullchainPath = ':config/live/:hostname/fullchain.pem';
+LE.certPath = ':config/live/:hostname/cert.pem';
+LE.chainPath = ':config/live/:hostname/chain.pem';
+
 // backwards compat
 LE.stagingServer = leCore.stagingServerUrl;
 LE.liveServer = leCore.productionServerUrl;
@@ -118,6 +123,20 @@ LE.create = function (defaults, handlers, backend) {
 
   le = {
     backend: backend
+  , pyToJson: function (pyobj) {
+      if (!pyobj) {
+        return null;
+      }
+
+      var jsobj = {};
+      Object.keys(pyobj).forEach(function (key) {
+        jsobj[key] = pyobj[key];
+      });
+      jsobj.__lines = undefined;
+      jsobj.__keys = undefined;
+
+      return jsobj;
+    }
   , validate: function (hostnames, cb) {
       // TODO check dns, etc
       if ((!hostnames.length && hostnames.every(le.isValidDomain))) {
@@ -199,6 +218,31 @@ LE.create = function (defaults, handlers, backend) {
   , renew: function (args, cb) {
       args.duplicate = false;
       le.register(args, cb);
+    }
+  , getConfig: function (args, cb) {
+      backend.getConfigAsync(args).then(function (pyobj) {
+        cb(null, le.pyToJson(pyobj));
+      }, function (err) {
+        console.error(err.stack);
+        return cb(null, []);
+      });
+    }
+  , getConfigs: function (args, cb) {
+      backend.getConfigsAsync(args).then(function (configs) {
+        cb(null, configs.map(le.pyToJson));
+      }, function (err) {
+        if ('ENOENT' === err.code) {
+          cb(null, []);
+        } else {
+          console.error(err.stack);
+          cb(err);
+        }
+      });
+    }
+  , setConfig: function (args, cb) {
+      backend.configureAsync(args).then(function (pyobj) {
+        cb(null, le.pyToJson(pyobj));
+      });
     }
   , register: function (args, cb) {
       if (!Array.isArray(args.domains)) {
