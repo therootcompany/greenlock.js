@@ -5,7 +5,7 @@
 var PromiseA = require('bluebird');
 var leCore = require('letiny-core');
 var merge = require('./lib/common').merge;
-var tplHostname = require('./lib/common').tplHostname;
+var tplCopy = require('./lib/common').tplCopy;
 
 var LE = module.exports;
 LE.productionServerUrl = leCore.productionServerUrl;
@@ -58,7 +58,7 @@ LE.create = function (defaults, handlers, backend) {
       var getChallenge = require('./lib/default-handlers').getChallenge;
       var copy = merge(defaults, { domains: [hostname] });
 
-      tplHostname(hostname, copy);
+      tplCopy(copy);
       defaultos.domains = [hostname];
 
       if (3 === getChallenge.length) {
@@ -158,9 +158,13 @@ LE.create = function (defaults, handlers, backend) {
           return;
         }
 
-        //console.log("[NLE]: begin registration");
+        if (args.debug) {
+          console.log("[NLE]: begin registration");
+        }
         return backend.registerAsync(copy).then(function (pems) {
-          //console.log("[NLE]: end registration");
+          if (args.debug) {
+            console.log("[NLE]: end registration");
+          }
           cb(null, pems);
           //return le.fetch(args, cb);
         }, cb);
