@@ -33,14 +33,13 @@
     "express": "^4.13.3",
     "localhost.daplie.com-certificates": "^1.1.2"
   },
-  "optionalDependencies": {
-  },
+  "optionalDependencies": {},
   "dependencies": {
     "bluebird": "^3.0.6",
     "homedir": "^0.6.0",
-    "letiny-core": "^1.0.1",
+    "letiny-core": "^1.0.3",
     "mkdirp": "^0.5.1",
-    "pyconf": "^1.0.0",
+    "pyconf": "^1.1.0",
     "request": "^2.67.0",
     "safe-replace": "^1.0.2"
   }
