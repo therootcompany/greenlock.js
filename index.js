@@ -137,8 +137,11 @@ LE.create = function (defaults, handlers, backend) {
       //  If you do not check these things, then someone could attack you
       //  and cause you, in return, to have your ip be rate-limit blocked
       //
-      console.warn("\n[TODO]: node-letsencrypt: `validate(hostnames, cb)` needs to be implemented");
-      console.warn("(it'll work fine without it, but for security - and convenience - it should be implemented\n");
+      //console.warn("\n[TODO]: node-letsencrypt: `validate(hostnames, cb)` needs to be implemented");
+      //console.warn("(it'll work fine without it, but for security - and convenience - it should be implemented\n");
+      // UPDATE:
+      // it's actually probably better that we don't do this here and instead
+      // take care of it in the approveRegistrationCallback in letsencrypt-express
       cb(null, true);
     }
   , _registerHelper: function (args, cb) {

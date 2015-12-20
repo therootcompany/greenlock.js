@@ -40,7 +40,7 @@ authenticator = webroot
 domains = :hostnames #comma,delimited,list
 rsa_key_size = :rsa_key_size
 # starts at 0 and increments at every renewal
-checkpoints = :checkpoint_count
+checkpoints = -1
 manual_test_mode = False
 apache = False
 cert_path = :cert_path
