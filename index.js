@@ -20,6 +20,8 @@ LE.privkeyPath = ':config/live/:hostname/privkey.pem';
 LE.fullchainPath = ':config/live/:hostname/fullchain.pem';
 LE.certPath = ':config/live/:hostname/cert.pem';
 LE.chainPath = ':config/live/:hostname/chain.pem';
+LE.renewalPath = ':config/renewal/:hostname.conf';
+LE.accountsDir = ':config/accounts/:server';
 
 // backwards compat
 LE.stagingServer = leCore.stagingServerUrl;
@@ -213,13 +215,22 @@ LE.create = function (defaults, handlers, backend) {
       }, cb);
     }
   , fetch: function (args, cb) {
+      if (defaults.debug || args.debug) {
+        console.log('[LE] fetch');
+      }
       le._fetchHelper(args, cb);
     }
   , renew: function (args, cb) {
+      if (defaults.debug || args.debug) {
+        console.log('[LE] renew');
+      }
       args.duplicate = false;
       le.register(args, cb);
     }
   , getConfig: function (args, cb) {
+      if (defaults.debug || args.debug) {
+        console.log('[LE] getConfig');
+      }
       backend.getConfigAsync(args).then(function (pyobj) {
         cb(null, le.pyToJson(pyobj));
       }, function (err) {
@@ -228,6 +239,9 @@ LE.create = function (defaults, handlers, backend) {
       });
     }
   , getConfigs: function (args, cb) {
+      if (defaults.debug || args.debug) {
+        console.log('[LE] getConfigs');
+      }
       backend.getConfigsAsync(args).then(function (configs) {
         cb(null, configs.map(le.pyToJson));
       }, function (err) {
@@ -240,11 +254,17 @@ LE.create = function (defaults, handlers, backend) {
       });
     }
   , setConfig: function (args, cb) {
+      if (defaults.debug || args.debug) {
+        console.log('[LE] setConfig');
+      }
       backend.configureAsync(args).then(function (pyobj) {
         cb(null, le.pyToJson(pyobj));
       });
     }
   , register: function (args, cb) {
+      if (defaults.debug || args.debug) {
+        console.log('[LE] register');
+      }
       if (!Array.isArray(args.domains)) {
         cb(new Error('args.domains should be an array of domains'));
         return;
