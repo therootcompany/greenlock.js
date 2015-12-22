@@ -3,11 +3,11 @@ letsencrypt
 
 Automatic [Let's Encrypt](https://letsencrypt.org) HTTPS Certificates for node.js
 
-  * Automatic HTTPS with ExpressJS
-  * Automatic live renewal (in-process)
+  * [Automatic HTTPS with ExpressJS](https://github.com/Daplie/letsencrypt-express)
+  * [Automatic live renewal](https://github.com/Daplie/letsencrypt-express#how-automatic)
   * On-the-fly HTTPS certificates for Dynamic DNS (in-process, no server restart)
   * Works with node cluster out of the box
-  * usable via commandline as well
+  * usable [via commandline](https://github.com/Daplie/letsencrypt-cli) as well
   * Free SSL (HTTPS Certificates for TLS)
   * [90-day certificates](https://letsencrypt.org/2015/11/09/why-90-days.html)
 
