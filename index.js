@@ -176,17 +176,18 @@ LE.create = function (defaults, handlers, backend) {
         return;
       }
 
-      return le.validate(args.domains, function (err) {
+      le.validate(args.domains, function (err) {
         if (err) {
           cb(err);
           return;
         }
 
-        if (args.debug) {
+        if (defaults.debug || args.debug) {
           console.log("[NLE]: begin registration");
         }
+
         return backend.registerAsync(copy).then(function (pems) {
-          if (args.debug) {
+          if (defaults.debug || args.debug) {
             console.log("[NLE]: end registration");
           }
           cb(null, pems);
@@ -234,6 +235,7 @@ LE.create = function (defaults, handlers, backend) {
       backend.getConfigAsync(args).then(function (pyobj) {
         cb(null, le.pyToJson(pyobj));
       }, function (err) {
+        console.error("[letsencrypt/index.js] getConfig");
         console.error(err.stack);
         return cb(null, []);
       });
@@ -248,6 +250,7 @@ LE.create = function (defaults, handlers, backend) {
         if ('ENOENT' === err.code) {
           cb(null, []);
         } else {
+          console.error("[letsencrypt/index.js] getConfigs");
           console.error(err.stack);
           cb(err);
         }
@@ -290,7 +293,7 @@ LE.create = function (defaults, handlers, backend) {
           }
         }
 
-        return le._registerHelper(args, function (err/*, pems*/) {
+        le._registerHelper(args, function (err/*, pems*/) {
           if (err) {
             cb(err);
             return;
@@ -304,9 +307,10 @@ LE.create = function (defaults, handlers, backend) {
             }
 
             // still couldn't read the certs after success... that's weird
+            console.error("still couldn't read certs after success... that's weird");
             cb(err, null);
           });
-        }, cb);
+        });
       });
     }
   };
