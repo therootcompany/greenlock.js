@@ -76,7 +76,7 @@ var LE = require('letsencrypt');
 
 
 var config = {
-, server: LE.stagingServerUrl                               // or LE.productionServerUrl
+  server: LE.stagingServerUrl                               // or LE.productionServerUrl
 
 , configDir: require('homedir')() + '/letsencrypt/etc'      // or /etc/letsencrypt or wherever
 
