@@ -22,6 +22,15 @@ LE.certPath = ':config/live/:hostname/cert.pem';
 LE.chainPath = ':config/live/:hostname/chain.pem';
 LE.renewalPath = ':config/renewal/:hostname.conf';
 LE.accountsDir = ':config/accounts/:server';
+LE.defaults = {
+  privkeyPath: LE.privkeyPath
+, fullchainPath: LE.fullchainPath
+, certPath: LE.certPath
+, chainPath: LE.chainPath
+, renewalPath: LE.renewalPath
+, accountsDir: LE.accountsDir
+, server: LE.productionServerUrl
+};
 
 // backwards compat
 LE.stagingServer = leCore.stagingServerUrl;
