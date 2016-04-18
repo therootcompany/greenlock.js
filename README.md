@@ -36,6 +36,16 @@ Are you planning to use one of these?
 
 ### Use [letsencrypt-express](https://github.com/Daplie/letsencrypt-express) instead!
 
+Are you planning to use one of these?
+
+  * `bash`
+  * `fish`
+  * `zsh`
+  * `cmd.exe`
+  * `PowerShell`
+
+### Use [letsencrypt-cli](https://github.com/Daplie/letsencrypt-cli) instead!
+
 Install
 =======
 
@@ -47,45 +57,11 @@ npm install --global letsencrypt-cli
 Usage
 =====
 
-### letsencrypt-cli
+### letsencrypt
 
-See more at [letsencrypt-cli](https://github.com/Daplie/node-letsencrypt-cli)
+There are **NO DEFAULTS**.
 
-```bash
-letsencrypt certonly \
-  --agree-tos --email user@example.com \
-  --standalone \
-  --domains example.com,www.example.com \
-  --config-dir ~/letsencrypt/etc \
-  --server https://acme-staging.api.letsencrypt.org/directory \
-
-ls ~/letsencrypt/etc/live
-```
-
-### letsencrypt-express
-
-```javascript
-'use strict';
-
-// Note: using staging server url, remove .testing() for production
-var lex = require('letsencrypt-express').testing();
-var express = require('express');
-var app = express();
-
-app.use('/', function (req, res) {
-  res.send({ success: true });
-});
-
-lex.create('./letsencrypt.config', app).listen([80], [443, 5001], function () {
-  console.log("ENCRYPT __ALL__ THE DOMAINS!");
-});
-```
-
-See more at [letsencrypt-express](https://github.com/Daplie/letsencrypt-express)
-
-### letsencrypt (the library)
-
-There are **NO DEFAULTS**. A number of **constants** (such as LE.stagingServerUrl and LE.configDir)
+A number of **constants** (such as LE.stagingServerUrl and LE.configDir)
 are exported for your convenience, but all required options must be specified by the library invoking the call.
 
 Open an issue if you need a variable for something that isn't there yet.
@@ -151,8 +127,7 @@ API
 ===
 
 ```javascript
-LetsEncrypt.init(leConfig, handlers)                      // wraps a given
-LetsEncrypt.create(backend, leConfig, handlers)           // wraps a given "backend" (the python or node client)
+LetsEncrypt.create(leConfig, handlers, backend)           // wraps a given "backend" (the python or node client)
 LetsEncrypt.stagingServer                                 // string of staging server for testing
 
 le.middleware()                                           // middleware for serving webrootPath to /.well-known/acme-challenge
