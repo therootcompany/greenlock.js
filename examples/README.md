@@ -1,7 +1,7 @@
 STOP
 ====
 
-** These aren't the droids you're looking for.**
+**These aren't the droids you're looking for.**
 
 You probably don't want to use `node-letsencrypt` directly.
 
