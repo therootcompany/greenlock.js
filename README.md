@@ -25,7 +25,9 @@ This is a low-level library for implementing CLIs,
 system tools, and abstracting storage backends (file vs db, etc).
 This is not the thing to use in your webserver directly.
 
-Are you planning to use one of these?
+### Use [letsencrypt-express](https://github.com/Daplie/letsencrypt-express) if...
+
+you are planning to use one of these:
 
   * `express`
   * `hapi`
@@ -34,9 +36,9 @@ Are you planning to use one of these?
   * raw `https`
   * raw `spdy`
 
-### Use [letsencrypt-express](https://github.com/Daplie/letsencrypt-express) instead!
+### Use [letsencrypt-cli](https://github.com/Daplie/letsencrypt-cli) if...
 
-Are you planning to use one of these?
+You are planning to use one of these:
 
   * `bash`
   * `fish`
@@ -44,14 +46,11 @@ Are you planning to use one of these?
   * `cmd.exe`
   * `PowerShell`
 
-### Use [letsencrypt-cli](https://github.com/Daplie/letsencrypt-cli) instead!
-
 Install
 =======
 
 ```bash
 npm install --save letsencrypt
-npm install --global letsencrypt-cli
 ```
 
 Usage
