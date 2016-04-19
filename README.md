@@ -30,11 +30,13 @@ This is not the thing to use in your webserver directly.
 you are planning to use one of these:
 
   * `express`
-  * `hapi`
   * `connect`
-  * `koa`
   * raw `https`
   * raw `spdy`
+  * `restify` (same as raw https)
+  * `hapi` See [letsencrypt-hapi](https://github.com/Daplie/letsencrypt-hapi)
+  * `koa` See [letsencrypt-koa](https://github.com/Daplie/letsencrypt-koa)
+  * `rill` (similar to koa example)
 
 ### Use [letsencrypt-cli](https://github.com/Daplie/letsencrypt-cli) if...
 
