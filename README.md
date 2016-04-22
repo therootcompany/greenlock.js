@@ -1,6 +1,6 @@
 [![Join the chat at https://gitter.im/Daplie/letsencrypt-express](https://badges.gitter.im/Daplie/letsencrypt-express.svg)](https://gitter.im/Daplie/letsencrypt-express?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-| [**letsencrypt** (library)](https://github.com/Daplie/node-letsencrypt)
+| **letsencrypt** (library)
 | [letsencrypt-cli](https://github.com/Daplie/letsencrypt-cli) 
 | [letsencrypt-express](https://github.com/Daplie/letsencrypt-express)
 | [letsencrypt-koa](https://github.com/Daplie/letsencrypt-koa)
