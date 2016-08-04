@@ -1,7 +1,7 @@
 [![Join the chat at https://gitter.im/Daplie/letsencrypt-express](https://badges.gitter.im/Daplie/letsencrypt-express.svg)](https://gitter.im/Daplie/letsencrypt-express?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 | **letsencrypt** (library)
-| [letsencrypt-cli](https://github.com/Daplie/letsencrypt-cli) 
+| [letsencrypt-cli](https://github.com/Daplie/letsencrypt-cli)
 | [letsencrypt-express](https://github.com/Daplie/letsencrypt-express)
 | [letsencrypt-koa](https://github.com/Daplie/letsencrypt-koa)
 | [letsencrypt-hapi](https://github.com/Daplie/letsencrypt-hapi)
@@ -144,7 +144,6 @@ le.middleware()                                           // middleware for serv
 le.sniCallback(hostname, function (err, tlsContext) {})   // uses fetch (below) and formats for https.SNICallback
 le.register({ domains, email, agreeTos, ... }, cb)        // registers or renews certs for a domain
 le.fetch({domains, email, agreeTos, ... }, cb)            // fetches certs from in-memory cache, occasionally refreshes from disk
-le.validate(domains, cb)                                  // do some sanity checks before attempting to register
 le.registrationFailureCallback(err, args, certInfo, cb)   // called when registration fails (not implemented yet)
 ```
 
@@ -188,16 +187,6 @@ but around February when it is possible to use ECDSA keys (as opposed to RSA at 
 registration will take very little time.
 
 This will not be called while another registration is already in progress.
-
-**SECURITY WARNING**: If you use this option with a custom `h.validate()`, make sure that `args.domains`
-refers to domains you expect, otherwise an attacker will spoof SNI and cause your server to rate-limit
-letsencrypt.org and get blocked. Note that `le.validate()` will check A records before attempting to
-register to help prevent such possible attacks.
-
-`h.validate(domains, cb)`
-
-When specified this will override `le.validate()`. You will need to do this if the ip address of this
-server is not one specified in the A records for your domain.
 
 ### `le.middleware()`
 
@@ -251,17 +240,6 @@ le.register({
 returns `true` if `hostname` is a valid ascii or punycode domain name.
 
 (also exposed on the main exported module as `LetsEncrypt.isValidDomain()`)
-
-### `le.validate(args, cb)`
-
-Used internally, but exposed for convenience. Checks `LetsEncrypt.isValidDomain()`
-and then checks to see that the current server
-
-Called before `backend.register()` to validate the following:
-
-  * the hostnames don't use any illegal characters
-  * the server's actual public ip (via api.apiify.org)
-  * the A records for said hostnames
 
 ### `le.fetch(args, cb)`
 
