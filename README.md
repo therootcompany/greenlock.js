@@ -297,6 +297,7 @@ the python client, but it's not necessary)
 Change History
 ==============
 
+* v1.5.0 now using letiny-core v2.0.0 and rsa-compat
 * v1.4.x I can't remember... but it's better!
 * v1.1.0 Added letiny-core, removed node-letsencrypt-python
 * v1.0.2 Works with node-letsencrypt-python
