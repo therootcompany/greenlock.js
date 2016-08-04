@@ -1,6 +1,6 @@
 {
   "name": "letsencrypt",
-  "version": "1.4.4",
+  "version": "1.5.0",
   "description": "Let's Encrypt for node.js on npm",
   "main": "index.js",
   "scripts": {
@@ -37,10 +37,11 @@
   "dependencies": {
     "bluebird": "^3.0.6",
     "homedir": "^0.6.0",
-    "letiny-core": "^1.0.5",
+    "letiny-core": "^2.0.1",
     "mkdirp": "^0.5.1",
     "pyconf": "^1.1.2",
     "request": "^2.67.0",
+    "rsa-compat": "^1.2.1",
     "safe-replace": "^1.0.2"
   }
 }
