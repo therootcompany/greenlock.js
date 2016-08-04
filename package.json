@@ -30,8 +30,6 @@
   },
   "homepage": "https://github.com/Daplie/node-letsencrypt#readme",
   "devDependencies": {
-    "express": "^4.13.3",
-    "localhost.daplie.com-certificates": "^1.1.2"
   },
   "optionalDependencies": {},
   "dependencies": {

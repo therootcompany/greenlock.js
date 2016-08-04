@@ -29,9 +29,6 @@ No, I wanted node-letsencrypt
 =============================
 
 Well, take a look at the API in the main README
-and you can also check out the [scraps](https://github.com/Daplie/node-letsencrypt/tree/master/scraps).
+and you can also check out the code in the repos above.
 
-Feel free to create issues for examples that don't work and pull requests if you fix one.
-
-And please, please, do open an issue. We haven't updated the scrap examples
-(hence being moved), but we do have it on the roadmap to bring back some raw API examples.
+Feel free to open an issues to request any particular type of example.

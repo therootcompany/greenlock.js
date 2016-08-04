@@ -4,45 +4,34 @@
 
 var PromiseA = require('bluebird');
 var leCore = require('letiny-core');
+var utils = require('./lib/common');
 var merge = require('./lib/common').merge;
 var tplCopy = require('./lib/common').tplCopy;
 
 var LE = module.exports;
-LE.productionServerUrl = leCore.productionServerUrl;
-LE.stagingServerUrl = leCore.stagingServerUrl;
-LE.configDir = leCore.configDir;
-LE.logsDir = leCore.logsDir;
-LE.workDir = leCore.workDir;
-LE.acmeChallengPrefix = leCore.acmeChallengPrefix;
-LE.knownEndpoints = leCore.knownEndpoints;
 
-LE.privkeyPath = ':config/live/:hostname/privkey.pem';
-LE.fullchainPath = ':config/live/:hostname/fullchain.pem';
-LE.certPath = ':config/live/:hostname/cert.pem';
-LE.chainPath = ':config/live/:hostname/chain.pem';
-LE.renewalPath = ':config/renewal/:hostname.conf';
-LE.accountsDir = ':config/accounts/:server';
+LE.merge = require('./lib/common').merge;
+
 LE.defaults = {
-  privkeyPath: LE.privkeyPath
-, fullchainPath: LE.fullchainPath
-, certPath: LE.certPath
-, chainPath: LE.chainPath
-, renewalPath: LE.renewalPath
-, accountsDir: LE.accountsDir
-, server: LE.productionServerUrl
+  server: leCore.productionServerUrl
+, stagingServer: leCore.stagingServerUrl
+, liveServer: leCore.productionServerUrl
+
+, productionServerUrl: leCore.productionServerUrl
+, stagingServerUrl: leCore.stagingServerUrl
+
+, acmeChallengePrefix: leCore.acmeChallengePrefix
 };
 
 // backwards compat
-LE.stagingServer = leCore.stagingServerUrl;
-LE.liveServer = leCore.productionServerUrl;
-LE.knownUrls = leCore.knownEndpoints;
-
-LE.merge = require('./lib/common').merge;
-LE.tplConfigDir = require('./lib/common').tplConfigDir;
+Object.keys(LE.defaults).forEach(function (key) {
+  LE[key] = LE.defaults[key];
+});
 
                     // backend, defaults, handlers
 LE.create = function (defaults, handlers, backend) {
-  if (!backend) { backend = require('./lib/core'); }
+  var Backend = require('./lib/core');
+  if (!backend) { backend = require('./lib/pycompat').create(defaults); }
   if (!handlers) { handlers = {}; }
   if (!handlers.lifetime) { handlers.lifetime = 90 * 24 * 60 * 60 * 1000; }
   if (!handlers.renewWithin) { handlers.renewWithin = 3 * 24 * 60 * 60 * 1000; }
@@ -64,14 +53,15 @@ LE.create = function (defaults, handlers, backend) {
       // the request it came from... it's kinda stateless in that way
       // but realistically there only needs to be one handler and one
       // "directory" for this. It's not that big of a deal.
-      var defaultos = LE.merge(defaults, {});
+      var defaultos = LE.merge({}, defaults);
       var getChallenge = require('./lib/default-handlers').getChallenge;
-      var copy = merge(defaults, { domains: [hostname] });
+      var copy = merge({ domains: [hostname] }, defaults);
 
       tplCopy(copy);
       defaultos.domains = [hostname];
 
       if (3 === getChallenge.length) {
+        console.warn('[WARNING] Deprecated use. Define getChallenge as function (opts, domain, key, cb) { }');
         getChallenge(defaultos, key, done);
       }
       else if (4 === getChallenge.length) {
@@ -102,22 +92,10 @@ LE.create = function (defaults, handlers, backend) {
     }
     handlers.agreeToTerms = require('./lib/default-handlers').agreeToTerms;
   }
-  if ('function' === typeof backend.create) {
-    backend = backend.create(defaults, handlers);
-  }
-  else {
-    // ignore
-    // this backend was created the v1.0.0 way
-  }
 
-  // replaces strings of workDir, certPath, etc
-  // if they have :config/etc/live or :conf/etc/archive
-  // to instead have the path of the configDir
-  LE.tplConfigDir(defaults.configDir, defaults);
-
+  backend = Backend.create(defaults, handlers);
   backend = PromiseA.promisifyAll(backend);
 
-  var utils = require('./lib/common');
   //var attempts = {};  // should exist in master process only
   var le;
 
@@ -151,7 +129,7 @@ LE.create = function (defaults, handlers, backend) {
         return;
       }
 
-      var copy = LE.merge(defaults, args);
+      var copy = LE.merge(args, defaults);
       var err;
 
       if (!utils.isValidDomain(args.domains[0])) {
@@ -185,6 +163,11 @@ LE.create = function (defaults, handlers, backend) {
       if (defaults.debug || args.debug) {
         console.log('[LE] fetch');
       }
+
+      // TODO figure out what TPLs are needed
+      var copy = merge(args, defaults);
+      tplCopy(copy);
+
       return backend.fetchAsync(args).then(function (certInfo) {
         if (args.debug) {
           console.log('[LE] raw fetch certs', certInfo && Object.keys(certInfo));
