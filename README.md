@@ -10,7 +10,7 @@
 letsencrypt
 ===========
 
-Automatic [Let's Encrypt](https://letsencrypt.org) HTTPS Certificates for node.js
+Automatic [Let's Encrypt](https://letsencrypt.org) HTTPS / TLS / SSL Certificates for node.js
 
   * [Automatic HTTPS with ExpressJS](https://github.com/Daplie/letsencrypt-express)
   * [Automatic live renewal](https://github.com/Daplie/letsencrypt-express#how-automatic)
@@ -30,8 +30,9 @@ STOP
 
 **These aren't the droids you're looking for.**
 
-This is a low-level library for implementing CLIs,
+This is a **low-level library** for implementing ACME / LetsEncrypt Clients, CLIs,
 system tools, and abstracting storage backends (file vs db, etc).
+
 This is not the thing to use in your webserver directly.
 
 ### Use [letsencrypt-express](https://github.com/Daplie/letsencrypt-express) if...
@@ -57,224 +58,210 @@ You are planning to use one of these:
   * `cmd.exe`
   * `PowerShell`
 
+CONTINUE
+========
+
+If you're sure you're at the right place, here's what you need to know now:
+
 Install
-=======
+-------
 
 ```bash
-npm install --save letsencrypt
+npm install --save letsencrypt@2.x
+npm install --save le-store-certbot@2.x
+npm install --save le-challenge-fs@2.x
 ```
 
 Usage
-=====
+-----
 
-### letsencrypt
+It's very simple and easy to use, but also very complete and easy to extend and customize.
 
-There are **NO DEFAULTS**.
+### Overly Simplified Example
 
-A number of **constants** (such as LE.stagingServerUrl and LE.configDir)
-are exported for your convenience, but all required options must be specified by the library invoking the call.
-
-Open an issue if you need a variable for something that isn't there yet.
+Against my better judgement I'm providing a terribly oversimplified exmaple
+of how to use this library:
 
 ```javascript
-var LE = require('letsencrypt');
+var app = express();
 
+var le = require('letsencrypt').create({ server: 'staging' });
 
-var config = {
-  server: LE.stagingServerUrl                               // or LE.productionServerUrl
+app.use('/', le.middleware());
 
-, configDir: require('homedir')() + '/letsencrypt/etc'      // or /etc/letsencrypt or wherever
-
-, privkeyPath: ':config/live/:hostname/privkey.pem'         //
-, fullchainPath: ':config/live/:hostname/fullchain.pem'     // Note: both that :config and :hostname
-, certPath: ':config/live/:hostname/cert.pem'               //       will be templated as expected
-, chainPath: ':config/live/:hostname/chain.pem'             //
-
-, debug: false
-};
-
-
-var handlers = {
-  setChallenge: function (opts, hostname, key, val, cb) {}  // called during the ACME server handshake, before validation
-, removeChallenge: function (opts, hostname, key, cb) {}    // called after validation on both success and failure
-, getChallenge: function (opts, hostname, key, cb) {}       // this is special because it is called by the webserver
-                                                            // (see letsencrypt-cli/bin & letsencrypt-express/standalone),
-                                                            // not by the library itself
-
-, agreeToTerms: function (tosUrl, cb) {}                    // gives you an async way to expose the legal agreement
-                                                            // (terms of use) to your users before accepting
-};
-
-
-var le = LE.create(config, handlers);
-
-                                                              // checks :conf/renewal/:hostname.conf
-le.register({                                                 // and either renews or registers
-
-  domains: ['example.com']                                    // CHANGE TO YOUR DOMAIN
-, email: 'user@email.com'                                     // CHANGE TO YOUR EMAIL
-, agreeTos: false                                             // set to true to automatically accept an agreement
-                                                              // which you have pre-approved (not recommended)
-}, function (err) {
-
-  if (err) {
-    // Note: you must have a webserver running
-    // and expose handlers.getChallenge to it
-    // in order to pass validation
-    // See letsencrypt-cli and or letsencrypt-express
-    console.error('[Error]: node-letsencrypt/examples/standalone');
-    console.error(err.stack);
-  } else {
-    console.log('success');
-  }
-});
-```
-
-**However**, due to the nature of what this library does, it has a few more "moving parts"
-than what makes sense to show in a minimal snippet.
-
-API
-===
-
-```javascript
-LetsEncrypt.create(leConfig, handlers, backend)           // wraps a given "backend" (the python or node client)
-LetsEncrypt.stagingServer                                 // string of staging server for testing
-
-le.middleware()                                           // middleware for serving webrootPath to /.well-known/acme-challenge
-le.sniCallback(hostname, function (err, tlsContext) {})   // uses fetch (below) and formats for https.SNICallback
-le.register({ domains, email, agreeTos, ... }, cb)        // registers or renews certs for a domain
-le.fetch({domains, email, agreeTos, ... }, cb)            // fetches certs from in-memory cache, occasionally refreshes from disk
-le.registrationFailureCallback(err, args, certInfo, cb)   // called when registration fails (not implemented yet)
-```
-
-### `LetsEncrypt.create(backend, leConfig, handlers)`
-
-#### leConfig
-
-The arguments passed here (typically `webpathRoot`, `configDir`, etc) will be merged with
-any `args` (typically `domains`, `email`, and `agreeTos`) and passed to the backend whenever
-it is called.
-
-Typically the backend wrapper will already merge any necessary backend-specific arguments.
-
-**Example**:
-```javascript
-{ webrootPath: __dirname, '/acme-challenge'
-, fullchainTpl: '/live/:hostname/fullchain.pem'
-, privkeyTpl: '/live/:hostname/fullchain.pem'
-, configDir: '/etc/letsencrypt'
-}
-```
-
-Note: `webrootPath` can be set as a default, semi-locally with `webrootPathTpl`, or per
-registration as `webrootPath` (which overwrites `leConfig.webrootPath`).
-
-#### handlers *optional*
-
-`h.setChallenge(hostnames, name, value, cb)`:
-
-default is to write to fs
-
-`h.getChallenge(hostnames, value cb)`
-
-default is to read from fs
-
-`h.sniRegisterCallback(args, currentCerts, cb)`
-
-The default is to immediately call `cb(null, null)` and register (or renew) in the background
-during the `SNICallback` phase. Right now it isn't reasonable to renew during SNICallback,
-but around February when it is possible to use ECDSA keys (as opposed to RSA at present),
-registration will take very little time.
-
-This will not be called while another registration is already in progress.
-
-### `le.middleware()`
-
-An express handler for `/.well-known/acme-challenge/<challenge>`.
-Will call `getChallenge([hostname], key, cb)` if present or otherwise read `challenge` from disk.
-
-Example:
-```javascript
-app.use('/', le.middleware())
-```
-
-### `le.sniCallback(hostname, function (err, tlsContext) {});`
-
-Will call `fetch`. If fetch does not return certificates or returns expired certificates
-it will call `sniRegisterCallback(args, currentCerts, cb)` and then return the error,
-the new certificates, or call `fetch` a final time.
-
-Example:
-```javascript
-var server = require('https').createServer({ SNICallback: le.sniCallback, cert: '...', key: '...' });
-server.on('request', app);
-```
-
-### `le.register({ domains, email, agreeTos, ... }, cb)`
-
-Get certificates for a domain
-
-Example:
-```javascript
-le.register({
-  domains: ['example.com', 'www.example.com']
-, email: 'user@example.com'
-, webrootPath: '/srv/www/example.com/public'
-, agreeTos: true
-}, function (err, certs) {
-  // err is some error
-
-  console.log(certs);
-  /*
-  { cert: "contents of fullchain.pem"
-  , key: "contents of privkey.pem"
-  , renewedAt: <date in milliseconds>
-  , duration: <duration in milliseconds (90-days)>
-  }
-  */
-});
-```
-
-### `le.isValidDomain(hostname)`
-
-returns `true` if `hostname` is a valid ascii or punycode domain name.
-
-(also exposed on the main exported module as `LetsEncrypt.isValidDomain()`)
-
-### `le.fetch(args, cb)`
-
-Used internally, but exposed for convenience.
-
-Checks in-memory cache of certificates for `args.domains` and calls then calls `backend.fetch(args, cb)`
-**after** merging `args` if necessary.
-
-### `le.registrationFailureCallback(err, args, certInfo, cb)`
-
-Not yet implemented
-
-
-This is what `args` looks like:
-
-```javascript
-{ domains: ['example.com', 'www.example.com']
+var reg = {
+  domains: ['example.com']
 , email: 'user@email.com'
 , agreeTos: true
-, configDir: '/etc/letsencrypt'
-, fullchainTpl: '/live/:hostname/fullchain.pem'  // :hostname will be replaced with the domainname
-, privkeyTpl: '/live/:hostname/privkey.pem'
-, webrootPathTpl: '/srv/www/:hostname/public'
-, webrootPath: '/srv/www/example.com/public'    // templated from webrootPathTpl
+};
+
+le.register(reg, function (err, results) {
+  if (err) {
+    console.error(err.stack);
+    return;
+  }
+
+  console.log(results);
+});
+```
+
+### Useful Example
+
+The configuration consists of 3 components:
+
+* Storage Backend (search npm for projects starting with 'le-store-')
+* ACME Challenge Handlers (search npm for projects starting with 'le-challenge-')
+* Letsencryt Config (this is all you)
+
+```javascript
+'use strict';
+
+var LE = require('letsencrypt');
+var le;
+
+
+// Storage Backend
+var leStore = require('le-store-certbot').create({
+  configDir: '~/letsencrypt/etc'                          // or /etc/letsencrypt or wherever
+, debug: false
+});
+
+
+// ACME Challenge Handlers
+var leChallenger = require('le-challenge-fs').create({
+  webrootPath: '~/letsencrypt/var/'                       // or template string such as
+, debug: false                                            // '/srv/www/:hostname/.well-known/acme-challenge'
+});
+
+
+function leAgree(opts, agreeCb) {
+  // opts = { email, domains, tosUrl }
+  agreeCb(null, opts.tosUrl);
+}
+
+le = LE.create({
+  server: LE.stagingServerUrl                             // or LE.productionServerUrl
+, store: leStore                                          // handles saving of config, accounts, and certificates
+, challenger: leChallenger                                // handles /.well-known/acme-challege keys and tokens
+, agreeToTerms: leAgree                                   // hook to allow user to view and accept LE TOS
+, debug: false
+});
+
+
+// If using express you should use the middleware
+// app.use('/', le.middleware());
+//
+// Otherwise you should use the wrapped getChallenge:
+// le.getChallenge(domain, key, val, done)
+
+
+
+// Check in-memory cache of certificates for the named domain
+le.exists({ domain: 'example.com' }).then(function (results) {
+  if (results) {
+    // we already have certificates
+    return;
+  }
+
+  // Register Certificate manually
+  le.register(
+
+    { domains: ['example.com']                                // CHANGE TO YOUR DOMAIN (list for SANS)
+    , email: 'user@email.com'                                 // CHANGE TO YOUR EMAIL
+    , agreeTos: ''                                            // set to tosUrl string to pre-approve (and skip agreeToTerms)
+    , rsaKeySize: 2048                                        // 1024 or 2048
+    , challengeType: 'http-01'                                // http-01, tls-sni-01, or dns-01
+    }
+
+  , function (err, results) {
+      if (err) {
+        // Note: you must either use le.middleware() with express,
+        // manually use le.getChallenge(domain, key, val, done)
+        // or have a webserver running and responding
+        // to /.well-known/acme-challenge at `webrootPath`
+        console.error('[Error]: node-letsencrypt/examples/standalone');
+        console.error(err.stack);
+        return;
+      }
+
+      console.log('success');
+    }
+
+  );
+
+});
+```
+
+Here's what `results` looks like:
+
+```javascript
+{ privkey: ''     // PEM encoded private key
+, cert: ''        // PEM encoded cert
+, chain: ''       // PEM encoded intermediate cert
+, fullchain: ''   // cert + chain
+, issuedAt: 0     // notBefore date (in ms) parsed from cert
+, expiresAt: 0    // notAfter date (in ms) parsed from cert
 }
 ```
 
-This is what the implementation should look like:
+API
+---
 
-(it's expected that the client will follow the same conventions as
-the python client, but it's not necessary)
+The full end-user API is exposed in the example above and includes all relevant options.
+
+### Helper Functions
+
+We do expose a few helper functions:
+
+* LE.validDomain(hostname) // returns '' or the hostname string if it's a valid ascii or punycode domain name
+
+TODO fetch domain tld list
+
+Developer API
+-------------
+
+If you are developing an `le-store-*` or `le-challenge-*` plugin you need to be aware of
+additional internal API expectations.
+
+**IMPORTANT**:
+
+Use `v2.0.0` as your initial version - NOT v0.1.0 and NOT v1.0.0 and NOT v3.0.0.
+This is to indicate that your module is compatible with v2.x of node-letsencrypt.
+
+Since the public API for your module is defined by node-letsencrypt the major version
+should be kept in sync.
+
+### store implementation
+
+TODO double check and finish
+
+* accounts
+  * accounts.byDomain
+  * accounts.all
+  * accounts.get
+  * accounts.exists
+* certs
+  * certs.byDomain
+  * certs.all
+  * certs.get
+  * certs.exists
+
+### challenge implementation
+
+TODO finish
+
+* setChallenge(opts, domain, key, value, done);   // opts will be saved with domain/key
+* getChallenge(domain, key, done);                // opts will be retrieved by domain/key
+* removeChallenge(domain, key, done);             // opts will be retrieved by domain/key
 
 Change History
 ==============
 
+* v2.0.0 - Aug 5th 2016
+  * major refactor
+  * simplified API
+  * modular pluigns
+  * knock out bugs
 * v1.5.0 now using letiny-core v2.0.0 and rsa-compat
 * v1.4.x I can't remember... but it's better!
 * v1.1.0 Added letiny-core, removed node-letsencrypt-python
