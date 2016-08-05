@@ -208,6 +208,15 @@ We do expose a few helper functions:
 
 TODO fetch domain tld list
 
+### Template Strings
+
+The following variables will be tempalted in any strings passed to the options object:
+
+* `~/` replaced with `os.homedir()` i.e. `/Users/aj`
+* `:hostname` replaced with the domain i.e. `example.com`
+* `:config` replaced with `configDir` i.e. `~/letsencrypt/etc`
+* `:server` replaced with the hostname + pathname of the acme server api
+
 Developer API
 -------------
 
