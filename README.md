@@ -7,7 +7,7 @@
 | [letsencrypt-hapi](https://github.com/Daplie/letsencrypt-hapi)
 |
 
-letsencrypt
+letsencrypt (v2)
 ===========
 
 Automatic [Let's Encrypt](https://letsencrypt.org) HTTPS / TLS / SSL Certificates for node.js
@@ -87,7 +87,7 @@ le.register(
 
 You also need some sort of server to handle the acme challenge:
 
-```
+```javascript
 var app = express();
 app.use('/', le.middleware());
 ```
