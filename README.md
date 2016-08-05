@@ -28,35 +28,21 @@ Automatic [Let's Encrypt](https://letsencrypt.org) HTTPS / TLS / SSL Certificate
 STOP
 ====
 
-**These aren't the droids you're looking for.**
+> **These aren't the droids you're looking for.**
 
 This is a **low-level library** for implementing ACME / LetsEncrypt Clients, CLIs,
 system tools, and abstracting storage backends (file vs db, etc).
 
-This is not the thing to use in your webserver directly.
+For `express`, raw `https` or `spdy`, or `restify` (same as raw https) see
+[**letsencrypt-express**](https://github.com/Daplie/letsencrypt-express).
 
-### Use [letsencrypt-express](https://github.com/Daplie/letsencrypt-express) if...
+For `hapi` see [letsencrypt-hapi](https://github.com/Daplie/letsencrypt-hapi).
 
-you are planning to use one of these:
+For `koa` or `rill`
+see [letsencrypt-koa](https://github.com/Daplie/letsencrypt-koa).
 
-  * `express`
-  * `connect`
-  * raw `https`
-  * raw `spdy`
-  * `restify` (same as raw https)
-  * `hapi` See [letsencrypt-hapi](https://github.com/Daplie/letsencrypt-hapi)
-  * `koa` See [letsencrypt-koa](https://github.com/Daplie/letsencrypt-koa)
-  * `rill` (similar to koa example)
-
-### Use [letsencrypt-cli](https://github.com/Daplie/letsencrypt-cli) if...
-
-You are planning to use one of these:
-
-  * `bash`
-  * `fish`
-  * `zsh`
-  * `cmd.exe`
-  * `PowerShell`
+For `bash`, `fish`, `zsh`, `cmd.exe`, `PowerShell`
+see [**letsencrypt-cli**](https://github.com/Daplie/letsencrypt-cli).
 
 CONTINUE
 ========
@@ -65,6 +51,12 @@ If you're sure you're at the right place, here's what you need to know now:
 
 Install
 -------
+
+`letsencrypt` requires at least two plugins:
+one for managing certificate storage and the other for handling ACME challenges.
+
+The default storage plugin is [`le-store-certbot`](https://github.com/Daplie/le-store-certbot)
+and the default challenger is [`le-challenge-fs`](https://github.com/Daplie/le-challenge-fs).
 
 ```bash
 npm install --save letsencrypt@2.x
@@ -83,27 +75,26 @@ Against my better judgement I'm providing a terribly oversimplified exmaple
 of how to use this library:
 
 ```javascript
-var app = express();
-
 var le = require('letsencrypt').create({ server: 'staging' });
 
-app.use('/', le.middleware());
-
-var reg = {
-  domains: ['example.com']
-, email: 'user@email.com'
-, agreeTos: true
-};
-
-le.register(reg, function (err, results) {
-  if (err) {
-    console.error(err.stack);
-    return;
+le.register(
+  { domains: ['example.com'], email: 'user@email.com', agreeTos: true }
+, function (err, results) {
+    console.log(err, results);
   }
-
-  console.log(results);
-});
+);
 ```
+
+You also need some sort of server to handle the acme challenge:
+
+```
+var app = express();
+app.use('/', le.middleware());
+```
+
+Note: The `webrootPath` string is a template.
+Any occurance of `:hostname` will be replaced
+with the domain for which we are requested certificates.
 
 ### Useful Example
 
