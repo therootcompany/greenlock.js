@@ -23,58 +23,82 @@ Object.keys(LE.defaults).forEach(function (key) {
   LE[key] = LE.defaults[key];
 });
 
-LE.create = function (defaults, handlers, backend) {
-  var Core = require('./lib/core');
-  var core;
-  if (!backend) { backend = require('./lib/pycompat'); }
-  if (!handlers) { handlers = {}; }
-  if (!handlers.renewWithin) { handlers.renewWithin = 3 * 24 * 60 * 60 * 1000; }
-  if (!handlers.memorizeFor) { handlers.memorizeFor = 1 * 24 * 60 * 60 * 1000; }
-  if (!handlers.sniRegisterCallback) {
-    handlers.sniRegisterCallback = function (args, cache, cb) {
-      // TODO when we have ECDSA, just do this automatically
-      cb(null, null);
-    };
+var u; // undefined
+LE._undefined = {
+  store: u
+, challenger: u
+, register: u
+, check: u
+, renewWithin: u
+, memorizeFor: u
+, acmeChallengePrefix: u
+};
+LE._undefine = function (le) {
+  Object.keys(LE._undefined).forEach(function (key) {
+    if (!(key in le)) {
+      le[key] = u;
+    }
+  });
+
+  return le;
+};
+LE.create = function (le) {
+  le = LE._undefine(le);
+  var store = le.store || require('le-store-certbot').create({ debug: le.debug });
+  var challenger = le.challenge || require('le-store-certbot').create({ debug: le.debug });
+  var core = le.core = require('./lib/core');
+
+  le.acmeChallengePrefix = LE.acmeChallengePrefix;
+
+  if (!le.renewWithin) { le.renewWithin = 3 * 24 * 60 * 60 * 1000; }
+  if (!le.memorizeFor) { le.memorizeFor = 1 * 24 * 60 * 60 * 1000; }
+
+  if (!le.server) {
+    throw new Error("opts.server must be set to 'staging' or a production url, such as LE.productionServerUrl'");
+  }
+  if ('staging' === le.server) {
+    le.server = LE.stagingServerUrl;
+  }
+  else if ('production' === le.server) {
+    le.server = LE.productionServerUrl;
   }
 
-  if (backend.create) {
-    backend = backend.create(defaults);
+  if (store.create) {
+    store = store.create(le);
   }
-  backend = PromiseA.promisifyAll(backend);
-  core = Core.create(defaults, handlers, backend);
+  store = PromiseA.promisifyAll(store);
+  le._storeOpts = store.getOptions();
+  Object.keys(le._storeOpts).forEach(function (key) {
+    if (!(key in le._storeOpts)) {
+      le[key] = le._storeOpts[key];
+    }
+  });
 
-  var le = {
-    backend: backend
-  , core: core
-    // register
-  , create: function (args, cb) {
-      return core.registerAsync(args).then(function (pems) {
-        cb(null, pems);
-      }, cb);
+  if (challenger.create) {
+    challenger = challenger.create(le);
+  }
+  challenger = PromiseA.promisifyAll(challenger);
+  le._challengerOpts = challenger.getOptions();
+  Object.keys(le._storeOpts).forEach(function (key) {
+    if (!(key in le._challengerOpts)) {
+      le[key] = le._challengerOpts[key];
     }
-    // fetch
-  , domain: function (args, cb) {
-      // TODO must return email, domains, tos, pems
-      return core.fetchAsync(args).then(function (certInfo) {
-        cb(null, certInfo);
-      }, cb);
-    }
-  , domains: function (args, cb) {
-      // TODO show all domains or limit by account
-      throw new Error('not implemented');
-    }
-  , accounts: function (args, cb) {
-      // TODO show all accounts or limit by domain
-      throw new Error('not implemented');
-    }
-  , account: function (args, cb) {
-      // TODO return one account
-      throw new Error('not implemented');
-    }
+  });
+
+  core = le.core = core.create(le);
+
+  le.register = function (args) {
+    return core.registerAsync(args);
   };
 
-  // exists
-  // get
+  le.check = function (args) {
+    // TODO must return email, domains, tos, pems
+    return core.fetchAsync(args);
+  };
+
+  le.middleware = function () {
+    return require('./lib/middleware')(le);
+  };
 
   return le;
 };
