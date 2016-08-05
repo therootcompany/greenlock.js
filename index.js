@@ -1,19 +1,16 @@
 'use strict';
 
-// TODO handle www and no-www together somehow?
-
 var PromiseA = require('bluebird');
 var leCore = require('letiny-core');
 
 var LE = module.exports;
 
 LE.defaults = {
-  server: leCore.productionServerUrl
-, stagingServer: leCore.stagingServerUrl
-, liveServer: leCore.productionServerUrl
-
-, productionServerUrl: leCore.productionServerUrl
+  productionServerUrl: leCore.productionServerUrl
 , stagingServerUrl: leCore.stagingServerUrl
+
+, rsaKeySize: leCore.rsaKeySize || 2048
+, challengeType: leCore.challengeType || 'http-01'
 
 , acmeChallengePrefix: leCore.acmeChallengePrefix
 };
@@ -23,6 +20,7 @@ Object.keys(LE.defaults).forEach(function (key) {
   LE[key] = LE.defaults[key];
 });
 
+// show all possible options
 var u; // undefined
 LE._undefined = {
   store: u
@@ -32,6 +30,9 @@ LE._undefined = {
 , renewWithin: u
 , memorizeFor: u
 , acmeChallengePrefix: u
+, rsaKeySize: u
+, challengeType: u
+, server: u
 };
 LE._undefine = function (le) {
   Object.keys(LE._undefined).forEach(function (key) {
@@ -49,6 +50,8 @@ LE.create = function (le) {
   var core = le.core = require('./lib/core');
 
   le.acmeChallengePrefix = LE.acmeChallengePrefix;
+  le.rsaKeySize = le.rsaKeySize || LE.rsaKeySize;
+  le.challengeType = le.challengeType || LE.challengeType;
 
   if (!le.renewWithin) { le.renewWithin = 3 * 24 * 60 * 60 * 1000; }
   if (!le.memorizeFor) { le.memorizeFor = 1 * 24 * 60 * 60 * 1000; }

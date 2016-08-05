@@ -154,31 +154,30 @@ le.exists({ domain: 'example.com' }).then(function (results) {
     return;
   }
 
+
   // Register Certificate manually
-  le.register(
+  le.register({
 
-    { domains: ['example.com']                                // CHANGE TO YOUR DOMAIN (list for SANS)
-    , email: 'user@email.com'                                 // CHANGE TO YOUR EMAIL
-    , agreeTos: ''                                            // set to tosUrl string to pre-approve (and skip agreeToTerms)
-    , rsaKeySize: 2048                                        // 1024 or 2048
-    , challengeType: 'http-01'                                // http-01, tls-sni-01, or dns-01
-    }
+    domains: ['example.com']                                // CHANGE TO YOUR DOMAIN (list for SANS)
+  , email: 'user@email.com'                                 // CHANGE TO YOUR EMAIL
+  , agreeTos: ''                                            // set to tosUrl string to pre-approve (and skip agreeToTerms)
+  , rsaKeySize: 2048                                        // 2048 or higher
+  , challengeType: 'http-01'                                // http-01, tls-sni-01, or dns-01
 
-  , function (err, results) {
-      if (err) {
-        // Note: you must either use le.middleware() with express,
-        // manually use le.getChallenge(domain, key, val, done)
-        // or have a webserver running and responding
-        // to /.well-known/acme-challenge at `webrootPath`
-        console.error('[Error]: node-letsencrypt/examples/standalone');
-        console.error(err.stack);
-        return;
-      }
+  }).then(function (results) {
 
-      console.log('success');
-    }
+    console.log('success');
 
-  );
+  }, function (err) {
+
+    // Note: you must either use le.middleware() with express,
+    // manually use le.getChallenge(domain, key, val, done)
+    // or have a webserver running and responding
+    // to /.well-known/acme-challenge at `webrootPath`
+    console.error('[Error]: node-letsencrypt/examples/standalone');
+    console.error(err.stack);
+
+  });
 
 });
 ```
@@ -241,7 +240,7 @@ TODO double check and finish
   * accounts.get
   * accounts.exists
 * certs
-  * certs.byDomain
+  * certs.byAccount
   * certs.all
   * certs.get
   * certs.exists
@@ -250,9 +249,9 @@ TODO double check and finish
 
 TODO finish
 
-* setChallenge(opts, domain, key, value, done);   // opts will be saved with domain/key
-* getChallenge(domain, key, done);                // opts will be retrieved by domain/key
-* removeChallenge(domain, key, done);             // opts will be retrieved by domain/key
+* `.set(opts, domain, key, value, done);`         // opts will be saved with domain/key
+* `.get(opts, domain, key, done);`                // opts will be retrieved by domain/key
+* `.remove(opts, domain, key, done);`             // opts will be retrieved by domain/key
 
 Change History
 ==============
