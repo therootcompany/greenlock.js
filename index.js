@@ -1,9 +1,10 @@
 'use strict';
 
-var PromiseA = require('bluebird');
 var leCore = require('letiny-core');
 
 var LE = module.exports;
+// in-process cache, shared between all instances
+var ipc = {};
 
 LE.defaults = {
   productionServerUrl: leCore.productionServerUrl
@@ -33,6 +34,7 @@ LE._undefined = {
 , rsaKeySize: u
 , challengeType: u
 , server: u
+, _ipc: u
 };
 LE._undefine = function (le) {
   Object.keys(LE._undefined).forEach(function (key) {
@@ -44,14 +46,17 @@ LE._undefine = function (le) {
   return le;
 };
 LE.create = function (le) {
-  le = LE._undefine(le);
-  var store = le.store || require('le-store-certbot').create({ debug: le.debug });
-  var challenger = le.challenge || require('le-store-certbot').create({ debug: le.debug });
-  var core = le.core = require('./lib/core');
+  var PromiseA = require('bluebird');
 
+  le.store = le.store || require('le-store-certbot').create({ debug: le.debug });
+  le.challenger = le.challenger || require('le-store-certbot').create({ debug: le.debug });
+  le.core = require('./lib/core');
+
+  le = LE._undefine(le);
   le.acmeChallengePrefix = LE.acmeChallengePrefix;
   le.rsaKeySize = le.rsaKeySize || LE.rsaKeySize;
   le.challengeType = le.challengeType || LE.challengeType;
+  le._ipc = ipc;
 
   if (!le.renewWithin) { le.renewWithin = 3 * 24 * 60 * 60 * 1000; }
   if (!le.memorizeFor) { le.memorizeFor = 1 * 24 * 60 * 60 * 1000; }
@@ -66,37 +71,39 @@ LE.create = function (le) {
     le.server = LE.productionServerUrl;
   }
 
-  if (store.create) {
-    store = store.create(le);
+  if (le.store.create) {
+    le.store = le.store.create(le);
   }
-  store = PromiseA.promisifyAll(store);
-  le._storeOpts = store.getOptions();
+  le.store = PromiseA.promisifyAll(le.store);
+  le._storeOpts = le.store.getOptions();
   Object.keys(le._storeOpts).forEach(function (key) {
     if (!(key in le._storeOpts)) {
       le[key] = le._storeOpts[key];
     }
   });
 
-  if (challenger.create) {
-    challenger = challenger.create(le);
+  if (le.challenger.create) {
+    le.challenger = le.challenger.create(le);
   }
-  challenger = PromiseA.promisifyAll(challenger);
-  le._challengerOpts = challenger.getOptions();
+  le.challenger = PromiseA.promisifyAll(le.challenger);
+  le._challengerOpts = le.challenger.getOptions();
   Object.keys(le._storeOpts).forEach(function (key) {
     if (!(key in le._challengerOpts)) {
       le[key] = le._challengerOpts[key];
     }
   });
 
-  core = le.core = core.create(le);
+  if (le.core.create) {
+    le.core = le.core.create(le);
+  }
 
   le.register = function (args) {
-    return core.registerAsync(args);
+    return le.core.registerAsync(args);
   };
 
   le.check = function (args) {
     // TODO must return email, domains, tos, pems
-    return core.fetchAsync(args);
+    return le.core.fetchAsync(args);
   };
 
   le.middleware = function () {
