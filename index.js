@@ -4,13 +4,8 @@
 
 var PromiseA = require('bluebird');
 var leCore = require('letiny-core');
-var utils = require('./lib/common');
-var merge = require('./lib/common').merge;
-var tplCopy = require('./lib/common').tplCopy;
 
 var LE = module.exports;
-
-LE.merge = require('./lib/common').merge;
 
 LE.defaults = {
   server: leCore.productionServerUrl
@@ -28,12 +23,11 @@ Object.keys(LE.defaults).forEach(function (key) {
   LE[key] = LE.defaults[key];
 });
 
-                    // backend, defaults, handlers
 LE.create = function (defaults, handlers, backend) {
-  var Backend = require('./lib/core');
-  if (!backend) { backend = require('./lib/pycompat').create(defaults); }
+  var Core = require('./lib/core');
+  var core;
+  if (!backend) { backend = require('./lib/pycompat'); }
   if (!handlers) { handlers = {}; }
-  if (!handlers.lifetime) { handlers.lifetime = 90 * 24 * 60 * 60 * 1000; }
   if (!handlers.renewWithin) { handlers.renewWithin = 3 * 24 * 60 * 60 * 1000; }
   if (!handlers.memorizeFor) { handlers.memorizeFor = 1 * 24 * 60 * 60 * 1000; }
   if (!handlers.sniRegisterCallback) {
@@ -42,188 +36,45 @@ LE.create = function (defaults, handlers, backend) {
       cb(null, null);
     };
   }
-  if (!handlers.getChallenge) {
-    if (!defaults.manual && !defaults.webrootPath) {
-      // GET /.well-known/acme-challenge/{{challengeKey}} should return {{tokenValue}}
-      throw new Error("handlers.getChallenge or defaults.webrootPath must be set");
-    }
-    handlers.getChallenge = function (hostname, key, done) {
-      // TODO associate by hostname?
-      // hmm... I don't think there's a direct way to associate this with
-      // the request it came from... it's kinda stateless in that way
-      // but realistically there only needs to be one handler and one
-      // "directory" for this. It's not that big of a deal.
-      var defaultos = LE.merge({}, defaults);
-      var getChallenge = require('./lib/default-handlers').getChallenge;
-      var copy = merge({ domains: [hostname] }, defaults);
 
-      tplCopy(copy);
-      defaultos.domains = [hostname];
-
-      if (3 === getChallenge.length) {
-        console.warn('[WARNING] Deprecated use. Define getChallenge as function (opts, domain, key, cb) { }');
-        getChallenge(defaultos, key, done);
-      }
-      else if (4 === getChallenge.length) {
-        getChallenge(defaultos, hostname, key, done);
-      }
-      else {
-        done(new Error("handlers.getChallenge [1] receives the wrong number of arguments"));
-      }
-    };
+  if (backend.create) {
+    backend = backend.create(defaults);
   }
-  if (!handlers.setChallenge) {
-    if (!defaults.webrootPath) {
-      // GET /.well-known/acme-challenge/{{challengeKey}} should return {{tokenValue}}
-      throw new Error("handlers.setChallenge or defaults.webrootPath must be set");
-    }
-    handlers.setChallenge = require('./lib/default-handlers').setChallenge;
-  }
-  if (!handlers.removeChallenge) {
-    if (!defaults.webrootPath) {
-      // GET /.well-known/acme-challenge/{{challengeKey}} should return {{tokenValue}}
-      throw new Error("handlers.removeChallenge or defaults.webrootPath must be set");
-    }
-    handlers.removeChallenge = require('./lib/default-handlers').removeChallenge;
-  }
-  if (!handlers.agreeToTerms) {
-    if (defaults.agreeTos) {
-      console.warn("[WARN] Agreeing to terms by default is risky business...");
-    }
-    handlers.agreeToTerms = require('./lib/default-handlers').agreeToTerms;
-  }
-
-  backend = Backend.create(defaults, handlers);
   backend = PromiseA.promisifyAll(backend);
+  core = Core.create(defaults, handlers, backend);
 
-  //var attempts = {};  // should exist in master process only
-  var le;
-
-  // TODO check certs on initial load
-  // TODO expect that certs expire every 90 days
-  // TODO check certs with setInterval?
-  //options.cacheContextsFor = options.cacheContextsFor || (1 * 60 * 60 * 1000);
-
-  le = {
+  var le = {
     backend: backend
-  , pyToJson: function (pyobj) {
-      if (!pyobj) {
-        return null;
-      }
-
-      var jsobj = {};
-      Object.keys(pyobj).forEach(function (key) {
-        jsobj[key] = pyobj[key];
-      });
-      jsobj.__lines = undefined;
-      jsobj.__keys = undefined;
-
-      return jsobj;
-    }
-  , register: function (args, cb) {
-      if (defaults.debug || args.debug) {
-        console.log('[LE] register');
-      }
-      if (!Array.isArray(args.domains)) {
-        cb(new Error('args.domains should be an array of domains'));
-        return;
-      }
-
-      var copy = LE.merge(args, defaults);
-      var err;
-
-      if (!utils.isValidDomain(args.domains[0])) {
-        err = new Error("invalid domain name: '" + args.domains + "'");
-        err.code = "INVALID_DOMAIN";
-        cb(err);
-        return;
-      }
-
-      if ((!args.domains.length && args.domains.every(le.isValidDomain))) {
-        // NOTE: this library can't assume to handle the http loopback
-        // (or dns-01 validation may be used)
-        // so we do not check dns records or attempt a loopback here
-        cb(new Error("node-letsencrypt: invalid hostnames: " + args.domains.join(',')));
-        return;
-      }
-
-      if (defaults.debug || args.debug) {
-        console.log("[NLE]: begin registration");
-      }
-
-      return backend.registerAsync(copy).then(function (pems) {
-        if (defaults.debug || args.debug) {
-          console.log("[NLE]: end registration");
-        }
+  , core: core
+    // register
+  , create: function (args, cb) {
+      return core.registerAsync(args).then(function (pems) {
         cb(null, pems);
-        //return le.fetch(args, cb);
       }, cb);
     }
-  , fetch: function (args, cb) {
-      if (defaults.debug || args.debug) {
-        console.log('[LE] fetch');
-      }
-
-      // TODO figure out what TPLs are needed
-      var copy = merge(args, defaults);
-      tplCopy(copy);
-
-      return backend.fetchAsync(args).then(function (certInfo) {
-        if (args.debug) {
-          console.log('[LE] raw fetch certs', certInfo && Object.keys(certInfo));
-        }
-        if (!certInfo) { cb(null, null); return; }
-
-        // key, cert, issuedAt, lifetime, expiresAt
-        if (!certInfo.expiresAt) {
-          certInfo.expiresAt = certInfo.issuedAt + (certInfo.lifetime || handlers.lifetime);
-        }
-        if (!certInfo.lifetime) {
-          certInfo.lifetime = (certInfo.lifetime || handlers.lifetime);
-        }
-        // a pretty good hard buffer
-        certInfo.expiresAt -= (1 * 24 * 60 * 60 * 100);
-
+    // fetch
+  , domain: function (args, cb) {
+      // TODO must return email, domains, tos, pems
+      return core.fetchAsync(args).then(function (certInfo) {
         cb(null, certInfo);
       }, cb);
     }
-  , getConfig: function (args, cb) {
-      if (defaults.debug || args.debug) {
-        console.log('[LE] getConfig');
-      }
-      backend.getConfigAsync(args).then(function (pyobj) {
-        cb(null, le.pyToJson(pyobj));
-      }, function (err) {
-        console.error("[letsencrypt/index.js] getConfig");
-        console.error(err.stack);
-        return cb(null, []);
-      });
+  , domains: function (args, cb) {
+      // TODO show all domains or limit by account
+      throw new Error('not implemented');
     }
-  , getConfigs: function (args, cb) {
-      if (defaults.debug || args.debug) {
-        console.log('[LE] getConfigs');
-      }
-      backend.getConfigsAsync(args).then(function (configs) {
-        cb(null, configs.map(le.pyToJson));
-      }, function (err) {
-        if ('ENOENT' === err.code) {
-          cb(null, []);
-        } else {
-          console.error("[letsencrypt/index.js] getConfigs");
-          console.error(err.stack);
-          cb(err);
-        }
-      });
+  , accounts: function (args, cb) {
+      // TODO show all accounts or limit by domain
+      throw new Error('not implemented');
     }
-  , setConfig: function (args, cb) {
-      if (defaults.debug || args.debug) {
-        console.log('[LE] setConfig');
-      }
-      backend.configureAsync(args).then(function (pyobj) {
-        cb(null, le.pyToJson(pyobj));
-      });
+  , account: function (args, cb) {
+      // TODO return one account
+      throw new Error('not implemented');
     }
   };
+
+  // exists
+  // get
 
   return le;
 };
