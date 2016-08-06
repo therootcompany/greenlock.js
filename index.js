@@ -34,6 +34,7 @@ LE._undefined = {
 , rsaKeySize: u
 , challengeType: u
 , server: u
+, agreeToTerms: u
 , _ipc: u
 };
 LE._undefine = function (le) {
