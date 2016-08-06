@@ -148,7 +148,7 @@ le = LE.create({
 
 
 // Check in-memory cache of certificates for the named domain
-le.exists({ domain: 'example.com' }).then(function (results) {
+le.check({ domain: 'example.com' }).then(function (results) {
   if (results) {
     // we already have certificates
     return;
@@ -156,11 +156,11 @@ le.exists({ domain: 'example.com' }).then(function (results) {
 
 
   // Register Certificate manually
-  le.register({
+  le.get({
 
     domains: ['example.com']                                // CHANGE TO YOUR DOMAIN (list for SANS)
   , email: 'user@email.com'                                 // CHANGE TO YOUR EMAIL
-  , agreeTos: ''                                            // set to tosUrl string to pre-approve (and skip agreeToTerms)
+  , agreeTos: ''                                            // set to tosUrl string (or true) to pre-approve (and skip agreeToTerms)
   , rsaKeySize: 2048                                        // 2048 or higher
   , challengeType: 'http-01'                                // http-01, tls-sni-01, or dns-01
 
@@ -198,6 +198,12 @@ API
 ---
 
 The full end-user API is exposed in the example above and includes all relevant options.
+
+```
+le.register
+le.get          // checkAndRegister
+le.check
+```
 
 ### Helper Functions
 
