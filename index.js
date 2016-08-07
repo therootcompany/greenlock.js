@@ -99,12 +99,12 @@ LE.create = function (le) {
   }
 
   le.register = function (args) {
-    return le.core.registerAsync(args);
+    return le.core.certificates.getAsync(args);
   };
 
   le.check = function (args) {
     // TODO must return email, domains, tos, pems
-    return le.core.fetchAsync(args);
+    return le.core.certificates.checkAsync(args);
   };
 
   le.middleware = function () {
