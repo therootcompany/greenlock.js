@@ -1,19 +1,20 @@
 'use strict';
 
-var leCore = require('letiny-core');
+var ACME = require('le-acme-core').ACME;
 
 var LE = module.exports;
+LE.LE = LE;
 // in-process cache, shared between all instances
 var ipc = {};
 
 LE.defaults = {
-  productionServerUrl: leCore.productionServerUrl
-, stagingServerUrl: leCore.stagingServerUrl
+  productionServerUrl: ACME.productionServerUrl
+, stagingServerUrl: ACME.stagingServerUrl
 
-, rsaKeySize: leCore.rsaKeySize || 2048
-, challengeType: leCore.challengeType || 'http-01'
+, rsaKeySize: ACME.rsaKeySize || 2048
+, challengeType: ACME.challengeType || 'http-01'
 
-, acmeChallengePrefix: leCore.acmeChallengePrefix
+, acmeChallengePrefix: ACME.acmeChallengePrefix
 };
 
 // backwards compat
@@ -50,7 +51,7 @@ LE._undefine = function (le) {
 LE.create = function (le) {
   var PromiseA = require('bluebird');
 
-  le.acme = le.acme || leCore;
+  le.acme = le.acme || ACME.create({ debug: le.debug });
   le.store = le.store || require('le-store-certbot').create({ debug: le.debug });
   le.challenger = le.challenger || require('le-store-certbot').create({ debug: le.debug });
   le.core = require('./lib/core');
