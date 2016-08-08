@@ -28,8 +28,10 @@ LE._undefined = {
   acme: u
 , store: u
 , challenger: u
+
 , register: u
 , check: u
+
 , renewWithin: u
 , memorizeFor: u
 , acmeChallengePrefix: u
@@ -61,6 +63,9 @@ LE.create = function (le) {
   le.rsaKeySize = le.rsaKeySize || LE.rsaKeySize;
   le.challengeType = le.challengeType || LE.challengeType;
   le._ipc = ipc;
+  le.agreeToTerms = le.agreeToTerms || function (args, agreeCb) {
+    agreeCb(new Error("'agreeToTerms' was not supplied to LE and 'agreeTos' was not supplied to LE.register"));
+  };
 
   if (!le.renewWithin) { le.renewWithin = 3 * 24 * 60 * 60 * 1000; }
   if (!le.memorizeFor) { le.memorizeFor = 1 * 24 * 60 * 60 * 1000; }

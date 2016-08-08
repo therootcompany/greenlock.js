@@ -11,7 +11,8 @@ var le = LE.create({
 , debug: true
 });
 
-var testId = Math.round(Date.now() / 1000).toString();
+//var testId = Math.round(Date.now() / 1000).toString();
+var testId = 'test1000';
 var fakeEmail = 'coolaj86+le.' + testId + '@example.com';
 var testEmail = 'coolaj86+le.' + testId + '@gmail.com';
 var testAccount;
@@ -74,6 +75,10 @@ var tests = [
     , rsaKeySize: 2048
     }).then(function (account) {
       testAccount = account;
+
+      console.log(testEmail);
+      console.log(testAccount);
+
       if (!account) {
         throw new Error("Registration should always return a new account.");
       }
@@ -82,24 +87,6 @@ var tests = [
       }
       if (!account.id) {
         throw new Error("Registration should return the account id.");
-      }
-    });
-  }
-, function () {
-    return le.core.accounts.checkAsync({
-      email: testAccount.email
-    }).then(function (account) {
-      if (!account) {
-        throw new Error("Test account should exist when searched by email.");
-      }
-    });
-  }
-, function () {
-    return le.core.accounts.checkAsync({
-      accountId: testAccount.id
-    }).then(function (account) {
-      if (!account) {
-        throw new Error("Test account should exist when searched by account id.");
       }
     });
   }
