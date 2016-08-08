@@ -24,7 +24,8 @@ Object.keys(LE.defaults).forEach(function (key) {
 // show all possible options
 var u; // undefined
 LE._undefined = {
-  store: u
+  acme: u
+, store: u
 , challenger: u
 , register: u
 , check: u
@@ -49,6 +50,7 @@ LE._undefine = function (le) {
 LE.create = function (le) {
   var PromiseA = require('bluebird');
 
+  le.acme = le.acme || leCore;
   le.store = le.store || require('le-store-certbot').create({ debug: le.debug });
   le.challenger = le.challenger || require('le-store-certbot').create({ debug: le.debug });
   le.core = require('./lib/core');
@@ -72,13 +74,24 @@ LE.create = function (le) {
     le.server = LE.productionServerUrl;
   }
 
+  if (le.acme.create) {
+    le.acme = le.acme.create(le);
+  }
+  le.acme = PromiseA.promisifyAll(le.acme);
+  le._acmeOpts = le.acme.getOptions();
+  Object.keys(le._acmeOpts).forEach(function (key) {
+    if (!(key in le)) {
+      le[key] = le._acmeOpts[key];
+    }
+  });
+
   if (le.store.create) {
     le.store = le.store.create(le);
   }
   le.store = PromiseA.promisifyAll(le.store);
   le._storeOpts = le.store.getOptions();
   Object.keys(le._storeOpts).forEach(function (key) {
-    if (!(key in le._storeOpts)) {
+    if (!(key in le)) {
       le[key] = le._storeOpts[key];
     }
   });
@@ -88,8 +101,8 @@ LE.create = function (le) {
   }
   le.challenger = PromiseA.promisifyAll(le.challenger);
   le._challengerOpts = le.challenger.getOptions();
-  Object.keys(le._storeOpts).forEach(function (key) {
-    if (!(key in le._challengerOpts)) {
+  Object.keys(le._challengerOpts).forEach(function (key) {
+    if (!(key in le)) {
       le[key] = le._challengerOpts[key];
     }
   });
