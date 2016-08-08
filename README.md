@@ -7,23 +7,12 @@
 | [letsencrypt-hapi](https://github.com/Daplie/letsencrypt-hapi)
 |
 
-letsencrypt (v2)
+letsencrypt
 ===========
 
 Automatic [Let's Encrypt](https://letsencrypt.org) HTTPS / TLS / SSL Certificates for node.js
 
-  * [Automatic HTTPS with ExpressJS](https://github.com/Daplie/letsencrypt-express)
-  * [Automatic live renewal](https://github.com/Daplie/letsencrypt-express#how-automatic)
-  * On-the-fly HTTPS certificates for Dynamic DNS (in-process, no server restart)
-  * Works with node cluster out of the box
-  * usable [via commandline](https://github.com/Daplie/letsencrypt-cli) as well
-  * Free SSL (HTTPS Certificates for TLS)
-  * [90-day certificates](https://letsencrypt.org/2015/11/09/why-90-days.html)
-
-**See Also**
-
-* [Let's Encrypt in (exactly) 90 seconds with Caddy](https://daplie.com/articles/lets-encrypt-in-literally-90-seconds/)
-* [lego](https://github.com/xenolf/lego): Let's Encrypt for golang
+Free SLL with [90-day](https://letsencrypt.org/2015/11/09/why-90-days.html) HTTPS / TLS Certificates
 
 STOP
 ====
@@ -71,7 +60,7 @@ It's very simple and easy to use, but also very complete and easy to extend and 
 
 ### Overly Simplified Example
 
-Against my better judgement I'm providing a terribly oversimplified exmaple
+Against my better judgement I'm providing a terribly oversimplified example
 of how to use this library:
 
 ```javascript
