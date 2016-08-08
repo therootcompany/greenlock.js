@@ -6,12 +6,14 @@ var le = LE.create({
 , acme: require('le-acme-core').ACME.create()
 , store: require('le-store-certbot').create({
     configDir: '~/letsencrypt.test/etc/'
+  , webrootPath: '~/letsencrypt.test/tmp/:hostname'
   })
+, debug: true
 });
 
 var testId = Math.round(Date.now() / 1000).toString();
 var fakeEmail = 'coolaj86+le.' + testId + '@example.com';
-var testEmail = 'coolaj86+le.' + testId + '@example.com';
+var testEmail = 'coolaj86+le.' + testId + '@gmail.com';
 var testAccount;
 
 var tests = [
@@ -66,9 +68,8 @@ var tests = [
     });
   }
 , function () {
-    throw new Error('NOT IMPLEMENTED');
     return le.core.accounts.registerAsync({
-      email: 'coolaj86+le.' + testId + '@example.com'
+      email: testEmail
     , agreeTos: true
     , rsaKeySize: 2048
     }).then(function (account) {
