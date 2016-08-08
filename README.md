@@ -207,9 +207,7 @@ TODO fetch domain tld list
 The following variables will be tempalted in any strings passed to the options object:
 
 * `~/` replaced with `os.homedir()` i.e. `/Users/aj`
-* `:hostname` replaced with the domain i.e. `example.com`
-* `:config` replaced with `configDir` i.e. `~/letsencrypt/etc`
-* `:server` replaced with the hostname + pathname of the acme server api
+* `:hostname` replaced with the first domain in the list i.e. `example.com`
 
 Developer API
 -------------
