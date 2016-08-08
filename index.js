@@ -1,21 +1,20 @@
 'use strict';
 
-// TODO handle www and no-www together somehow?
-
-var PromiseA = require('bluebird');
-var leCore = require('letiny-core');
+var ACME = require('le-acme-core').ACME;
 
 var LE = module.exports;
+LE.LE = LE;
+// in-process cache, shared between all instances
+var ipc = {};
 
 LE.defaults = {
-  server: leCore.productionServerUrl
-, stagingServer: leCore.stagingServerUrl
-, liveServer: leCore.productionServerUrl
+  productionServerUrl: ACME.productionServerUrl
+, stagingServerUrl: ACME.stagingServerUrl
 
-, productionServerUrl: leCore.productionServerUrl
-, stagingServerUrl: leCore.stagingServerUrl
+, rsaKeySize: ACME.rsaKeySize || 2048
+, challengeType: ACME.challengeType || 'http-01'
 
-, acmeChallengePrefix: leCore.acmeChallengePrefix
+, acmeChallengePrefix: ACME.acmeChallengePrefix
 };
 
 // backwards compat
@@ -23,58 +22,108 @@ Object.keys(LE.defaults).forEach(function (key) {
   LE[key] = LE.defaults[key];
 });
 
-LE.create = function (defaults, handlers, backend) {
-  var Core = require('./lib/core');
-  var core;
-  if (!backend) { backend = require('./lib/pycompat'); }
-  if (!handlers) { handlers = {}; }
-  if (!handlers.renewWithin) { handlers.renewWithin = 3 * 24 * 60 * 60 * 1000; }
-  if (!handlers.memorizeFor) { handlers.memorizeFor = 1 * 24 * 60 * 60 * 1000; }
-  if (!handlers.sniRegisterCallback) {
-    handlers.sniRegisterCallback = function (args, cache, cb) {
-      // TODO when we have ECDSA, just do this automatically
-      cb(null, null);
-    };
+// show all possible options
+var u; // undefined
+LE._undefined = {
+  acme: u
+, store: u
+, challenger: u
+, register: u
+, check: u
+, renewWithin: u
+, memorizeFor: u
+, acmeChallengePrefix: u
+, rsaKeySize: u
+, challengeType: u
+, server: u
+, agreeToTerms: u
+, _ipc: u
+};
+LE._undefine = function (le) {
+  Object.keys(LE._undefined).forEach(function (key) {
+    if (!(key in le)) {
+      le[key] = u;
+    }
+  });
+
+  return le;
+};
+LE.create = function (le) {
+  var PromiseA = require('bluebird');
+
+  le.acme = le.acme || ACME.create({ debug: le.debug });
+  le.store = le.store || require('le-store-certbot').create({ debug: le.debug });
+  le.challenger = le.challenger || require('le-store-certbot').create({ debug: le.debug });
+  le.core = require('./lib/core');
+
+  le = LE._undefine(le);
+  le.acmeChallengePrefix = LE.acmeChallengePrefix;
+  le.rsaKeySize = le.rsaKeySize || LE.rsaKeySize;
+  le.challengeType = le.challengeType || LE.challengeType;
+  le._ipc = ipc;
+
+  if (!le.renewWithin) { le.renewWithin = 3 * 24 * 60 * 60 * 1000; }
+  if (!le.memorizeFor) { le.memorizeFor = 1 * 24 * 60 * 60 * 1000; }
+
+  if (!le.server) {
+    throw new Error("opts.server must be set to 'staging' or a production url, such as LE.productionServerUrl'");
+  }
+  if ('staging' === le.server) {
+    le.server = LE.stagingServerUrl;
+  }
+  else if ('production' === le.server) {
+    le.server = LE.productionServerUrl;
   }
 
-  if (backend.create) {
-    backend = backend.create(defaults);
+  if (le.acme.create) {
+    le.acme = le.acme.create(le);
   }
-  backend = PromiseA.promisifyAll(backend);
-  core = Core.create(defaults, handlers, backend);
+  le.acme = PromiseA.promisifyAll(le.acme);
+  le._acmeOpts = le.acme.getOptions();
+  Object.keys(le._acmeOpts).forEach(function (key) {
+    if (!(key in le)) {
+      le[key] = le._acmeOpts[key];
+    }
+  });
 
-  var le = {
-    backend: backend
-  , core: core
-    // register
-  , create: function (args, cb) {
-      return core.registerAsync(args).then(function (pems) {
-        cb(null, pems);
-      }, cb);
+  if (le.store.create) {
+    le.store = le.store.create(le);
+  }
+  le.store = PromiseA.promisifyAll(le.store);
+  le._storeOpts = le.store.getOptions();
+  Object.keys(le._storeOpts).forEach(function (key) {
+    if (!(key in le)) {
+      le[key] = le._storeOpts[key];
     }
-    // fetch
-  , domain: function (args, cb) {
-      // TODO must return email, domains, tos, pems
-      return core.fetchAsync(args).then(function (certInfo) {
-        cb(null, certInfo);
-      }, cb);
+  });
+
+  if (le.challenger.create) {
+    le.challenger = le.challenger.create(le);
+  }
+  le.challenger = PromiseA.promisifyAll(le.challenger);
+  le._challengerOpts = le.challenger.getOptions();
+  Object.keys(le._challengerOpts).forEach(function (key) {
+    if (!(key in le)) {
+      le[key] = le._challengerOpts[key];
     }
-  , domains: function (args, cb) {
-      // TODO show all domains or limit by account
-      throw new Error('not implemented');
-    }
-  , accounts: function (args, cb) {
-      // TODO show all accounts or limit by domain
-      throw new Error('not implemented');
-    }
-  , account: function (args, cb) {
-      // TODO return one account
-      throw new Error('not implemented');
-    }
+  });
+
+  if (le.core.create) {
+    le.core = le.core.create(le);
+  }
+
+  le.register = function (args) {
+    return le.core.certificates.getAsync(args);
   };
 
-  // exists
-  // get
+  le.check = function (args) {
+    // TODO must return email, domains, tos, pems
+    return le.core.certificates.checkAsync(args);
+  };
+
+  le.middleware = function () {
+    return require('./lib/middleware')(le);
+  };
 
   return le;
 };
