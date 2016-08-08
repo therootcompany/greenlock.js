@@ -60,7 +60,7 @@ It's very simple and easy to use, but also very complete and easy to extend and 
 
 ### Overly Simplified Example
 
-Against my better judgement I'm providing a terribly oversimplified exmaple
+Against my better judgement I'm providing a terribly oversimplified example
 of how to use this library:
 
 ```javascript
