@@ -114,6 +114,19 @@ LE.create = function (le) {
       le[key] = le._challengeOpts[key];
     }
   });
+  // TODO wrap these here and now with tplCopy?
+  if (5 !== le.challenge.set.length) {
+    throw new Error("le.challenge.set receives the wrong number of arguments."
+      + " You must define setChallenge as function (opts, domain, key, val, cb) { }");
+  }
+  if (4 !== le.challenge.get.length) {
+    throw new Error("le.challenge.get receives the wrong number of arguments."
+      + " You must define getChallenge as function (opts, domain, key, cb) { }");
+  }
+  if (4 !== le.challenge.remove.length) {
+    throw new Error("le.challenge.remove receives the wrong number of arguments."
+      + " You must define removeChallenge as function (opts, domain, key, cb) { }");
+  }
 
   if (le.core.create) {
     le.core = le.core.create(le);
