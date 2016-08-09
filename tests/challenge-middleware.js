@@ -1,17 +1,18 @@
 'use strict';
 
 var PromiseA = require('bluebird');
+var path = require('path');
 var requestAsync = PromiseA.promisify(require('request'));
 var LE = require('../').LE;
 var le = LE.create({
   server: 'staging'
 , acme: require('le-acme-core').ACME.create()
 , store: require('le-store-certbot').create({
-    configDir: '~/letsencrypt.test/etc'
-  , webrootPath: '~/letsencrypt.test/var/:hostname'
+    configDir: '~/letsencrypt.test/etc'.split('/').join(path.sep)
+  , webrootPath: '~/letsencrypt.test/var/:hostname'.split('/').join(path.sep)
   })
 , challenge: require('le-challenge-fs').create({
-    webrootPath: '~/letsencrypt.test/var/:hostname'
+    webrootPath: '~/letsencrypt.test/var/:hostname'.split('/').join(path.sep)
   })
 , debug: true
 });
@@ -22,7 +23,10 @@ if ('/.well-known/acme-challenge/' !== LE.acmeChallengePrefix) {
 }
 
 var baseUrl;
-var domain = 'example.com';
+// could use localhost as well, but for the sake of an FQDN for testing, we use this
+// also, example.com is just a junk domain to make sure that it is ignored
+// (even though it should always be an array of only one element in lib/core.js)
+var domains = [ 'localhost.daplie.com', 'example.com' ]; // or just localhost
 var token = 'token-id';
 var secret = 'key-secret';
 
@@ -38,9 +42,9 @@ var tests = [
   }
 
 , function () {
-    var copy = utils.merge({}, le);
+    var copy = utils.merge({ domains: domains }, le);
     copy = utils.tplCopy(copy);
-    return PromiseA.promisify(le.challenge.set)(copy, domain, token, secret);
+    return PromiseA.promisify(le.challenge.set)(copy, domains[0], token, secret);
   }
 
 , function () {
@@ -58,9 +62,9 @@ var tests = [
   }
 
 , function () {
-    var copy = utils.merge({}, le);
+    var copy = utils.merge({ domains: domains }, le);
     copy = utils.tplCopy(copy);
-    return PromiseA.promisify(le.challenge.remove)(copy, domain, token);
+    return PromiseA.promisify(le.challenge.remove)(copy, domains[0], token);
   }
 
 , function () {
@@ -78,7 +82,7 @@ function run() {
   var server = require('http').createServer(le.middleware());
   server.listen(0, function () {
     console.log('Server running, proceeding to test.');
-    baseUrl = 'http://localhost.daplie.com:' + server.address().port + LE.acmeChallengePrefix;
+    baseUrl = 'http://' + domains[0] + ':' + server.address().port + LE.acmeChallengePrefix;
 
     function next() {
       var test = tests.shift();
