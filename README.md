@@ -45,7 +45,7 @@ Install
 one for managing certificate storage and the other for handling ACME challenges.
 
 The default storage plugin is [`le-store-certbot`](https://github.com/Daplie/le-store-certbot)
-and the default challenger is [`le-challenge-fs`](https://github.com/Daplie/le-challenge-fs).
+and the default challenge is [`le-challenge-fs`](https://github.com/Daplie/le-challenge-fs).
 
 ```bash
 npm install --save letsencrypt@2.x
@@ -108,7 +108,7 @@ var leStore = require('le-store-certbot').create({
 
 
 // ACME Challenge Handlers
-var leChallenger = require('le-challenge-fs').create({
+var leChallenge = require('le-challenge-fs').create({
   webrootPath: '~/letsencrypt/var/'                       // or template string such as
 , debug: false                                            // '/srv/www/:hostname/.well-known/acme-challenge'
 });
@@ -122,7 +122,7 @@ function leAgree(opts, agreeCb) {
 le = LE.create({
   server: LE.stagingServerUrl                             // or LE.productionServerUrl
 , store: leStore                                          // handles saving of config, accounts, and certificates
-, challenger: leChallenger                                // handles /.well-known/acme-challege keys and tokens
+, challenge: leChallenge                                  // handles /.well-known/acme-challege keys and tokens
 , agreeToTerms: leAgree                                   // hook to allow user to view and accept LE TOS
 , debug: false
 });

@@ -27,7 +27,7 @@ var u; // undefined
 LE._undefined = {
   acme: u
 , store: u
-, challenger: u
+, challenge: u
 
 , register: u
 , check: u
@@ -40,6 +40,8 @@ LE._undefined = {
 , server: u
 , agreeToTerms: u
 , _ipc: u
+, duplicate: u
+, _acmeUrls: u
 };
 LE._undefine = function (le) {
   Object.keys(LE._undefined).forEach(function (key) {
@@ -55,7 +57,7 @@ LE.create = function (le) {
 
   le.acme = le.acme || ACME.create({ debug: le.debug });
   le.store = le.store || require('le-store-certbot').create({ debug: le.debug });
-  le.challenger = le.challenger || require('le-store-certbot').create({ debug: le.debug });
+  le.challenge = le.challenge || require('le-challenge-certbot').create({ debug: le.debug });
   le.core = require('./lib/core');
 
   le = LE._undefine(le);
@@ -102,14 +104,14 @@ LE.create = function (le) {
     }
   });
 
-  if (le.challenger.create) {
-    le.challenger = le.challenger.create(le);
+  if (le.challenge.create) {
+    le.challenge = le.challenge.create(le);
   }
-  le.challenger = PromiseA.promisifyAll(le.challenger);
-  le._challengerOpts = le.challenger.getOptions();
-  Object.keys(le._challengerOpts).forEach(function (key) {
+  le.challenge = PromiseA.promisifyAll(le.challenge);
+  le._challengeOpts = le.challenge.getOptions();
+  Object.keys(le._challengeOpts).forEach(function (key) {
     if (!(key in le)) {
-      le[key] = le._challengerOpts[key];
+      le[key] = le._challengeOpts[key];
     }
   });
 
@@ -126,9 +128,10 @@ LE.create = function (le) {
     return le.core.certificates.checkAsync(args);
   };
 
-  le.middleware = function () {
-    return require('./lib/middleware')(le);
-  };
+  le.middleware = le.middleware || require('./lib/middleware');
+  if (le.middleware.create) {
+    le.middleware = le.middleware.create(le);
+  }
 
   return le;
 };
