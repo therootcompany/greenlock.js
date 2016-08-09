@@ -131,13 +131,13 @@ le = LE.create({
 // If using express you should use the middleware
 // app.use('/', le.middleware());
 //
-// Otherwise you should use the wrapped getChallenge:
-// le.getChallenge(domain, key, val, done)
+// Otherwise you should see the test file for usage of this:
+// le.challenge.get(opts.domain, key, val, done)
 
 
 
 // Check in-memory cache of certificates for the named domain
-le.check({ domain: 'example.com' }).then(function (results) {
+le.check({ domains: [ 'example.com' ] }).then(function (results) {
   if (results) {
     // we already have certificates
     return;
@@ -145,7 +145,7 @@ le.check({ domain: 'example.com' }).then(function (results) {
 
 
   // Register Certificate manually
-  le.get({
+  le.register({
 
     domains: ['example.com']                                // CHANGE TO YOUR DOMAIN (list for SANS)
   , email: 'user@email.com'                                 // CHANGE TO YOUR EMAIL
@@ -160,7 +160,7 @@ le.check({ domain: 'example.com' }).then(function (results) {
   }, function (err) {
 
     // Note: you must either use le.middleware() with express,
-    // manually use le.getChallenge(domain, key, val, done)
+    // manually use le.challenge.get(opts, domain, key, val, done)
     // or have a webserver running and responding
     // to /.well-known/acme-challenge at `webrootPath`
     console.error('[Error]: node-letsencrypt/examples/standalone');
@@ -190,7 +190,6 @@ The full end-user API is exposed in the example above and includes all relevant 
 
 ```
 le.register
-le.get          // checkAndRegister
 le.check
 ```
 
