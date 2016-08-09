@@ -16,6 +16,12 @@ console.info(new Date(c.notAfter.value).valueOf());
 
 console.info('');
 
+var json = certInfo.testBasicCertInfo();
+
+console.log('');
+console.log(JSON.stringify(json, null, '  '));
+console.log('');
+
 console.info('');
 console.info('If we got values at all, it must have passed.');
 console.info('');
