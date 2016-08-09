@@ -42,8 +42,10 @@ and the default challenge is [`le-challenge-fs`](https://github.com/Daplie/le-ch
 
 ```bash
 npm install --save letsencrypt@2.x
-npm install --save le-store-certbot@2.x
-npm install --save le-challenge-fs@2.x
+
+npm install --save le-store-certbot@2.x   # default plugin for accounts, certificates, and keypairs
+npm install --save le-challenge-fs@2.x    # default plugin for challenge handlers
+npm install --save le-acme-core@2.x       # default plugin for ACME spec
 ```
 
 Usage
