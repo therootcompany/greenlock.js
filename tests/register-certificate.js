@@ -5,8 +5,11 @@ var le = LE.create({
   server: 'staging'
 , acme: require('le-acme-core').ACME.create()
 , store: require('le-store-certbot').create({
-    configDir: '~/letsencrypt.test/etc/'
-  , webrootPath: '~/letsencrypt.test/tmp/:hostname'
+    configDir: '~/letsencrypt.test/etc'
+  , webrootPath: '~/letsencrypt.test/var/:hostname'
+  })
+, challenge: require('le-challenge-fs').create({
+    webrootPath: '~/letsencrypt.test/var/:hostname'
   })
 , debug: true
 });
@@ -23,7 +26,7 @@ var testDomains = [ 'pokemap.hellabit.com', 'www.pokemap.hellabit.com' ];
 var tests = [
   function () {
     return le.core.certificates.checkAsync({
-      domains: [ 'example.com' ]
+      domains: [ 'example.com', 'www.example.com' ]
     }).then(function (cert) {
       if (cert) {
         throw new Error("Bogus domain should not have certificate.");
@@ -32,12 +35,12 @@ var tests = [
   }
 
 , function () {
-    return le.core.certificates.checkAsync({
+    return le.core.certificates.getAsync({
       email: testEmail
     , domains: testDomains
-    }).then(function (account) {
-      if (!account) {
-        throw new Error("Test account should exist when searched by email.");
+    }).then(function (certs) {
+      if (!certs) {
+        throw new Error("Should have acquired certificate for domains.");
       }
     });
   }
@@ -52,6 +55,7 @@ function run() {
     function next() {
       var test = tests.shift();
       if (!test) {
+        server.close();
         console.info('All tests passed');
         return;
       }
@@ -59,7 +63,6 @@ function run() {
       test().then(next, function (err) {
         console.error('ERROR');
         console.error(err.stack);
-      }).then(function () {
         server.close();
       });
     }
