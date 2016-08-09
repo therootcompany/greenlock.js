@@ -224,31 +224,33 @@ should be kept in sync.
 
 ### store implementation
 
-TODO double check and finish
+See https://github.com/Daplie/node-letsencrypt/issues/39 and https://github.com/Daplie/le-store-certbot
 
-* accounts
-  * accounts.byDomain
-  * accounts.all
-  * accounts.get
-  * accounts.exists
-* certs
-  * certs.byAccount
-  * certs.all
-  * certs.get
-  * certs.exists
+* getOptions()
+* accounts.
+  * checkKeypair(opts, cb)
+  * check(opts, cb)
+  * setKeypair(opts, keypair, cb)
+  * set(opts, reg, cb)
+* certificates.
+  * checkKeypair(opts, cb)
+  * check(opts, cb)
+  * setKeypair(opts, keypair, cb)
+  * set(opts, reg, cb)
 
 ### challenge implementation
 
-TODO finish
+See https://github.com/Daplie/le-challenge-fs
 
-* `.set(opts, domain, key, value, done);`         // opts will be saved with domain/key
-* `.get(opts, domain, key, done);`                // opts will be retrieved by domain/key
-* `.remove(opts, domain, key, done);`             // opts will be retrieved by domain/key
+* `.set(opts, domain, key, value, cb);`         // opts will be saved with domain/key
+* `.get(opts, domain, key, cb);`                // opts will be retrieved by domain/key
+* `.remove(opts, domain, key, cb);`             // opts will be retrieved by domain/key
 
 Change History
 ==============
 
-* v2.0.0 - Aug 5th 2016
+* v2.0.2 - Aug 9th 2016 update readme
+* v2.0.1 - Aug 9th 2016
   * major refactor
   * simplified API
   * modular pluigns
