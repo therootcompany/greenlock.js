@@ -14,10 +14,8 @@ Automatic [Let's Encrypt](https://letsencrypt.org) HTTPS / TLS / SSL Certificate
 
 Free SLL with [90-day](https://letsencrypt.org/2015/11/09/why-90-days.html) HTTPS / TLS Certificates
 
-STOP
-====
-
-> **These aren't the droids you're looking for.**
+Are these the droids you're looking for?
+------
 
 This is a **low-level library** for implementing ACME / LetsEncrypt Clients, CLIs,
 system tools, and abstracting storage backends (file vs db, etc).
@@ -33,13 +31,8 @@ see [letsencrypt-koa](https://github.com/Daplie/letsencrypt-koa).
 For `bash`, `fish`, `zsh`, `cmd.exe`, `PowerShell`
 see [**letsencrypt-cli**](https://github.com/Daplie/letsencrypt-cli).
 
-CONTINUE
-========
-
-If you're sure you're at the right place, here's what you need to know now:
-
 Install
--------
+=======
 
 `letsencrypt` requires at least two plugins:
 one for managing certificate storage and the other for handling ACME challenges.
@@ -54,7 +47,7 @@ npm install --save le-challenge-fs@2.x
 ```
 
 Usage
------
+=====
 
 It's very simple and easy to use, but also very complete and easy to extend and customize.
 
