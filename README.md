@@ -61,7 +61,9 @@ of how to use this library:
 ```javascript
 var le = require('letsencrypt').create({ server: 'staging' });
 
-le.register({ domains: ['example.com'], email: 'user@email.com', agreeTos: true }).then(function (results) {
+le.register({
+  domains: ['example.com'], email: 'user@email.com', agreeTos: true
+}).then(function (results) {
   console.log(results);
 }, function (err) {
   console.error(err);
