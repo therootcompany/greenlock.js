@@ -63,8 +63,9 @@ var le = require('letsencrypt').create({ server: 'staging' });
 
 le.register({
   domains: ['example.com'], email: 'user@email.com', agreeTos: true
-}).then(function (results) {
-  console.log(results);
+}).then(function (certs) {
+  // privkey, cert, chain, expiresAt, issuedAt, subject, altnames
+  console.log(certs);
 }, function (err) {
   console.error(err);
 });
