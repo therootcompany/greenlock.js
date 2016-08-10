@@ -174,7 +174,6 @@ Here's what `results` looks like:
 { privkey: ''     // PEM encoded private key
 , cert: ''        // PEM encoded cert
 , chain: ''       // PEM encoded intermediate cert
-, fullchain: ''   // cert + chain
 , issuedAt: 0     // notBefore date (in ms) parsed from cert
 , expiresAt: 0    // notAfter date (in ms) parsed from cert
 }
@@ -186,8 +185,8 @@ API
 The full end-user API is exposed in the example above and includes all relevant options.
 
 ```
-le.register
-le.check
+le.register(opts)
+le.check(opts)
 ```
 
 ### Helper Functions
