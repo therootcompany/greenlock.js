@@ -61,11 +61,13 @@ of how to use this library:
 ```javascript
 var le = require('letsencrypt').create({ server: 'staging' });
 
-le.register({
+var opts = {
   domains: ['example.com'], email: 'user@email.com', agreeTos: true
-}).then(function (certs) {
-  // privkey, cert, chain, expiresAt, issuedAt, subject, altnames
+};
+
+le.register(opts).then(function (certs) {
   console.log(certs);
+  // privkey, cert, chain, expiresAt, issuedAt, subject, altnames
 }, function (err) {
   console.error(err);
 });
@@ -176,6 +178,8 @@ Here's what `results` looks like:
 , chain: ''       // PEM encoded intermediate cert
 , issuedAt: 0     // notBefore date (in ms) parsed from cert
 , expiresAt: 0    // notAfter date (in ms) parsed from cert
+, subject: ''     // example.com
+, altnames: []    // example.com,www.example.com
 }
 ```
 
