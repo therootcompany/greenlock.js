@@ -35,7 +35,7 @@
   },
   "optionalDependencies": {},
   "dependencies": {
-    "asn1": "^0.2.3",
+    "asn1js": "^0.2.3",
     "bluebird": "^3.0.6",
     "homedir": "^0.6.0",
     "letiny-core": "^2.0.1",
