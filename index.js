@@ -6,6 +6,7 @@ var PromiseA = require('bluebird');
 var leCore = require('letiny-core');
 var merge = require('./lib/common').merge;
 var tplCopy = require('./lib/common').tplCopy;
+var isValidDomain = require('./lib/common').isValidDomain;
 
 var LE = module.exports;
 LE.productionServerUrl = leCore.productionServerUrl;
@@ -15,6 +16,7 @@ LE.logsDir = leCore.logsDir;
 LE.workDir = leCore.workDir;
 LE.acmeChallengPrefix = leCore.acmeChallengPrefix;
 LE.knownEndpoints = leCore.knownEndpoints;
+LE.isValidDomain = isValidDomain;
 
 LE.privkeyPath = ':config/live/:hostname/privkey.pem';
 LE.fullchainPath = ':config/live/:hostname/fullchain.pem';
@@ -128,6 +130,7 @@ LE.create = function (defaults, handlers, backend) {
 
   le = {
     backend: backend
+  , isValidDomain: isValidDomain
   , pyToJson: function (pyobj) {
       if (!pyobj) {
         return null;
