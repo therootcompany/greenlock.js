@@ -1,6 +1,6 @@
 {
   "name": "letsencrypt",
-  "version": "1.5.6",
+  "version": "1.5.7",
   "description": "Let's Encrypt for node.js on npm",
   "main": "index.js",
   "scripts": {
