@@ -34,6 +34,7 @@
   "dependencies": {
     "asn1js": "^1.2.12",
     "bluebird": "^3.0.6",
+    "certpem": "^1.0.0",
     "homedir": "^0.6.0",
     "le-acme-core": "^2.0.5",
     "le-challenge-fs": "^2.0.2",
