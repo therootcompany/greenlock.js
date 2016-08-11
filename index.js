@@ -59,7 +59,7 @@ LE.create = function (le) {
   le.store = le.store || require('le-store-certbot').create({ debug: le.debug });
   le.challenge = le.challenge || require('le-challenge-fs').create({ debug: le.debug });
   le.core = require('./lib/core');
-  // le.sni = require('le-sni-auto')
+  // le.sni = require('le-sni-auto');
 
   le = LE._undefine(le);
   le.acmeChallengePrefix = LE.acmeChallengePrefix;
