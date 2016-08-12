@@ -225,7 +225,7 @@ should be kept in sync.
 
 ### store implementation
 
-See https://github.com/Daplie/node-letsencrypt/issues/39 and https://github.com/Daplie/le-store-certbot
+See <https://github.com/Daplie/le-store-SPEC>
 
 * getOptions()
 * accounts.
