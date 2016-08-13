@@ -98,6 +98,8 @@ LE.create = function (le) {
     le.store = le.store.create(le);
   }
   le.store = PromiseA.promisifyAll(le.store);
+  le.store.accounts = PromiseA.promisifyAll(le.store.accounts);
+  le.store.certificates = PromiseA.promisifyAll(le.store.certificates);
   le._storeOpts = le.store.getOptions();
   Object.keys(le._storeOpts).forEach(function (key) {
     if (!(key in le)) {
