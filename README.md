@@ -125,6 +125,7 @@ le = LE.create({
 , challenges: { 'http-01': leChallenge }                  // handles /.well-known/acme-challege keys and tokens
 , challengeType: 'http-01'                                // default to this challenge type
 , agreeToTerms: leAgree                                   // hook to allow user to view and accept LE TOS
+//, sni: require('le-sni-auto').create({})                // handles sni callback
 , debug: false
 });
 
