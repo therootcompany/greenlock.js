@@ -13,6 +13,7 @@ LE.defaults = {
 
 , rsaKeySize: ACME.rsaKeySize || 2048
 , challengeType: ACME.challengeType || 'http-01'
+, challengeTypes: ACME.challengeTypes || [ 'http-01', 'tls-sni-01', 'dns-01' ]
 
 , acmeChallengePrefix: ACME.acmeChallengePrefix
 };
@@ -28,6 +29,9 @@ LE._undefined = {
   acme: u
 , store: u
 , challenge: u
+, challenges: u
+, sni: u
+, httpsOptions: u
 
 , register: u
 , check: u
@@ -57,8 +61,28 @@ LE.create = function (le) {
 
   le.acme = le.acme || ACME.create({ debug: le.debug });
   le.store = le.store || require('le-store-certbot').create({ debug: le.debug });
-  le.challenge = le.challenge || require('le-challenge-fs').create({ debug: le.debug });
   le.core = require('./lib/core');
+
+  if (!le.challenges) {
+    le.challenges = {};
+  }
+  if (!le.challenges['http-01']) {
+    le.challenges['http-01'] = require('le-challenge-fs').create({ debug: le.debug });
+  }
+  if (!le.challenges['tls-sni-01']) {
+    le.challenges['tls-sni-01'] = le.challenges['http-01'];
+  }
+  if (!le.challenges['dns-01']) {
+    try {
+      le.challenges['dns-01'] = require('le-challenge-ddns').create({ debug: le.debug });
+    } catch(e) {
+      try {
+        le.challenges['dns-01'] = require('le-challenge-dns').create({ debug: le.debug });
+      } catch(e) {
+        // not yet implemented
+      }
+    }
+  }
 
   le = LE._undefine(le);
   le.acmeChallengePrefix = LE.acmeChallengePrefix;
@@ -106,16 +130,33 @@ LE.create = function (le) {
     }
   });
 
-  if (le.challenge.create) {
-    le.challenge = le.challenge.create(le);
-  }
-  le.challenge = PromiseA.promisifyAll(le.challenge);
-  le._challengeOpts = le.challenge.getOptions();
-  Object.keys(le._challengeOpts).forEach(function (key) {
-    if (!(key in le)) {
-      le[key] = le._challengeOpts[key];
+  LE.challengeTypes.forEach(function (challengeType) {
+    if (le.challenges[challengeType].create) {
+      le.challenges[challengeType] = le.challenges[challengeType].create(le);
     }
+    le.challenges[challengeType] = PromiseA.promisifyAll(le.challenges[challengeType]);
+    le['_challengeOpts_' + challengeType] = le.challenges[challengeType].getOptions();
+    Object.keys(le._challengeOpts).forEach(function (key) {
+      if (!(key in le)) {
+        le[key] = le._challengeOpts[key];
+      }
+    });
   });
+
+  //
+  // Backwards compat until we fix le.challenges to be per-request
+  //
+  if (le.challenge) {
+    console.warn("Deprecated use of le.challenge. Use le.challenges['" + LE.challengeType + "'] instead.");
+    // TODO le.challenges[le.challengeType] = le.challenge
+    if (le.challenge.create) {
+      le.challenge = le.challenge.create(le);
+    }
+  }
+  else {
+    le.challenge = le.challenge[le.challengeType];
+  }
+  le._challengeOpts = le.challenge.getOptions();
 
   le.sni = le.sni || null;
   if (!le.httpsOptions) {

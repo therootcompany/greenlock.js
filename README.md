@@ -122,7 +122,8 @@ function leAgree(opts, agreeCb) {
 le = LE.create({
   server: LE.stagingServerUrl                             // or LE.productionServerUrl
 , store: leStore                                          // handles saving of config, accounts, and certificates
-, challenge: leChallenge                                  // handles /.well-known/acme-challege keys and tokens
+, challenges: { 'http-01': leChallenge }                  // handles /.well-known/acme-challege keys and tokens
+, challengeType: 'http-01'                                // default to this challenge type
 , agreeToTerms: leAgree                                   // hook to allow user to view and accept LE TOS
 , debug: false
 });
@@ -132,7 +133,7 @@ le = LE.create({
 // app.use('/', le.middleware());
 //
 // Otherwise you should see the test file for usage of this:
-// le.challenge.get(opts.domain, key, val, done)
+// le.challenges['http-01'].get(opts.domain, key, val, done)
 
 
 
@@ -160,7 +161,7 @@ le.check({ domains: [ 'example.com' ] }).then(function (results) {
   }, function (err) {
 
     // Note: you must either use le.middleware() with express,
-    // manually use le.challenge.get(opts, domain, key, val, done)
+    // manually use le.challenges['http-01'].get(opts, domain, key, val, done)
     // or have a webserver running and responding
     // to /.well-known/acme-challenge at `webrootPath`
     console.error('[Error]: node-letsencrypt/examples/standalone');
