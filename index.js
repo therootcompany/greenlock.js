@@ -163,6 +163,46 @@ LE.create = function (le) {
     le.httpsOptions = {};
   }
   if (!le.httpsOptions.SNICallback) {
+    if (!le.getCertificatesAsync && !le.getCertificates) {
+      if (!le.approveDomains) {
+        if (!(le.approvedDomains && le.email && le.agreeTos)) {
+          throw new Error("You must provide opts.approveDomains(domain, certs, callback) to approve certificates");
+        }
+        le.approveDomains = function (lexOpts, certs, cb) {
+          if (lexOpts.domains.every(function (domain) {
+            return -1 !==  lexOpts.approvedDomains.indexOf(domain);
+          })) {
+            lexOpts.domains = le.approvedDomains.slice(0);
+            lexOpts.email = le.email;
+            lexOpts.agreeTos = le.agreeTos;
+            return cb(null, lexOpts);
+          }
+          cb(new Error("unapproved domain"));
+        };
+      }
+
+      le.getCertificates = function (domain, certs, cb) {
+        var opts = { domain: domain, domains: certs && certs.altnames || [ domain ] };
+
+        le.approveDomains(opts, certs, function (_err, results) {
+          if (_err) {
+            cb(_err);
+            return;
+          }
+
+          var promise;
+
+          if (results.certs) {
+            promise = le.core.certificates.renewAsync(results.options, results.certs);
+          }
+          else {
+            promise = le.core.certificates.registerAsync(results.options);
+          }
+
+          return promise.then(function (certs) { cb(null, certs); }, cb);
+        });
+      };
+    }
     le.sni = le.sni || require('le-sni-auto');
     if (le.sni.create) {
       le.sni = le.sni.create(le);
