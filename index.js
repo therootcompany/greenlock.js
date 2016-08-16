@@ -172,10 +172,11 @@ LE.create = function (le) {
   if (!le.httpsOptions.SNICallback) {
     if (!le.getCertificatesAsync && !le.getCertificates) {
       if (!le.approveDomains) {
-        if (!(le.approvedDomains && le.email && le.agreeTos)) {
-          throw new Error("You must provide opts.approveDomains(domain, certs, callback) to approve certificates");
-        }
+        le.approvedDomains = le.approvedDomains || [];
         le.approveDomains = function (lexOpts, certs, cb) {
+          if (!(le.approvedDomains.length && le.email && le.agreeTos)) {
+            throw new Error("le-sni-auto is not properly configured. Missing one or more of approveDomains(domain, certs, callback) or approvedDomains (array), email, or agreeTos");
+          }
           if (lexOpts.domains.every(function (domain) {
             return -1 !== le.approvedDomains.indexOf(domain);
           })) {
