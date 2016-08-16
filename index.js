@@ -1,5 +1,7 @@
 'use strict';
 
+var DAY = 24 * 60 * 60 * 1000;
+//var MIN = 60 * 1000;
 var ACME = require('le-acme-core').ACME;
 
 var LE = module.exports;
@@ -36,7 +38,8 @@ LE._undefined = {
 , register: u
 , check: u
 
-, renewWithin: u
+, renewWithin: u // le-auto-sni and core
+//, renewBy: u // le-auto-sni
 , memorizeFor: u
 , acmeChallengePrefix: u
 , rsaKeySize: u
@@ -93,7 +96,8 @@ LE.create = function (le) {
     agreeCb(new Error("'agreeToTerms' was not supplied to LE and 'agreeTos' was not supplied to LE.register"));
   };
 
-  if (!le.renewWithin) { le.renewWithin = 3 * 24 * 60 * 60 * 1000; }
+  if (!le.renewWithin) { le.renewWithin = 7 * DAY; }
+  // renewBy has a default in le-sni-auto
   if (!le.memorizeFor) { le.memorizeFor = 1 * 24 * 60 * 60 * 1000; }
 
   if (!le.server) {
