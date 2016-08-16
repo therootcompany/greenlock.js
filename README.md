@@ -22,7 +22,7 @@ This is a **low-level library** for implementing ACME / LetsEncrypt Clients, CLI
 system tools, and abstracting storage backends (file vs db, etc).
 
 For `express`, raw `https` or `spdy`, or `restify` (same as raw https) see
-[**letsencrypt-express**](https://github.com/Daplie/letsencrypt-express).
+[**letsencrypt-express**](https://github.com/Daplie/letsencrypt-express) and [letsencrypt-cluster](https://github.com/Daplie/letsencrypt-cluster).
 
 For `hapi` see [letsencrypt-hapi](https://github.com/Daplie/letsencrypt-hapi).
 
