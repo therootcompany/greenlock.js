@@ -135,14 +135,17 @@ LE.create = function (le) {
   });
 
   LE.challengeTypes.forEach(function (challengeType) {
+    if (!le.challenges[challengeType]) {
+      return;
+    }
     if (le.challenges[challengeType].create) {
       le.challenges[challengeType] = le.challenges[challengeType].create(le);
     }
     le.challenges[challengeType] = PromiseA.promisifyAll(le.challenges[challengeType]);
     le['_challengeOpts_' + challengeType] = le.challenges[challengeType].getOptions();
-    Object.keys(le._challengeOpts).forEach(function (key) {
+    Object.keys(le['_challengeOpts_' + challengeType]).forEach(function (key) {
       if (!(key in le)) {
-        le[key] = le._challengeOpts[key];
+        le[key] = le['_challengeOpts_' + challengeType][key];
       }
     });
   });
@@ -158,7 +161,7 @@ LE.create = function (le) {
     }
   }
   else {
-    le.challenge = le.challenge[le.challengeType];
+    le.challenge = le.challenges[le.challengeType];
   }
   le._challengeOpts = le.challenge.getOptions();
 
@@ -174,12 +177,15 @@ LE.create = function (le) {
         }
         le.approveDomains = function (lexOpts, certs, cb) {
           if (lexOpts.domains.every(function (domain) {
-            return -1 !==  lexOpts.approvedDomains.indexOf(domain);
+            return -1 !== le.approvedDomains.indexOf(domain);
           })) {
             lexOpts.domains = le.approvedDomains.slice(0);
             lexOpts.email = le.email;
             lexOpts.agreeTos = le.agreeTos;
-            return cb(null, lexOpts);
+            return cb(null, { options: lexOpts, certs: certs });
+          }
+          if (le.debug) {
+            console.log('unapproved domain', lexOpts.domains, le.approvedDomains);
           }
           cb(new Error("unapproved domain"));
         };
@@ -243,6 +249,10 @@ LE.create = function (le) {
   if (le.core.create) {
     le.core = le.core.create(le);
   }
+
+  le.renew = function (args, certs) {
+    return le.core.certificates.renewAsync(args, certs);
+  };
 
   le.register = function (args) {
     return le.core.certificates.getAsync(args);
