@@ -40,7 +40,6 @@ LE._undefined = {
 
 , renewWithin: u // le-auto-sni and core
 //, renewBy: u // le-auto-sni
-, memorizeFor: u
 , acmeChallengePrefix: u
 , rsaKeySize: u
 , challengeType: u
@@ -98,7 +97,6 @@ LE.create = function (le) {
 
   if (!le.renewWithin) { le.renewWithin = 7 * DAY; }
   // renewBy has a default in le-sni-auto
-  if (!le.memorizeFor) { le.memorizeFor = 1 * 24 * 60 * 60 * 1000; }
 
   if (!le.server) {
     throw new Error("opts.server must be set to 'staging' or a production url, such as LE.productionServerUrl'");
