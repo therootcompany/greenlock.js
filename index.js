@@ -169,6 +169,10 @@ LE.create = function (le) {
   }
   if (!le.httpsOptions.SNICallback) {
     if (!le.getCertificatesAsync && !le.getCertificates) {
+      if (Array.isArray(le.approveDomains)) {
+        le.approvedDomains = le.approveDomains;
+        le.approveDomains = null;
+      }
       if (!le.approveDomains) {
         le.approvedDomains = le.approvedDomains || [];
         le.approveDomains = function (lexOpts, certs, cb) {
