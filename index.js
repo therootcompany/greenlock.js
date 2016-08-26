@@ -9,6 +9,15 @@ LE.LE = LE;
 // in-process cache, shared between all instances
 var ipc = {};
 
+function _log(debug) {
+  if (debug) {
+    var args = Array.prototype.slice.call(arguments);
+    args.shift();
+    args.unshift("[le/index.js]");
+    console.log.apply(console, args);
+  }
+}
+
 LE.defaults = {
   productionServerUrl: ACME.productionServerUrl
 , stagingServerUrl: ACME.stagingServerUrl
@@ -64,6 +73,7 @@ LE.create = function (le) {
   le.acme = le.acme || ACME.create({ debug: le.debug });
   le.store = le.store || require('le-store-certbot').create({ debug: le.debug });
   le.core = require('./lib/core');
+  var log = le.log || _log;
 
   if (!le.challenges) {
     le.challenges = {};
@@ -187,25 +197,19 @@ LE.create = function (le) {
             lexOpts.agreeTos = le.agreeTos;
             return cb(null, { options: lexOpts, certs: certs });
           }
-          if (le.debug) {
-            console.log('unapproved domain', lexOpts.domains, le.approvedDomains);
-          }
+          log(le.debug, 'unapproved domain', lexOpts.domains, le.approvedDomains);
           cb(new Error("unapproved domain"));
         };
       }
 
       le.getCertificates = function (domain, certs, cb) {
         // certs come from current in-memory cache, not lookup
-        if (le.debug) {
-          console.log('le.getCertificates called for', domain, 'with certs for', certs && certs.altnames || 'NONE');
-        }
+        log(le.debug, 'le.getCertificates called for', domain, 'with certs for', certs && certs.altnames || 'NONE');
         var opts = { domain: domain, domains: certs && certs.altnames || [ domain ] };
 
         le.approveDomains(opts, certs, function (_err, results) {
-          if (le.debug) {
-            console.log('le.approveDomains called with certs for', results.certs && results.certs.altnames || 'NONE', 'and options:');
-            console.log(results.options);
-          }
+          log(le.debug, 'le.approveDomains called with certs for', results.certs && results.certs.altnames || 'NONE', 'and options:');
+          log(le.debug, results.options);
           if (_err) {
             cb(_err);
             return;
@@ -214,15 +218,11 @@ LE.create = function (le) {
           var promise;
 
           if (results.certs) {
-            if (le.debug) {
-              console.log('le renewing');
-            }
+            log(le.debug, 'le renewing');
             promise = le.core.certificates.renewAsync(results.options, results.certs);
           }
           else {
-            if (le.debug) {
-              console.log('le getting from disk or registering new');
-            }
+            log(le.debug, 'le getting from disk or registering new');
             promise = le.core.certificates.getAsync(results.options);
           }
 
