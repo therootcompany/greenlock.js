@@ -50,6 +50,8 @@ npm install --save le-acme-core@2.x       # default plugin for ACME spec
 npm install --save le-sni-auto@2.x        # default plugin for SNICallback
 ```
 
+**Important**: Use node v4.5+ or v6.x, node <= v4.4 has a [known bug](https://github.com/nodejs/node/issues/8053) in the `Buffer` implementation.
+
 Usage
 =====
 
