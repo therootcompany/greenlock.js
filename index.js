@@ -254,7 +254,7 @@ LE.create = function (le) {
     throw new Error("le.challenge.set receives the wrong number of arguments."
       + " You must define setChallenge as function (opts, domain, key, val, cb) { }");
   }
-  if (4 !== le.challenge.get.length || le.challenge.get === undefined) {
+  if (le.challenge.get && 4 !== le.challenge.get.length) {
     throw new Error("le.challenge.get receives the wrong number of arguments."
       + " You must define getChallenge as function (opts, domain, key, cb) { }");
   }
