@@ -208,12 +208,14 @@ LE.create = function (le) {
         var opts = { domain: domain, domains: certs && certs.altnames || [ domain ] };
 
         le.approveDomains(opts, certs, function (_err, results) {
-          log(le.debug, 'le.approveDomains called with certs for', results.certs && results.certs.altnames || 'NONE', 'and options:');
-          log(le.debug, results.options);
           if (_err) {
+            log(le.debug, 'le.approveDomains called with error', _err);
             cb(_err);
             return;
           }
+
+          log(le.debug, 'le.approveDomains called with certs for', results.certs && results.certs.altnames || 'NONE', 'and options:');
+          log(le.debug, results.options);
 
           var promise;
 
