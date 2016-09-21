@@ -142,36 +142,50 @@ LE.create = function (le) {
     }
   });
 
+
+  //
+  // Backwards compat for <= v2.1.7
+  //
+  if (le.challenge) {
+    console.warn("Deprecated use of le.challenge. Use le.challenges['" + LE.challengeType + "'] instead.");
+    le.challenges[le.challengeType] = le.challenge;
+  }
+
   LE.challengeTypes.forEach(function (challengeType) {
-    if (!le.challenges[challengeType]) {
+    var challenger = le.challenges[challengeType];
+
+    if (!challenger) {
       return;
     }
-    if (le.challenges[challengeType].create) {
-      le.challenges[challengeType] = le.challenges[challengeType].create(le);
+
+    if (challenger.create) {
+      challenger = le.challenges[challengeType] = challenger.create(le);
     }
-    le.challenges[challengeType] = PromiseA.promisifyAll(le.challenges[challengeType]);
-    le['_challengeOpts_' + challengeType] = le.challenges[challengeType].getOptions();
+    challenger = le.challenges[challengeType] = PromiseA.promisifyAll(challenger);
+    le['_challengeOpts_' + challengeType] = challenger.getOptions();
     Object.keys(le['_challengeOpts_' + challengeType]).forEach(function (key) {
       if (!(key in le)) {
         le[key] = le['_challengeOpts_' + challengeType][key];
       }
     });
-  });
 
-  //
-  // Backwards compat until we fix le.challenges to be per-request
-  //
-  if (le.challenge) {
-    console.warn("Deprecated use of le.challenge. Use le.challenges['" + LE.challengeType + "'] instead.");
-    // TODO le.challenges[le.challengeType] = le.challenge
-    if (le.challenge.create) {
-      le.challenge = le.challenge.create(le);
+    // TODO wrap these here and now with tplCopy?
+    if (!challenger.set || 5 !== challenger.set.length) {
+      throw new Error("le.challenges[" + challengeType + "].set receives the wrong number of arguments."
+        + " You must define setChallenge as function (opts, domain, token, keyAuthorization, cb) { }");
     }
-  }
-  else {
-    le.challenge = le.challenges[le.challengeType];
-  }
-  le._challengeOpts = le.challenge.getOptions();
+    if (challenger.get && 4 !== challenger.get.length) {
+      throw new Error("le.challenges[" + challengeType + "].get receives the wrong number of arguments."
+        + " You must define getChallenge as function (opts, domain, token, cb) { }");
+    }
+    if (!challenger.remove || 4 !== challenger.remove.length) {
+      throw new Error("le.challenges[" + challengeType + "].remove receives the wrong number of arguments."
+        + " You must define removeChallenge as function (opts, domain, token, cb) { }");
+    }
+    if (!challenger.loopback || 5 !== challenger.loopback.length) {
+      console.warn("le.challenges[" + challengeType + "].loopback should be defined as function (opts, domain, token, keyAuthorization, cb) { ... } and should prove (by external means) that the ACME server challenge '" + challengeType + "' will succeed");
+    }
+  });
 
   le.sni = le.sni || null;
   if (!le.httpsOptions) {
@@ -250,20 +264,6 @@ LE.create = function (le) {
     }
   });
   */
-
-  // TODO wrap these here and now with tplCopy?
-  if (5 !== le.challenge.set.length) {
-    throw new Error("le.challenge.set receives the wrong number of arguments."
-      + " You must define setChallenge as function (opts, domain, key, val, cb) { }");
-  }
-  if (le.challenge.get && 4 !== le.challenge.get.length) {
-    throw new Error("le.challenge.get receives the wrong number of arguments."
-      + " You must define getChallenge as function (opts, domain, key, cb) { }");
-  }
-  if (4 !== le.challenge.remove.length) {
-    throw new Error("le.challenge.remove receives the wrong number of arguments."
-      + " You must define removeChallenge as function (opts, domain, key, cb) { }");
-  }
 
   if (le.core.create) {
     le.core = le.core.create(le);
