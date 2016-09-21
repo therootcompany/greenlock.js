@@ -130,7 +130,7 @@ le = LE.create({
 , agreeToTerms: leAgree                                   // hook to allow user to view and accept LE TOS
 //, sni: require('le-sni-auto').create({})                // handles sni callback
 , debug: false
-//, log: function (debug) {console.log.apply(console, args);} // handles debug outputs   
+//, log: function (debug) {console.log.apply(console, args);} // handles debug outputs
 });
 
 
