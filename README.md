@@ -260,7 +260,7 @@ Change History
 * v2.0.1 - Aug 9th 2016
   * major refactor
   * simplified API
-  * modular pluigns
+  * modular plugins
   * knock out bugs
 * v1.5.0 now using letiny-core v2.0.0 and rsa-compat
 * v1.4.x I can't remember... but it's better!
