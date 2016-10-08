@@ -82,7 +82,7 @@ LE.create = function (le) {
     le.challenges['http-01'] = require('le-challenge-fs').create({ debug: le.debug });
   }
   if (!le.challenges['tls-sni-01']) {
-    le.challenges['tls-sni-01'] = le.challenges['http-01'];
+    le.challenges['tls-sni-01'] = require('le-challenge-sni').create({ debug: le.debug });
   }
   if (!le.challenges['dns-01']) {
     try {
