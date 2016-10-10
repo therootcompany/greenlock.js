@@ -29,7 +29,9 @@
     "url": "https://github.com/Daplie/node-letsencrypt/issues"
   },
   "homepage": "https://github.com/Daplie/node-letsencrypt#readme",
-  "devDependencies": {},
+  "devDependencies": {
+    "request": "^2.75.0"
+  },
   "optionalDependencies": {},
   "dependencies": {
     "asn1js": "^1.2.12",
@@ -38,6 +40,7 @@
     "homedir": "^0.6.0",
     "le-acme-core": "^2.0.5",
     "le-challenge-fs": "^2.0.2",
+    "le-challenge-sni": "^2.0.0",
     "le-sni-auto": "^2.0.1",
     "le-store-certbot": "^2.0.3",
     "localhost.daplie.com-certificates": "^1.2.3",
