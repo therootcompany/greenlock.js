@@ -1,6 +1,6 @@
 {
   "name": "letsencrypt",
-  "version": "2.1.7",
+  "version": "2.1.8",
   "description": "Let's Encrypt for node.js on npm",
   "main": "index.js",
   "scripts": {
@@ -41,7 +41,7 @@
     "le-acme-core": "^2.0.5",
     "le-challenge-fs": "^2.0.2",
     "le-challenge-sni": "^2.0.0",
-    "le-sni-auto": "^2.0.1",
+    "le-sni-auto": "^2.1.0",
     "le-store-certbot": "^2.0.3",
     "localhost.daplie.com-certificates": "^1.2.3",
     "node.extend": "^1.1.5",
