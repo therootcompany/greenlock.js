@@ -182,8 +182,14 @@ LE.create = function (le) {
       throw new Error("le.challenges[" + challengeType + "].remove receives the wrong number of arguments."
         + " You must define removeChallenge as function (opts, domain, token, cb) { }");
     }
-    if (!challenger.loopback || 5 !== challenger.loopback.length) {
-      console.warn("le.challenges[" + challengeType + "].loopback should be defined as function (opts, domain, token, keyAuthorization, cb) { ... } and should prove (by external means) that the ACME server challenge '" + challengeType + "' will succeed");
+
+    if (!le._challengeWarn && (!challenger.loopback || 4 !== challenger.loopback.length)) {
+      le._challengeWarn = true;
+      console.warn("le.challenges[" + challengeType + "].loopback should be defined as function (opts, domain, token, cb) { ... } and should prove (by external means) that the ACME server challenge '" + challengeType + "' will succeed");
+    }
+    else if (!le._challengeWarn && (!challenger.test || 5 !== challenger.test.length)) {
+      le._challengeWarn = true;
+      console.warn("le.challenges[" + challengeType + "].test should be defined as function (opts, domain, token, keyAuthorization, cb) { ... } and should prove (by external means) that the ACME server challenge '" + challengeType + "' will succeed");
     }
   });
 
