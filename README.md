@@ -1,3 +1,12 @@
+Support Daplie
+--------------
+
+Like what we're doing?
+You can [invest in Daplie on Wefunder](daplie.com/invest) or [Preorder Cloud](https://daplie.com/preorder), our plug & play home server! :)
+
+letsencrypt
+===========
+
 [![Join the chat at https://gitter.im/Daplie/letsencrypt-express](https://badges.gitter.im/Daplie/letsencrypt-express.svg)](https://gitter.im/Daplie/letsencrypt-express?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 | [Invest in Daplie on Wefunder](daplie.com/invest)
 
@@ -8,9 +17,6 @@
 | [letsencrypt-koa](https://github.com/Daplie/letsencrypt-koa)
 | [letsencrypt-hapi](https://github.com/Daplie/letsencrypt-hapi)
 |
-
-letsencrypt
-===========
 
 Automatic [Let's Encrypt](https://letsencrypt.org) HTTPS / TLS / SSL Certificates for node.js
 
