@@ -1,11 +1,11 @@
 Daplie is Taking Back the Internet!
 --------------
 
-![](http://i.imgur.com/eG1lUZr.jpg)
+[![](http://i.imgur.com/eG1lUZr.jpg)](https://daplie.com/preorder/)
 
 Stop serving the empire and join the rebel alliance!
 
-* [Invest in Daplie on Wefunder](daplie.com/invest/)
+* [Invest in Daplie on Wefunder](https://daplie.com/invest/)
 * [Pre-order Cloud](https://daplie.com/preorder/), The World's First Home Server for Everyone
 
 letsencrypt
