@@ -5,8 +5,8 @@ Daplie is Taking Back the Internet!
 
 Stop serving the empire and join the rebel alliance!
 
+* [Pre-order Cloud](https://daplie.com/preorder/) and Make the Internet Great Again!
 * [Invest in Daplie on Wefunder](https://daplie.com/invest/)
-* [Pre-order Cloud](https://daplie.com/preorder/), The World's First Home Server for Everyone
 
 letsencrypt
 ===========
