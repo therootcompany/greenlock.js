@@ -13,20 +13,20 @@ Tired of serving the Empire? Come join the Rebel Alliance:
 
 <!-- BANNER_TPL_END -->
 
-letsencrypt
-===========
+greenlock (was letsencrypt) 
+=========
 
 [![Join the chat at https://gitter.im/Daplie/letsencrypt-express](https://badges.gitter.im/Daplie/letsencrypt-express.svg)](https://gitter.im/Daplie/letsencrypt-express?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-| **letsencrypt**
-| [letsencrypt-cli](https://github.com/Daplie/letsencrypt-cli)
-| [letsencrypt-express](https://github.com/Daplie/letsencrypt-express)
-| [letsencrypt-cluster](https://github.com/Daplie/letsencrypt-cluster)
-| [letsencrypt-koa](https://github.com/Daplie/letsencrypt-koa)
-| [letsencrypt-hapi](https://github.com/Daplie/letsencrypt-hapi)
+| **greenlock**
+| [greenlock-cli](https://git.daplie.com/Daplie/greenlock-cli)
+| [greenlock-express](https://git.daplie.com/Daplie/greenlock-express)
+| [greenlock-cluster](https://git.daplie.com/Daplie/greenlock-cluster)
+| [greenlock-koa](https://git.daplie.com/Daplie/greenlock-koa)
+| [greenlock-hapi](https://git.daplie.com/Daplie/greenlock-hapi)
 |
 
-Automatic [Let's Encrypt](https://letsencrypt.org) HTTPS / TLS / SSL Certificates for node.js
+Automatic [Let's Encrypt](https://letsencrypt.org) (ACME) HTTPS / TLS / SSL Certificates for node.js
 
 Free SSL with [90-day](https://letsencrypt.org/2015/11/09/why-90-days.html) HTTPS / TLS Certificates
 
