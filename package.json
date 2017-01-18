@@ -1,5 +1,5 @@
 {
-  "name": "letsencrypt",
+  "name": "greenlock",
   "version": "2.1.8",
   "description": "Let's Encrypt for node.js on npm",
   "main": "index.js",
@@ -8,9 +8,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Daplie/node-letsencrypt.git"
+    "url": "git+https://git.daplie.com/Daplie/node-greenlock.git"
   },
   "keywords": [
+    "greenlock",
     "letsencrypt",
     "letsencrypt.org",
     "le",
@@ -26,9 +27,9 @@
   "author": "AJ ONeal <coolaj86@gmail.com> (https://coolaj86.com/)",
   "license": "(MIT OR Apache-2.0)",
   "bugs": {
-    "url": "https://github.com/Daplie/node-letsencrypt/issues"
+    "url": "https://git.daplie.com/Daplie/node-greenlock/issues"
   },
-  "homepage": "https://github.com/Daplie/node-letsencrypt#readme",
+  "homepage": "https://git.daplie.com/Daplie/node-greenlock#readme",
   "devDependencies": {
     "request": "^2.75.0"
   },
