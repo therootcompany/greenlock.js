@@ -50,14 +50,14 @@ see [**letsencrypt-cli**](https://github.com/Daplie/letsencrypt-cli).
 Install
 =======
 
-`letsencrypt` requires at least two plugins:
+`greenlock` requires at least two plugins:
 one for managing certificate storage and the other for handling ACME challenges.
 
 The default storage plugin is [`le-store-certbot`](https://github.com/Daplie/le-store-certbot)
 and the default challenge is [`le-challenge-fs`](https://github.com/Daplie/le-challenge-fs).
 
 ```bash
-npm install --save letsencrypt@2.x
+npm install --save greenlock@2.x
 
 npm install --save le-store-certbot@2.x   # default plugin for accounts, certificates, and keypairs
 npm install --save le-challenge-fs@2.x    # default plugin for challenge handlers
@@ -78,7 +78,7 @@ Against my better judgement I'm providing a terribly oversimplified example
 of how to use this library:
 
 ```javascript
-var le = require('letsencrypt').create({ server: 'staging' });
+var le = require('greenlock').create({ server: 'staging' });
 
 var opts = {
   domains: ['example.com'], email: 'user@email.com', agreeTos: true
@@ -114,20 +114,20 @@ The configuration consists of 3 components:
 ```javascript
 'use strict';
 
-var LE = require('letsencrypt');
+var LE = require('greenlock');
 var le;
 
 
 // Storage Backend
 var leStore = require('le-store-certbot').create({
-  configDir: '~/letsencrypt/etc'                          // or /etc/letsencrypt or wherever
+  configDir: '~/greenlock/etc'                          // or /etc/greenlock or wherever
 , debug: false
 });
 
 
 // ACME Challenge Handlers
 var leChallenge = require('le-challenge-fs').create({
-  webrootPath: '~/letsencrypt/var/'                       // or template string such as
+  webrootPath: '~/greenlock/var/'                       // or template string such as
 , debug: false                                            // '/srv/www/:hostname/.well-known/acme-challenge'
 });
 
@@ -184,7 +184,7 @@ le.check({ domains: [ 'example.com' ] }).then(function (results) {
     // manually use le.challenges['http-01'].get(opts, domain, key, val, done)
     // or have a webserver running and responding
     // to /.well-known/acme-challenge at `webrootPath`
-    console.error('[Error]: node-letsencrypt/examples/standalone');
+    console.error('[Error]: node-greenlock/examples/standalone');
     console.error(err.stack);
 
   });
@@ -239,9 +239,9 @@ additional internal API expectations.
 **IMPORTANT**:
 
 Use `v2.0.0` as your initial version - NOT v0.1.0 and NOT v1.0.0 and NOT v3.0.0.
-This is to indicate that your module is compatible with v2.x of node-letsencrypt.
+This is to indicate that your module is compatible with v2.x of node-greenlock.
 
-Since the public API for your module is defined by node-letsencrypt the major version
+Since the public API for your module is defined by node-greenlock the major version
 should be kept in sync.
 
 ### store implementation
