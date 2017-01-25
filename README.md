@@ -120,14 +120,14 @@ var le;
 
 // Storage Backend
 var leStore = require('le-store-certbot').create({
-  configDir: '~/greenlock/etc'                          // or /etc/greenlock or wherever
+  configDir: '~/letsencrypt/etc'                          // or /etc/letsencrypt or wherever
 , debug: false
 });
 
 
 // ACME Challenge Handlers
 var leChallenge = require('le-challenge-fs').create({
-  webrootPath: '~/greenlock/var/'                       // or template string such as
+  webrootPath: '~/letsencrypt/var/'                       // or template string such as
 , debug: false                                            // '/srv/www/:hostname/.well-known/acme-challenge'
 });
 
