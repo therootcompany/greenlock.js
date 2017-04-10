@@ -42,7 +42,7 @@ LE._undefined = {
 , challenge: u
 , challenges: u
 , sni: u
-, httpsOptions: u
+, tlsOptions: u
 
 , register: u
 , check: u
@@ -194,10 +194,8 @@ LE.create = function (le) {
   });
 
   le.sni = le.sni || null;
-  if (!le.httpsOptions) {
-    le.httpsOptions = {};
-  }
-  if (!le.httpsOptions.SNICallback) {
+  le.tlsOptions = le.tlsOptions || le.httpsOptions || {};
+  if (!le.tlsOptions.SNICallback) {
     if (!le.getCertificatesAsync && !le.getCertificates) {
       if (Array.isArray(le.approveDomains)) {
         le.approvedDomains = le.approveDomains;
@@ -256,20 +254,14 @@ LE.create = function (le) {
     if (le.sni.create) {
       le.sni = le.sni.create(le);
     }
-    le.httpsOptions.SNICallback = le.sni.sniCallback;
+    le.tlsOptions.SNICallback = le.sni.sniCallback;
   }
-  if (!le.httpsOptions.key || !le.httpsOptions.cert) {
-    le.httpsOptions = require('localhost.daplie.me-certificates').merge(le.httpsOptions);
+  if (!le.tlsOptions.key || !le.tlsOptions.cert) {
+    le.tlsOptions = require('localhost.daplie.me-certificates').merge(le.tlsOptions);
   }
-  /*
-  le.sni = PromiseA.promisifyAll(le.sni);
-  le._sniOpts = le.sni.getOptions();
-  Object.keys(le._sniOpts).forEach(function (key) {
-    if (!(key in le)) {
-      le[key] = le._sniOpts[key];
-    }
-  });
-  */
+  // We want to move to using tlsOptions instead of httpsOptions, but we also need to make
+  // sure anything that uses this object will still work if looking for httpsOptions.
+  le.httpsOptions = le.tlsOptions;
 
   if (le.core.create) {
     le.core = le.core.create(le);
