@@ -259,7 +259,7 @@ LE.create = function (le) {
     le.httpsOptions.SNICallback = le.sni.sniCallback;
   }
   if (!le.httpsOptions.key || !le.httpsOptions.cert) {
-    le.httpsOptions = require('localhost.daplie.com-certificates').merge(le.httpsOptions);
+    le.httpsOptions = require('localhost.daplie.me-certificates').merge(le.httpsOptions);
   }
   /*
   le.sni = PromiseA.promisifyAll(le.sni);
