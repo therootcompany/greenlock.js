@@ -131,7 +131,7 @@ var leHttpChallenge = require('le-challenge-fs').create({
 , debug: false                                            // '/srv/www/:hostname/.well-known/acme-challenge'
 });
 var leSniChallenge = require('le-challenge-sni').create({
-, debug: false                                            // '/srv/www/:hostname/.well-known/acme-challenge'
+, debug: false
 });
 
 
