@@ -60,7 +60,8 @@ and the default challenge is [`le-challenge-fs`](https://github.com/Daplie/le-ch
 npm install --save greenlock@2.x
 
 npm install --save le-store-certbot@2.x   # default plugin for accounts, certificates, and keypairs
-npm install --save le-challenge-fs@2.x    # default plugin for challenge handlers
+npm install --save le-challenge-fs@2.x    # default plugin for http-01 challenge
+npm install --save le-challenge-sni@2.x   # default plugin for tls-sni-01 and tls-sni-02 challenge
 npm install --save le-acme-core@2.x       # default plugin for ACME spec
 npm install --save le-sni-auto@2.x        # default plugin for SNICallback
 ```
