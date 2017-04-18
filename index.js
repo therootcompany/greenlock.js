@@ -204,8 +204,14 @@ LE.create = function (le) {
       if (!le.approveDomains) {
         le.approvedDomains = le.approvedDomains || [];
         le.approveDomains = function (lexOpts, certs, cb) {
-          if (!(le.approvedDomains.length && le.email && le.agreeTos)) {
-            throw new Error("le-sni-auto is not properly configured. Missing one or more of approveDomains(domain, certs, callback) or approvedDomains (array), email, or agreeTos");
+          if (!le.email) {
+            throw new Error("le-sni-auto is not properly configured. Missing email");
+          }
+          if (!le.agreeTos) {
+            throw new Error("le-sni-auto is not properly configured. Missing agreeTos");
+          }
+          if (!le.approvedDomains.length) {
+            throw new Error("le-sni-auto is not properly configured. Missing approveDomains(domain, certs, callback)");
           }
           if (lexOpts.domains.every(function (domain) {
             return -1 !== le.approvedDomains.indexOf(domain);
