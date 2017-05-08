@@ -37,15 +37,15 @@ This is a **low-level library** for implementing ACME / LetsEncrypt Clients, CLI
 system tools, and abstracting storage backends (file vs db, etc).
 
 For `express`, raw `https` or `spdy`, or `restify` (same as raw https) see
-[**letsencrypt-express**](https://github.com/Daplie/letsencrypt-express) and [letsencrypt-cluster](https://github.com/Daplie/letsencrypt-cluster).
+[**greenlock-express** (previously letsencrypt-express)](https://git.daplie.com/Daplie/greenlock-express) and [greenlock-cluster (previously letsencrypt-cluster)](https://git.daplie.com/Daplie/greenlock-cluster).
 
-For `hapi` see [letsencrypt-hapi](https://github.com/Daplie/letsencrypt-hapi).
+For `hapi` see [greenlock-hapi (previously letsencrypt-hapi)](https://git.daplie.com/Daplie/greenlock-hapi).
 
 For `koa` or `rill`
-see [letsencrypt-koa](https://github.com/Daplie/letsencrypt-koa).
+see [greenlock-koa (previously letsencrypt-koa)](https://git.daplie.com/Daplie/greenlock-koa).
 
 For `bash`, `fish`, `zsh`, `cmd.exe`, `PowerShell`
-see [**letsencrypt-cli**](https://github.com/Daplie/letsencrypt-cli).
+see [**greenlock-cli** (previously letsencrypt-cli)](https://git.daplie.com/Daplie/greenlock-cli).
 
 Install
 =======
@@ -53,8 +53,8 @@ Install
 `greenlock` requires at least two plugins:
 one for managing certificate storage and the other for handling ACME challenges.
 
-The default storage plugin is [`le-store-certbot`](https://github.com/Daplie/le-store-certbot)
-and the default challenge is [`le-challenge-fs`](https://github.com/Daplie/le-challenge-fs).
+The default storage plugin is [`le-store-certbot`](https://git.daplie.com/Daplie/le-store-certbot)
+and the default challenge is [`le-challenge-fs`](https://git.daplie.com/Daplie/le-challenge-fs).
 
 ```bash
 npm install --save greenlock@2.x
@@ -121,14 +121,14 @@ var le;
 
 // Storage Backend
 var leStore = require('le-store-certbot').create({
-  configDir: '~/letsencrypt/etc'                          // or /etc/letsencrypt or wherever
+  configDir: '~/acme/etc'                                 // or /etc/letsencrypt or wherever
 , debug: false
 });
 
 
 // ACME Challenge Handlers
 var leHttpChallenge = require('le-challenge-fs').create({
-  webrootPath: '~/letsencrypt/var/'                       // or template string such as
+  webrootPath: '~/acme/var/'                              // or template string such as
 , debug: false                                            // '/srv/www/:hostname/.well-known/acme-challenge'
 });
 var leSniChallenge = require('le-challenge-sni').create({
@@ -254,7 +254,7 @@ should be kept in sync.
 
 ### store implementation
 
-See <https://github.com/Daplie/le-store-SPEC>
+See <https://git.daplie.com/Daplie/le-store-SPEC>
 
 * getOptions()
 * accounts.
@@ -270,7 +270,7 @@ See <https://github.com/Daplie/le-store-SPEC>
 
 ### challenge implementation
 
-See https://github.com/Daplie/le-challenge-fs
+See https://git.daplie.com/Daplie/le-challenge-fs
 
 * `.set(opts, domain, key, value, cb);`         // opts will be saved with domain/key
 * `.get(opts, domain, key, cb);`                // opts will be retrieved by domain/key
@@ -279,6 +279,7 @@ See https://github.com/Daplie/le-challenge-fs
 Change History
 ==============
 
+* v2.1.9 - Jan 18th 2017 renamed to greenlock
 * v2.0.2 - Aug 9th 2016 update readme
 * v2.0.1 - Aug 9th 2016
   * major refactor
