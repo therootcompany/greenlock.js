@@ -1,30 +1,13 @@
-<!-- BANNER_TPL_BEGIN -->
-
-About Daplie: We're taking back the Internet!
---------------
-
-Down with Google, Apple, and Facebook!
-
-We're re-decentralizing the web and making it read-write again - one home cloud system at a time.
-
-Tired of serving the Empire? Come join the Rebel Alliance:
-
-<a href="mailto:jobs@daplie.com">jobs@daplie.com</a> | [Invest in Daplie on Wefunder](https://daplie.com/invest/) | [Pre-order Cloud](https://daplie.com/preorder/), The World's First Home Server for Everyone
-
-<!-- BANNER_TPL_END -->
-
-greenlock (node-letsencrypt) 
+greenlock (node-letsencrypt)
 =========
 
-[![Join the chat at https://gitter.im/Daplie/letsencrypt-express](https://badges.gitter.im/Daplie/letsencrypt-express.svg)](https://gitter.im/Daplie/letsencrypt-express?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
 | **greenlock**
-| [greenlock-cli](https://git.daplie.com/Daplie/greenlock-cli)
-| [greenlock-express](https://git.daplie.com/Daplie/greenlock-express)
-| [greenlock-cluster](https://git.daplie.com/Daplie/greenlock-cluster)
-| [greenlock-koa](https://git.daplie.com/Daplie/greenlock-koa)
-| [greenlock-hapi](https://git.daplie.com/Daplie/greenlock-hapi)
-|
+| [greenlock-cli](https://git.coolaj86.com/coolaj86/greenlock-cli.js)
+| [greenlock-express](https://git.coolaj86.com/coolaj86/greenlock-express.js)
+| [greenlock-cluster](https://git.coolaj86.com/coolaj86/greenlock-cluster.js)
+| [greenlock-koa](https://git.coolaj86.com/coolaj86/greenlock-koa.js)
+| [greenlock-hapi](https://git.coolaj86.com/coolaj86/greenlock-hapi.js)
+| Sponsored by [Daplie](https://daplie.com)
 
 Automatic [Let's Encrypt](https://letsencrypt.org) (ACME) HTTPS / TLS / SSL Certificates for node.js
 
@@ -37,15 +20,15 @@ This is a **low-level library** for implementing ACME / LetsEncrypt Clients, CLI
 system tools, and abstracting storage backends (file vs db, etc).
 
 For `express`, raw `https` or `spdy`, or `restify` (same as raw https) see
-[**greenlock-express** (previously letsencrypt-express)](https://git.daplie.com/Daplie/greenlock-express) and [greenlock-cluster (previously letsencrypt-cluster)](https://git.daplie.com/Daplie/greenlock-cluster).
+[**greenlock-express** (previously letsencrypt-express)](https://git.coolaj86.com/coolaj86/greenlock-express.js) and [greenlock-cluster (previously letsencrypt-cluster)](https://git.coolaj86.com/coolaj86/greenlock-cluster.js).
 
-For `hapi` see [greenlock-hapi (previously letsencrypt-hapi)](https://git.daplie.com/Daplie/greenlock-hapi).
+For `hapi` see [greenlock-hapi (previously letsencrypt-hapi)](https://git.coolaj86.com/coolaj86/greenlock-hapi.js).
 
 For `koa` or `rill`
-see [greenlock-koa (previously letsencrypt-koa)](https://git.daplie.com/Daplie/greenlock-koa).
+see [greenlock-koa (previously letsencrypt-koa)](https://git.coolaj86.com/coolaj86/greenlock-koa.js).
 
 For `bash`, `fish`, `zsh`, `cmd.exe`, `PowerShell`
-see [**greenlock-cli** (previously letsencrypt-cli)](https://git.daplie.com/Daplie/greenlock-cli).
+see [**greenlock-cli** (previously letsencrypt-cli)](https://git.coolaj86.com/coolaj86/greenlock-cli.js).
 
 Install
 =======
@@ -53,8 +36,8 @@ Install
 `greenlock` requires at least two plugins:
 one for managing certificate storage and the other for handling ACME challenges.
 
-The default storage plugin is [`le-store-certbot`](https://git.daplie.com/Daplie/le-store-certbot)
-and the default challenge is [`le-challenge-fs`](https://git.daplie.com/Daplie/le-challenge-fs).
+The default storage plugin is [`le-store-certbot`](https://git.coolaj86.com/coolaj86/le-store-certbot.js)
+and the default challenge is [`le-challenge-fs`](https://git.coolaj86.com/coolaj86/le-challenge-fs.js).
 
 ```bash
 npm install --save greenlock@2.x
@@ -254,7 +237,7 @@ should be kept in sync.
 
 ### store implementation
 
-See <https://git.daplie.com/Daplie/le-store-SPEC>
+See <https://git.coolaj86.com/coolaj86/le-store-SPEC.js>
 
 * getOptions()
 * accounts.
@@ -270,7 +253,7 @@ See <https://git.daplie.com/Daplie/le-store-SPEC>
 
 ### challenge implementation
 
-See https://git.daplie.com/Daplie/le-challenge-fs
+See https://git.coolaj86.com/coolaj86/le-challenge-fs.js
 
 * `.set(opts, domain, key, value, cb);`         // opts will be saved with domain/key
 * `.get(opts, domain, key, cb);`                // opts will be retrieved by domain/key
@@ -279,6 +262,7 @@ See https://git.daplie.com/Daplie/le-challenge-fs
 Change History
 ==============
 
+* v2.1.17 - Nov 5th 2017 migrate back to personal repo
 * v2.1.9 - Jan 18th 2017 renamed to greenlock
 * v2.0.2 - Aug 9th 2016 update readme
 * v2.0.1 - Aug 9th 2016
