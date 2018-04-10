@@ -7,7 +7,7 @@ greenlock (node-letsencrypt)
 | [greenlock-cluster](https://git.coolaj86.com/coolaj86/greenlock-cluster.js)
 | [greenlock-koa](https://git.coolaj86.com/coolaj86/greenlock-koa.js)
 | [greenlock-hapi](https://git.coolaj86.com/coolaj86/greenlock-hapi.js)
-| Sponsored by [Daplie](https://daplie.com)
+| Sponsored by [ppl](https://ppl.family)
 
 Automatic [Let's Encrypt](https://letsencrypt.org) (ACME) HTTPS / TLS / SSL Certificates for node.js
 
