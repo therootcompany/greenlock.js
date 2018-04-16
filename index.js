@@ -2,7 +2,7 @@
 
 var DAY = 24 * 60 * 60 * 1000;
 //var MIN = 60 * 1000;
-var ACME = require('le-acme-core').ACME;
+var ACME = require('acme-v2/compat').ACME;
 
 var LE = module.exports;
 LE.LE = LE;
@@ -19,12 +19,12 @@ function _log(debug) {
 }
 
 LE.defaults = {
-  productionServerUrl: ACME.productionServerUrl
-, stagingServerUrl: ACME.stagingServerUrl
+  productionServerUrl: 'https://acme-v02.api.letsencrypt.org/directory'
+, stagingServerUrl: 'https://acme-staging-v02.api.letsencrypt.org/directory'
 
 , rsaKeySize: ACME.rsaKeySize || 2048
 , challengeType: ACME.challengeType || 'http-01'
-, challengeTypes: ACME.challengeTypes || [ 'http-01', 'tls-sni-01', 'dns-01' ]
+, challengeTypes: ACME.challengeTypes || [ 'http-01', 'dns-01' ]
 
 , acmeChallengePrefix: ACME.acmeChallengePrefix
 };
@@ -53,6 +53,7 @@ LE._undefined = {
 , rsaKeySize: u
 , challengeType: u
 , server: u
+, version: u
 , agreeToTerms: u
 , _ipc: u
 , duplicate: u
@@ -70,7 +71,6 @@ LE._undefine = function (le) {
 LE.create = function (le) {
   var PromiseA = require('bluebird');
 
-  le.acme = le.acme || ACME.create({ debug: le.debug });
   le.store = le.store || require('le-store-certbot').create({ debug: le.debug });
   le.core = require('./lib/core');
   var log = le.log || _log;
@@ -81,9 +81,11 @@ LE.create = function (le) {
   if (!le.challenges['http-01']) {
     le.challenges['http-01'] = require('le-challenge-fs').create({ debug: le.debug });
   }
+  /*
   if (!le.challenges['tls-sni-01']) {
     le.challenges['tls-sni-01'] = require('le-challenge-sni').create({ debug: le.debug });
   }
+  */
   if (!le.challenges['dns-01']) {
     try {
       le.challenges['dns-01'] = require('le-challenge-ddns').create({ debug: le.debug });
@@ -118,6 +120,42 @@ LE.create = function (le) {
     le.server = LE.productionServerUrl;
   }
 
+  if (-1 !== [ 'https://acme-v01.api.letsencrypt.org/directory'
+    , 'https://acme-staging.api.letsencrypt.org/directory' ].indexOf(le.server)) {
+    ACME = require('le-acme-core').ACME;
+    console.warn("Let's Encrypt v1 is deprecated. Please update to Let's Encrypt v2 (ACME draft 11)");
+  }
+  else if (-1 !=== [ 'https://acme-v02.api.letsencrypt.org/directory'
+    , 'https://acme-staging-v02.api.letsencrypt.org/directory' ].indexOf(le.server)) {
+    if ('v02' !== le.version && 'draft-11' !== le.version) {
+      ACME = require('le-acme-core').ACME;
+      if ('v01' !== le.version) {
+        //console.warn("Please specify version: 'v01' (Let's Encrypt v1) or 'draft-11' (Let's Encrypt v2 / ACME draft 11)");
+        console.warn("");
+        console.warn("");
+        console.warn("");
+        console.warn("====================================================================");
+        console.warn("==                     greenlock.js (v2.2.0+)                     ==");
+        console.warn("====================================================================");
+        console.warn("");
+        console.warn("Please specify 'version' option:");
+        console.warn("");
+        console.warn("        'v01' for Let's Encrypt v1");
+        console.warn("                 or");
+        console.warn("        'draft-11' for Let's Encrypt v2 and ACME draft 11");
+        console.warn("        ('v02' is an alias of 'draft-11'");
+        console.warn("");
+        console.warn("====================================================================");
+        console.warn("==      this will be required from version v2.3 forward           ==");
+        console.warn("====================================================================");
+        console.warn("");
+        console.warn("");
+        console.warn("");
+      }
+    }
+  }
+
+  le.acme = le.acme || ACME.create({ debug: le.debug });
   if (le.acme.create) {
     le.acme = le.acme.create(le);
   }
@@ -183,6 +221,7 @@ LE.create = function (le) {
         + " You must define removeChallenge as function (opts, domain, token, cb) { }");
     }
 
+/*
     if (!le._challengeWarn && (!challenger.loopback || 4 !== challenger.loopback.length)) {
       le._challengeWarn = true;
       console.warn("le.challenges[" + challengeType + "].loopback should be defined as function (opts, domain, token, cb) { ... } and should prove (by external means) that the ACME server challenge '" + challengeType + "' will succeed");
@@ -191,6 +230,7 @@ LE.create = function (le) {
       le._challengeWarn = true;
       console.warn("le.challenges[" + challengeType + "].test should be defined as function (opts, domain, token, keyAuthorization, cb) { ... } and should prove (by external means) that the ACME server challenge '" + challengeType + "' will succeed");
     }
+*/
   });
 
   le.sni = le.sni || null;

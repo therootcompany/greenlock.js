@@ -1,12 +1,16 @@
 greenlock (node-letsencrypt)
 =========
 
+Now supports **Let's Encrypt v2**!!
+
+| [acme-v2.js](https://git.coolaj86.com/coolaj86/acme-v2.js)
 | **greenlock**
 | [greenlock-cli](https://git.coolaj86.com/coolaj86/greenlock-cli.js)
 | [greenlock-express](https://git.coolaj86.com/coolaj86/greenlock-express.js)
 | [greenlock-cluster](https://git.coolaj86.com/coolaj86/greenlock-cluster.js)
 | [greenlock-koa](https://git.coolaj86.com/coolaj86/greenlock-koa.js)
 | [greenlock-hapi](https://git.coolaj86.com/coolaj86/greenlock-hapi.js)
+
 | Sponsored by [ppl](https://ppl.family)
 
 Automatic [Let's Encrypt](https://letsencrypt.org) (ACME) HTTPS / TLS / SSL Certificates for node.js
@@ -125,7 +129,18 @@ function leAgree(opts, agreeCb) {
 }
 
 le = LE.create({
-  server: LE.stagingServerUrl                             // or LE.productionServerUrl
+  version: 'draft-11'                                     // 'draft-11' or 'v01'
+                                                          // 'draft-11' is for Let's Encrypt v2 otherwise known as ACME draft 11
+                                                          // 'v02' is an alias for 'draft-11'
+                                                          // 'v01' is for the pre-spec Let's Encrypt v1
+  //
+  // staging API
+  server: 'https://acme-staging-v02.api.letsencrypt.org/directory'
+
+  //
+  // production API
+  //server: 'https://acme-v02.api.letsencrypt.org/directory'
+
 , store: leStore                                          // handles saving of config, accounts, and certificates
 , challenges: {
     'http-01': leHttpChallenge                            // handles /.well-known/acme-challege keys and tokens
