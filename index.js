@@ -125,7 +125,7 @@ LE.create = function (le) {
     ACME = require('le-acme-core').ACME;
     console.warn("Let's Encrypt v1 is deprecated. Please update to Let's Encrypt v2 (ACME draft 11)");
   }
-  else if (-1 !=== [ 'https://acme-v02.api.letsencrypt.org/directory'
+  else if (-1 !== [ 'https://acme-v02.api.letsencrypt.org/directory'
     , 'https://acme-staging-v02.api.letsencrypt.org/directory' ].indexOf(le.server)) {
     if ('v02' !== le.version && 'draft-11' !== le.version) {
       ACME = require('le-acme-core').ACME;
