@@ -10,12 +10,8 @@ Now supports **Let's Encrypt v2**!!
 | [greenlock-cluster](https://git.coolaj86.com/coolaj86/greenlock-cluster.js)
 | [greenlock-koa](https://git.coolaj86.com/coolaj86/greenlock-koa.js)
 | [greenlock-hapi](https://git.coolaj86.com/coolaj86/greenlock-hapi.js)
-<<<<<<< HEAD
-| Sponsored by [ppl](https://ppl.family). Created at [Daplie](https://dapliefounder.com).
-=======
 
 | Sponsored by [ppl](https://ppl.family)
->>>>>>> 84e21d2385da4e2260befd1c91ac4564e1e21301
 
 Automatic [Let's Encrypt](https://letsencrypt.org) (ACME) HTTPS / TLS / SSL Certificates for node.js
 
@@ -154,6 +150,11 @@ le = LE.create({
 , challengeType: 'http-01'                                // default to this challenge type
 , agreeToTerms: leAgree                                   // hook to allow user to view and accept LE TOS
 //, sni: require('le-sni-auto').create({})                // handles sni callback
+
+                                                          // renewals happen at a random time within this window
+, renewWithin: 14 * 24 * 60 * 60 * 1000                   // certificate renewal may begin at this time
+, renewBy:     10 * 24 * 60 * 60 * 1000                   // certificate renewal should happen by this time
+
 , debug: false
 //, log: function (debug) {console.log.apply(console, args);} // handles debug outputs
 });

@@ -107,7 +107,7 @@ LE.create = function (le) {
     agreeCb(new Error("'agreeToTerms' was not supplied to LE and 'agreeTos' was not supplied to LE.register"));
   };
 
-  if (!le.renewWithin) { le.renewWithin = 7 * DAY; }
+  if (!le.renewWithin) { le.renewWithin = 14 * DAY; }
   // renewBy has a default in le-sni-auto
 
   if (!le.server) {
