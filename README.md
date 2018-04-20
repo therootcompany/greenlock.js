@@ -1,5 +1,6 @@
-greenlock (node-letsencrypt)
-=========
+greenlock
+=====
+(previously node-letsencrypt)
 
 Now supports **Let's Encrypt v2**!!
 
