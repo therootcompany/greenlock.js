@@ -1,6 +1,6 @@
 | Sponsored by [ppl](https://ppl.family)
 | [acme-v2.js](https://git.coolaj86.com/coolaj86/acme-v2.js)
-| **greenlock**
+| **greenlock** ([npm](https://www.npmjs.com/package/greenlock))
 | [greenlock-cli](https://git.coolaj86.com/coolaj86/greenlock-cli.js)
 | [greenlock-express](https://git.coolaj86.com/coolaj86/greenlock-express.js)
 | [greenlock-cluster](https://git.coolaj86.com/coolaj86/greenlock-cluster.js)
