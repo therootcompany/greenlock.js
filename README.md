@@ -282,7 +282,11 @@ See https://git.coolaj86.com/coolaj86/le-challenge-fs.js
 
 Change History
 ==============
-
+* v2.2 - Let's Encrypt v2 Support
+  * v2.2.4 - don't promisify all of `dns`
+  * v2.2.3 - `renewWithin` default to 14 days
+  * v2.2.2 - replace git dependency with npm
+  * v2.2.1 - April 2018 **Let's Encrypt v2** support
 * v2.1.17 - Nov 5th 2017 migrate back to personal repo
 * v2.1.9 - Jan 18th 2017 renamed to greenlock
 * v2.0.2 - Aug 9th 2016 update readme
