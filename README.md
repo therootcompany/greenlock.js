@@ -1,9 +1,4 @@
-greenlock
-=====
-(previously node-letsencrypt)
-
-Now supports **Let's Encrypt v2**!!
-
+| Sponsored by [ppl](https://ppl.family)
 | [acme-v2.js](https://git.coolaj86.com/coolaj86/acme-v2.js)
 | **greenlock**
 | [greenlock-cli](https://git.coolaj86.com/coolaj86/greenlock-cli.js)
@@ -11,8 +6,11 @@ Now supports **Let's Encrypt v2**!!
 | [greenlock-cluster](https://git.coolaj86.com/coolaj86/greenlock-cluster.js)
 | [greenlock-koa](https://git.coolaj86.com/coolaj86/greenlock-koa.js)
 | [greenlock-hapi](https://git.coolaj86.com/coolaj86/greenlock-hapi.js)
+|
 
-| Sponsored by [ppl](https://ppl.family)
+greenlock
+=====
+(previously node-letsencrypt)
 
 Automatic [Let's Encrypt](https://letsencrypt.org) (ACME) HTTPS / TLS / SSL Certificates for node.js
 
@@ -34,6 +32,8 @@ see [greenlock-koa (previously letsencrypt-koa)](https://git.coolaj86.com/coolaj
 
 For `bash`, `fish`, `zsh`, `cmd.exe`, `PowerShell`
 see [**greenlock-cli** (previously letsencrypt-cli)](https://git.coolaj86.com/coolaj86/greenlock-cli.js).
+
+### Now supports **Let's Encrypt v2**!!
 
 Install
 =======
