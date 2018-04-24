@@ -1,6 +1,6 @@
 {
   "name": "greenlock",
-  "version": "2.2.4",
+  "version": "2.2.5",
   "description": "Let's Encrypt for node.js on npm",
   "main": "index.js",
   "scripts": {
@@ -54,11 +54,12 @@
   "devDependencies": {
     "request": "^2.75.0"
   },
-  "optionalDependencies": {},
+  "optionalDependencies": {
+    "bluebird": "^3.5.1"
+  },
   "dependencies": {
     "acme-v2": "^1.0.2",
     "asn1js": "^1.2.12",
-    "bluebird": "^3.0.6",
     "certpem": "^1.0.0",
     "homedir": "^0.6.0",
     "le-acme-core": "^2.1.2",
