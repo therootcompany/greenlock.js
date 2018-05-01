@@ -3,9 +3,9 @@
 | **greenlock** ([npm](https://www.npmjs.com/package/greenlock))
 | [greenlock-cli](https://git.coolaj86.com/coolaj86/greenlock-cli.js)
 | [greenlock-express](https://git.coolaj86.com/coolaj86/greenlock-express.js)
+  ([koa](https://git.coolaj86.com/coolaj86/greenlock-koa.js))
+  ([hapi](https://git.coolaj86.com/coolaj86/greenlock-hapi.js))
 | [greenlock-cluster](https://git.coolaj86.com/coolaj86/greenlock-cluster.js)
-| [greenlock-koa](https://git.coolaj86.com/coolaj86/greenlock-koa.js)
-| [greenlock-hapi](https://git.coolaj86.com/coolaj86/greenlock-hapi.js)
 |
 
 greenlock
