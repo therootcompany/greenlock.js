@@ -8,7 +8,7 @@
 | [greenlock-cluster](https://git.coolaj86.com/coolaj86/greenlock-cluster.js)
 |
 
-greenlock
+Greenlock&trade; for node.js
 =====
 (previously node-letsencrypt)
 
