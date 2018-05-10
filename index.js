@@ -103,6 +103,7 @@ LE.create = function (le) {
   le.rsaKeySize = le.rsaKeySize || LE.rsaKeySize;
   le.challengeType = le.challengeType || LE.challengeType;
   le._ipc = ipc;
+  le._communityPackage = le._communityPackage || 'greenlock';
   le.agreeToTerms = le.agreeToTerms || function (args, agreeCb) {
     agreeCb(new Error("'agreeToTerms' was not supplied to LE and 'agreeTos' was not supplied to LE.register"));
   };
@@ -259,6 +260,7 @@ LE.create = function (le) {
             lexOpts.domains = le.approvedDomains.slice(0);
             lexOpts.email = le.email;
             lexOpts.agreeTos = le.agreeTos;
+            lexOpts.communityMember = lexOpts.communityMember;
             return cb(null, { options: lexOpts, certs: certs });
           }
           log(le.debug, 'unapproved domain', lexOpts.domains, le.approvedDomains);
