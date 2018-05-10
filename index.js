@@ -103,7 +103,7 @@ LE.create = function (le) {
   le.rsaKeySize = le.rsaKeySize || LE.rsaKeySize;
   le.challengeType = le.challengeType || LE.challengeType;
   le._ipc = ipc;
-  le._communityPackage = le._communityPackage || 'greenlock';
+  le._communityPackage = le._communityPackage || 'greenlock.js';
   le.agreeToTerms = le.agreeToTerms || function (args, agreeCb) {
     agreeCb(new Error("'agreeToTerms' was not supplied to LE and 'agreeTos' was not supplied to LE.register"));
   };
