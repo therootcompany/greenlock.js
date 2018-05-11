@@ -273,36 +273,53 @@ LE.create = function (le) {
         log(le.debug, 'le.getCertificates called for', domain, 'with certs for', certs && certs.altnames || 'NONE');
         var opts = { domain: domain, domains: certs && certs.altnames || [ domain ] };
 
-        le.approveDomains(opts, certs, function (_err, results) {
-          if (_err) {
-            log(le.debug, 'le.approveDomains called with error', _err);
-            cb(_err);
-            return;
-          }
+        try {
+          le.approveDomains(opts, certs, function (_err, results) {
+            if (_err) {
+              log(le.debug, 'le.approveDomains called with error', _err);
+              cb(_err);
+              return;
+            }
 
-          log(le.debug, 'le.approveDomains called with certs for', results.certs && results.certs.altnames || 'NONE', 'and options:');
-          log(le.debug, results.options);
+            log(le.debug, 'le.approveDomains called with certs for', results.certs && results.certs.altnames || 'NONE', 'and options:');
+            log(le.debug, results.options);
 
-          var promise;
+            var promise;
 
-          if (results.certs) {
-            log(le.debug, 'le renewing');
-            promise = le.core.certificates.renewAsync(results.options, results.certs);
-          }
-          else {
-            log(le.debug, 'le getting from disk or registering new');
-            promise = le.core.certificates.getAsync(results.options);
-          }
+            if (results.certs) {
+              log(le.debug, 'le renewing');
+              promise = le.core.certificates.renewAsync(results.options, results.certs);
+            }
+            else {
+              log(le.debug, 'le getting from disk or registering new');
+              promise = le.core.certificates.getAsync(results.options);
+            }
 
-          return promise.then(function (certs) { cb(null, certs); }, cb);
-        });
+            return promise.then(function (certs) { cb(null, certs); }, function (e) {
+              if (le.debug) { console.debug("Error"); console.debug(e); }
+              cb(e);
+            });
+          });
+        } catch(e) {
+          console.error("[ERROR] Something went wrong in approveDomains:");
+          console.error(e);
+          console.error("BUT WAIT! Good news: It's probably your fault, so you can probably fix it.");
+        }
       };
     }
     le.sni = le.sni || require('le-sni-auto');
     if (le.sni.create) {
       le.sni = le.sni.create(le);
     }
-    le.tlsOptions.SNICallback = le.sni.sniCallback;
+    le.tlsOptions.SNICallback = function (domain, cb) {
+      try {
+        le.sni.sniCallback(domain, cb);
+      } catch(e) {
+        console.error("[ERROR] Something went wrong in the SNICallback:");
+        console.error(e);
+        cb(e);
+      }
+    };
   }
   if (!le.tlsOptions.key || !le.tlsOptions.cert) {
     le.tlsOptions = require('localhost.daplie.me-certificates').merge(le.tlsOptions);
