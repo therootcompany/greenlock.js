@@ -1,79 +1,263 @@
-| Sponsored by [ppl](https://ppl.family)
-| [acme-v2.js](https://git.coolaj86.com/coolaj86/acme-v2.js)
-| **greenlock** ([npm](https://www.npmjs.com/package/greenlock))
-| [greenlock-cli](https://git.coolaj86.com/coolaj86/greenlock-cli.js)
-| [greenlock-express](https://git.coolaj86.com/coolaj86/greenlock-express.js)
-  ([koa](https://git.coolaj86.com/coolaj86/greenlock-koa.js))
-  ([hapi](https://git.coolaj86.com/coolaj86/greenlock-hapi.js))
-| [greenlock-cluster](https://git.coolaj86.com/coolaj86/greenlock-cluster.js)
-|
-
-Greenlock&trade; for node.js
+🔐 Greenlock&trade; for node.js
 =====
-(previously node-letsencrypt)
 
-Automatic [Let's Encrypt](https://letsencrypt.org) (ACME) HTTPS / TLS / SSL Certificates for node.js
+Greenlock provides Free SSL, Free Wildcard SSL, and Fully Automated HTTPS <br>
+<small>certificates issued by Let's Encrypt v2 via [ACME](https://git.coolaj86.com/coolaj86/acme-v2.js)</small>
 
-Free SSL with [90-day](https://letsencrypt.org/2015/11/09/why-90-days.html) HTTPS / TLS Certificates
+| Sponsored by [ppl](https://ppl.family) |
+Greenlock works
+in the [Commandline](https://git.coolaj86.com/coolaj86/greenlock-cli.js) (cli),
+as a [Web Server](https://git.coolaj86.com/coolaj86/greenlock-server.js),
+in [Web Browsers](https://git.coolaj86.com/coolaj86/greenlock.html) (WebCrypto),
+and with **node.js** ([npm](https://www.npmjs.com/package/greenlock)).
 
-Are these the droids you're looking for?
+Features
+========
+
+  - [x] Actively Maintained and Supported
+  - [x] Automatic HTTPS
+    - [x] Free SSL
+    - [x] Free Wildcard SSL
+    - [x] Multiple domain support (up to 100 altnames per SAN)
+    - [x] Dynamic Virtual Hosting (vhost)
+    - [x] Automatical renewal (10 to 14 days before expiration)
+  - [x] Great ACME support via [acme.js](https://git.coolaj86.com/coolaj86/acme-v2.js)
+    - [x] ACME draft 11
+    - [x] Let's Encrypt v2
+    - [x] Let's Encrypt v1
+  - [x] [Commandline](https://git.coolaj86.com/coolaj86/greenlock-cli.js) (cli) Utilities
+    - [x] Works with `bash`, `fish`, `zsh`, `cmd.exe`, `PowerShell`, and more
+  - [x] [Browser](https://git.coolaj86.com/coolaj86/greenlock.html) (cli) Support
+  - [x] Full node.js support, with modules for
+    - [x] [http/https](https://git.coolaj86.com/coolaj86/greenlock-express.js/src/branch/master/examples/https-server.js) (native core modules)
+    - [x] [Express.js](https://git.coolaj86.com/coolaj86/greenlock-express.js)
+    - [x] [cluster](https://git.coolaj86.com/coolaj86/greenlock-cluster.js)
+    - [x] [hapi](https://git.coolaj86.com/coolaj86/greenlock-hapi.js)
+    - [x] [Koa](https://git.coolaj86.com/coolaj86/greenlock-koa.js)
+    - [x] [rill](https://git.coolaj86.com/coolaj86/greenlock-rill.js)
+    - [x] also works with `spdy`, `restify`, and all other node http and middleware systems
+  - [x] Great for securing your Raspberry Pi
+  - [x] Extensible Plugin Support
+    - [x] AWS (S3, Route53)
+    - [x] Azure
+    - [x] CloudFlare
+    - [x] Consul
+    - [x] Digital Ocean
+    - [x] etcd
+    - [x] Redis
+
+Greenlock.js for Middleware
 ------
 
-This is a **low-level library** for implementing ACME / LetsEncrypt Clients, CLIs,
-system tools, and abstracting storage backends (file vs db, etc).
+Documentation for using Greenlock with
+[http/https](https://git.coolaj86.com/coolaj86/greenlock-express.js/src/branch/master/examples/https-server.js),
+[Express.js](https://git.coolaj86.com/coolaj86/greenlock-express.js),
+[cluster](https://git.coolaj86.com/coolaj86/greenlock-cluster.js),
+[hapi](https://git.coolaj86.com/coolaj86/greenlock-hapi.js),
+[Koa](https://git.coolaj86.com/coolaj86/greenlock-koa.js),
+[rill](https://git.coolaj86.com/coolaj86/greenlock-rill.js).
+[restify](https://git.coolaj86.com/coolaj86/greenlock-restify.js).
 
-For `express`, raw `https` or `spdy`, or `restify` (same as raw https) see
-[**greenlock-express** (previously letsencrypt-express)](https://git.coolaj86.com/coolaj86/greenlock-express.js) and [greenlock-cluster (previously letsencrypt-cluster)](https://git.coolaj86.com/coolaj86/greenlock-cluster.js).
+Table of Contents
+=================
 
-For `hapi` see [greenlock-hapi (previously letsencrypt-hapi)](https://git.coolaj86.com/coolaj86/greenlock-hapi.js).
-
-For `koa` or `rill`
-see [greenlock-koa (previously letsencrypt-koa)](https://git.coolaj86.com/coolaj86/greenlock-koa.js).
-
-For `bash`, `fish`, `zsh`, `cmd.exe`, `PowerShell`
-see [**greenlock-cli** (previously letsencrypt-cli)](https://git.coolaj86.com/coolaj86/greenlock-cli.js).
-
-### Now supports **Let's Encrypt v2**!!
+  * Install
+  * Simple Examples
+  * Example with ALL OPTIONS
+  * API
+  * Developer API
+  * Change History
+  * License
 
 Install
 =======
 
-`greenlock` requires at least two plugins:
-one for managing certificate storage and the other for handling ACME challenges.
-
-The default storage plugin is [`le-store-certbot`](https://git.coolaj86.com/coolaj86/le-store-certbot.js)
-and the default challenge is [`le-challenge-fs`](https://git.coolaj86.com/coolaj86/le-challenge-fs.js).
-
 ```bash
 npm install --save greenlock@2.x
-
-npm install --save le-store-certbot@2.x   # default plugin for accounts, certificates, and keypairs
-npm install --save le-challenge-fs@2.x    # default plugin for http-01 challenge
-npm install --save le-challenge-sni@2.x   # default plugin for tls-sni-01 and tls-sni-02 challenge
-npm install --save le-acme-core@2.x       # default plugin for ACME spec
-npm install --save le-sni-auto@2.x        # default plugin for SNICallback
 ```
 
-**Important**: Use node v4.5+ or v6.x, node <= v4.4 has a [known bug](https://github.com/nodejs/node/issues/8053) in the `Buffer` implementation.
+**Note**: Ignore errors related to `ursa`. It is an optional dependency used when available.
+For many people it will not install properly, but it's only necessary on ARM devices (i.e. Raspberry Pi).
 
-Usage
+Easy as 1, 2, 3... 4
 =====
 
-It's very simple and easy to use, but also very complete and easy to extend and customize.
+Greenlock is built to incredibly easy to use, without sacrificing customization or extensibility.
 
-### Overly Simplified Example
+The following examples range from just a few lines of code for getting started,
+to more robust examples that you might start with for an enterprise-grade use of the ACME api.
 
-Against my better judgement I'm providing a terribly oversimplified example
-of how to use this library:
+* Automatic HTTPS (for single sites)
+* Fully Automatic HTTPS (for multi-domain vhosts)
+* Manual HTTPS (for API integration)
 
-```javascript
-var le = require('greenlock').create({ server: 'staging' });
+Automatic HTTPS
+---------------
+
+**Note**: For (fully) automatic HTTPS you may prefer
+the [Express.js module](https://git.coolaj86.com/coolaj86/greenlock-express.js)
+
+This works for most people, but it's not as fun as some of the other examples.
+
+Great when
+
+ - [x] You only need a limited number of certificates
+ - [x] You want to use the bare node http and https modules without fluff
+
+```js
+////////////////////
+// INIT GREENLOCK //
+////////////////////
+
+var path = require('path');
+var os = require('os')
+var Greenlock = require('greenlock');
+
+var acmeEnv = 'staging-';
+var greenlock = Greenlock.create({
+  agreeTos: true                      // Accept Let's Encrypt v2 Agreement
+, email: 'user@example.com'           // IMPORTANT: Change email and domains
+, approveDomains: [ 'example.com' ]
+, communityMember: false              // Optionally get important updates (security, api changes, etc)
+                                      // and submit stats to help make Greenlock better
+, version: 'draft-11'
+, server: 'https://acme-' + acmeEnv + 'v02.api.letsencrypt.org/directory'
+, configDir: path.join(os.homedir(), 'acme/etc')
+});
+
+////////////////////
+// CREATE SERVERS //
+////////////////////
+
+```js
+var redir = require('redirect-https')();
+require('http').createServer(greenlock.middleware(redir)).listen(80);
+
+require('https').createServer(greenlock.tlsOptions, function (req, res) {
+  res.end('Hello, Secure World!');
+}).listen(443);
+```
+
+Fully Automatic HTTPS
+------------
+
+**Note**: For (fully) automatic HTTPS you may prefer
+the [Express.js module](https://git.coolaj86.com/coolaj86/greenlock-express.js)
+
+Great when
+
+ - [x] You have a growing number of domains
+ - [x] You're integrating into your own hosting solution
+ - [x] Customize ACME http-01 or dns-01 challenge
+
+```js
+////////////////////
+// INIT GREENLOCK //
+////////////////////
+
+var path = require('path');
+var os = require('os')
+var Greenlock = require('greenlock');
+
+var acmeEnv = 'staging-';
+var greenlock = Greenlock.create({
+  version: 'draft-11'
+, server: 'https://acme-' + acmeEnv + 'v02.api.letsencrypt.org/directory'
+
+  // If you wish to replace the default account and domain key storage plugin
+, store: require('le-store-certbot').create({
+    configDir: path.join(os.homedir(), 'acme/etc')
+  , webrootPath: '/tmp/acme-challenges'
+  })
+});
+
+
+/////////////////////
+// APPROVE DOMAINS //
+/////////////////////
+
+var http01 = require('le-challenge-fs').create({ webrootPath: '/tmp/acme-challenges' });
+function approveDomains(opts, certs, cb) {
+  // This is where you check your database and associated
+  // email addresses with domains and agreements and such
+
+  // Opt-in to submit stats and get important updates
+  opts.communityMember = true;
+
+  // If you wish to replace the default challenge plugin, you may do so here
+  opts.challenges = { 'http-01': http01 };
+
+  // The domains being approved for the first time are listed in opts.domains
+  // Certs being renewed are listed in certs.altnames
+  if (certs) {
+    opts.domains = certs.altnames;
+  }
+  else {
+    opts.email = 'john.doe@example.com';
+    opts.agreeTos = true;
+  }
+
+  // NOTE: you can also change other options such as `challengeType` and `challenge`
+  // opts.challengeType = 'http-01';
+  // opts.challenge = require('le-challenge-fs').create({});
+
+  cb(null, { options: opts, certs: certs });
+}
+
+
+////////////////////
+// CREATE SERVERS //
+////////////////////
+
+```js
+var redir = require('redirect-https')();
+require('http').createServer(greenlock.middleware(redir)).listen(80);
+
+require('https').createServer(greenlock.tlsOptions, function (req, res) {
+  res.end('Hello, Secure World!');
+}).listen(443);
+```
+
+Manual HTTPS
+-------------
+
+Here's a taste of the API that you might use if building a commandline tool or API integration
+that doesn't use node's SNICallback.
+
+```
+var staging = true;
+
+
+/////////////////////
+// SET USER PARAMS //
+/////////////////////
 
 var opts = {
-  domains: ['example.com'], email: 'user@email.com', agreeTos: true
+  domains: [ 'example.com'        // CHANGE EMAIL AND DOMAINS
+           , 'www.example.com' ]
+, email: 'user@example.com'
+, agreeTos: true                  // Accept Let's Encrypt v2 Agreement
+, communityMember: true           // Help make Greenlock better by submitting
+                                  // stats and getting updates
 };
 
-le.register(opts).then(function (certs) {
+
+////////////////////
+// INIT GREENLOCK //
+////////////////////
+
+var greenlock = require('greenlock').create({
+  version: 'draft-11'
+, server: 'https://acme-' + (staging ? 'staging-' : '') + 'v02.api.letsencrypt.org/directory'
+, configDir: '/tmp/acme/etc'
+});
+
+
+///////////////////
+// GET TLS CERTS //
+///////////////////
+
+greenlock.register(opts).then(function (certs) {
   console.log(certs);
   // privkey, cert, chain, expiresAt, issuedAt, subject, altnames
 }, function (err) {
@@ -81,18 +265,17 @@ le.register(opts).then(function (certs) {
 });
 ```
 
-You also need some sort of server to handle the acme challenge:
+The domain key and ssl certificates you get back can be used in a webserver like this:
 
-```javascript
-var app = express();
-app.use('/', le.middleware());
+```js
+var tlsOptions = { key: certs.privkey, cert: certs.cert + '\r\n' + certs.chain };
+require('https').createServer(tlsOptions, function (req, res) {
+  res.end('Hello, Secure World!');
+}).listen(443);
 ```
 
-Note: The `webrootPath` string is a template.
-Any occurance of `:hostname` will be replaced
-with the domain for which we are requested certificates.
-
-### Useful Example
+Example with ALL OPTIONS
+=========
 
 The configuration consists of 3 components:
 
@@ -119,9 +302,6 @@ var leHttpChallenge = require('le-challenge-fs').create({
   webrootPath: '~/acme/var/'                              // or template string such as
 , debug: false                                            // '/srv/www/:hostname/.well-known/acme-challenge'
 });
-var leSniChallenge = require('le-challenge-sni').create({
-, debug: false
-});
 
 
 function leAgree(opts, agreeCb) {
@@ -145,8 +325,6 @@ le = LE.create({
 , store: leStore                                          // handles saving of config, accounts, and certificates
 , challenges: {
     'http-01': leHttpChallenge                            // handles /.well-known/acme-challege keys and tokens
-  , 'tls-sni-01': leSniChallenge                          // handles generating a certificate with the correct name
-  , 'tls-sni-02': leSniChallenge
   }
 , challengeType: 'http-01'                                // default to this challenge type
 , agreeToTerms: leAgree                                   // hook to allow user to view and accept LE TOS
@@ -283,6 +461,11 @@ See https://git.coolaj86.com/coolaj86/le-challenge-fs.js
 Change History
 ==============
 * v2.2 - Let's Encrypt v2 Support
+  * v2.2.11 - documentation updates
+  * v2.2.10 - don't let SNICallback swallow approveDomains errors 6286883fc2a6ebfff711a540a2e4d92f3ac2907c
+  * v2.2.8 - communityMember option support
+  * v2.2.7 - bugfix for wildcard support
+  * v2.2.5 - node v6.x compat
   * v2.2.4 - don't promisify all of `dns`
   * v2.2.3 - `renewWithin` default to 14 days
   * v2.2.2 - replace git dependency with npm
@@ -307,3 +490,5 @@ LICENSE
 Dual-licensed MIT and Apache-2.0
 
 See LICENSE
+
+Greenlock&trade; is a trademark of AJ ONeal
