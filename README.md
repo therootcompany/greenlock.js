@@ -129,7 +129,6 @@ var greenlock = Greenlock.create({
 // CREATE SERVERS //
 ////////////////////
 
-```js
 var redir = require('redirect-https')();
 require('http').createServer(greenlock.middleware(redir)).listen(80);
 
@@ -209,7 +208,6 @@ function approveDomains(opts, certs, cb) {
 // CREATE SERVERS //
 ////////////////////
 
-```js
 var redir = require('redirect-https')();
 require('http').createServer(greenlock.middleware(redir)).listen(80);
 
