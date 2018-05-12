@@ -321,9 +321,7 @@ LE.create = function (le) {
       }
     };
   }
-  if (!le.tlsOptions.key || !le.tlsOptions.cert) {
-    le.tlsOptions = require('localhost.daplie.me-certificates').merge(le.tlsOptions);
-  }
+
   // We want to move to using tlsOptions instead of httpsOptions, but we also need to make
   // sure anything that uses this object will still work if looking for httpsOptions.
   le.httpsOptions = le.tlsOptions;
