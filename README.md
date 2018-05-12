@@ -1,4 +1,6 @@
-🔐 Greenlock&trade; for node.js
+!["Greenlock Logo"](https://git.coolaj86.com/coolaj86/greenlock.js/raw/branch/master/logo/greenlock-1063x250.png)
+
+Greenlock&trade; for node.js
 =====
 
 Greenlock provides Free SSL, Free Wildcard SSL, and Fully Automated HTTPS <br>
