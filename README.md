@@ -29,22 +29,10 @@ Features
     - [x] Works with `bash`, `fish`, `zsh`, `cmd.exe`, `PowerShell`, and more
   - [x] [Browser](https://git.coolaj86.com/coolaj86/greenlock.html) (cli) Support
   - [x] Full node.js support, with modules for
-    - [x] [http/https](https://git.coolaj86.com/coolaj86/greenlock-express.js/src/branch/master/examples/https-server.js) (native core modules)
-    - [x] [Express.js](https://git.coolaj86.com/coolaj86/greenlock-express.js)
-    - [x] [cluster](https://git.coolaj86.com/coolaj86/greenlock-cluster.js)
-    - [x] [hapi](https://git.coolaj86.com/coolaj86/greenlock-hapi.js)
-    - [x] [Koa](https://git.coolaj86.com/coolaj86/greenlock-koa.js)
-    - [x] [rill](https://git.coolaj86.com/coolaj86/greenlock-rill.js)
-    - [x] also works with `spdy`, `restify`, and all other node http and middleware systems
+    - [x] [http/https](https://git.coolaj86.com/coolaj86/greenlock-express.js/src/branch/master/examples/https-server.js), [Express.js](https://git.coolaj86.com/coolaj86/greenlock-express.js), [cluster](https://git.coolaj86.com/coolaj86/greenlock-cluster.js), [hapi](https://git.coolaj86.com/coolaj86/greenlock-hapi.js), [Koa](https://git.coolaj86.com/coolaj86/greenlock-koa.js), [rill](https://git.coolaj86.com/coolaj86/greenlock-rill.js), [restify](https://git.coolaj86.com/coolaj86/greenlock-restify.js), spdy, etc
   - [x] Great for securing your Raspberry Pi
   - [x] Extensible Plugin Support
-    - [x] AWS (S3, Route53)
-    - [x] Azure
-    - [x] CloudFlare
-    - [x] Consul
-    - [x] Digital Ocean
-    - [x] etcd
-    - [x] Redis
+    - [x] AWS S3, AWS Route53, Azure, CloudFlare, Consul, Digital Ocean, etcd, Redis
 
 Greenlock.js for Middleware
 ------
