@@ -75,7 +75,7 @@
     "rsa-compat": "^1.2.1"
   },
   "engines": {
-    { "node" : ">=4.5" }
+    "node" : ">=4.5"
   },
   "gitDependencies": {
     "acme-v2": "git+https://git.coolaj86.com/coolaj86/acme-v2.js.git#v1.0",
