@@ -4,8 +4,9 @@ var DAY = 24 * 60 * 60 * 1000;
 //var MIN = 60 * 1000;
 var ACME = require('acme-v2/compat').ACME;
 
-var LE = module.exports;
-LE.LE = LE;
+var Greenlock = module.exports;
+Greenlock.Greenlock = Greenlock;
+Greenlock.LE = Greenlock;
 // in-process cache, shared between all instances
 var ipc = {};
 
@@ -13,12 +14,12 @@ function _log(debug) {
   if (debug) {
     var args = Array.prototype.slice.call(arguments);
     args.shift();
-    args.unshift("[le/index.js]");
+    args.unshift("[gl/index.js]");
     console.log.apply(console, args);
   }
 }
 
-LE.defaults = {
+Greenlock.defaults = {
   productionServerUrl: 'https://acme-v01.api.letsencrypt.org/directory'
 , stagingServerUrl: 'https://acme-staging.api.letsencrypt.org/directory'
 
@@ -30,13 +31,13 @@ LE.defaults = {
 };
 
 // backwards compat
-Object.keys(LE.defaults).forEach(function (key) {
-  LE[key] = LE.defaults[key];
+Object.keys(Greenlock.defaults).forEach(function (key) {
+  Greenlock[key] = Greenlock.defaults[key];
 });
 
 // show all possible options
 var u; // undefined
-LE._undefined = {
+Greenlock._undefined = {
   acme: u
 , store: u
 , challenge: u
@@ -59,56 +60,51 @@ LE._undefined = {
 , duplicate: u
 , _acmeUrls: u
 };
-LE._undefine = function (le) {
-  Object.keys(LE._undefined).forEach(function (key) {
-    if (!(key in le)) {
-      le[key] = u;
+Greenlock._undefine = function (gl) {
+  Object.keys(Greenlock._undefined).forEach(function (key) {
+    if (!(key in gl)) {
+      gl[key] = u;
     }
   });
 
-  return le;
+  return gl;
 };
-LE.create = function (le) {
+Greenlock.create = function (gl) {
   var PromiseA = require('bluebird');
 
-  le.store = le.store || require('le-store-certbot').create({ debug: le.debug });
-  le.core = require('./lib/core');
-  var log = le.log || _log;
+  gl.store = gl.store || require('le-store-certbot').create({ debug: gl.debug });
+  gl.core = require('./lib/core');
+  var log = gl.log || _log;
 
-  if (!le.challenges) {
-    le.challenges = {};
+  if (!gl.challenges) {
+    gl.challenges = {};
   }
-  if (!le.challenges['http-01']) {
-    le.challenges['http-01'] = require('le-challenge-fs').create({ debug: le.debug });
+  if (!gl.challenges['http-01']) {
+    gl.challenges['http-01'] = require('le-challenge-fs').create({ debug: gl.debug });
   }
-  /*
-  if (!le.challenges['tls-sni-01']) {
-    le.challenges['tls-sni-01'] = require('le-challenge-sni').create({ debug: le.debug });
-  }
-  */
-  if (!le.challenges['dns-01']) {
+  if (!gl.challenges['dns-01']) {
     try {
-      le.challenges['dns-01'] = require('le-challenge-ddns').create({ debug: le.debug });
+      gl.challenges['dns-01'] = require('le-challenge-ddns').create({ debug: gl.debug });
     } catch(e) {
       try {
-        le.challenges['dns-01'] = require('le-challenge-dns').create({ debug: le.debug });
+        gl.challenges['dns-01'] = require('le-challenge-dns').create({ debug: gl.debug });
       } catch(e) {
         // not yet implemented
       }
     }
   }
 
-  le = LE._undefine(le);
-  le.acmeChallengePrefix = LE.acmeChallengePrefix;
-  le.rsaKeySize = le.rsaKeySize || LE.rsaKeySize;
-  le.challengeType = le.challengeType || LE.challengeType;
-  le._ipc = ipc;
-  le._communityPackage = le._communityPackage || 'greenlock.js';
-  le.agreeToTerms = le.agreeToTerms || function (args, agreeCb) {
-    agreeCb(new Error("'agreeToTerms' was not supplied to LE and 'agreeTos' was not supplied to LE.register"));
+  gl = Greenlock._undefine(gl);
+  gl.acmeChallengePrefix = Greenlock.acmeChallengePrefix;
+  gl.rsaKeySize = gl.rsaKeySize || Greenlock.rsaKeySize;
+  gl.challengeType = gl.challengeType || Greenlock.challengeType;
+  gl._ipc = ipc;
+  gl._communityPackage = gl._communityPackage || 'greenlock.js';
+  gl.agreeToTerms = gl.agreeToTerms || function (args, agreeCb) {
+    agreeCb(new Error("'agreeToTerms' was not supplied to Greenlock and 'agreeTos' was not supplied to Greenlock.register"));
   };
 
-  if (!le.renewWithin) { le.renewWithin = 14 * DAY; }
+  if (!gl.renewWithin) { gl.renewWithin = 14 * DAY; }
   // renewBy has a default in le-sni-auto
 
 
@@ -117,7 +113,7 @@ LE.create = function (le) {
   // BEGIN VERSION MADNESS //
   ///////////////////////////
 
-  if (!le.version) {
+  if (!gl.version) {
     //console.warn("Please specify version: 'v01' (Let's Encrypt v1) or 'draft-11' (Let's Encrypt v2 / ACME draft 11)");
     console.warn("");
     console.warn("");
@@ -141,40 +137,40 @@ LE.create = function (le) {
     console.warn("");
     console.warn("");
     console.warn("");
-  } else if ('v02' === le.version) {
-    le.version = 'draft-11';
-  } else if ('v01' !== le.version && 'draft-11' !== le.version) {
-    throw new Error("Unrecognized version '" + le.version + "'");
+  } else if ('v02' === gl.version) {
+    gl.version = 'draft-11';
+  } else if ('v01' !== gl.version && 'draft-11' !== gl.version) {
+    throw new Error("Unrecognized version '" + gl.version + "'");
   }
 
-  if (!le.server) {
+  if (!gl.server) {
     throw new Error("opts.server must specify an ACME directory URL, such as 'https://acme-staging-v02.api.letsencrypt.org/directory'");
   }
-  if ('staging' === le.server) {
-    le.server = 'https://acme-staging.api.letsencrypt.org/directory';
-    le.version = 'v01';
+  if ('staging' === gl.server) {
+    gl.server = 'https://acme-staging.api.letsencrypt.org/directory';
+    gl.version = 'v01';
     console.warn("");
     console.warn("");
     console.warn("=== WARNING ===");
     console.warn("");
     console.warn("Due to versioning issues the 'staging' option is deprecated. Please specify the full url and version.");
     console.warn("");
-    console.warn("\t--acme-url '" + le.server + "' \\");
-    console.warn("\t--acme-version '" + le.version + "' \\");
+    console.warn("\t--acme-url '" + gl.server + "' \\");
+    console.warn("\t--acme-version '" + gl.version + "' \\");
     console.warn("");
     console.warn("");
   }
-  else if ('production' === le.server) {
-    le.server = 'https://acme-v01.api.letsencrypt.org/directory';
-    le.version = 'v01';
+  else if ('production' === gl.server) {
+    gl.server = 'https://acme-v01.api.letsencrypt.org/directory';
+    gl.version = 'v01';
     console.warn("");
     console.warn("");
     console.warn("=== WARNING ===");
     console.warn("");
     console.warn("Due to versioning issues the 'production' option is deprecated. Please specify the full url and version.");
     console.warn("");
-    console.warn("\t--acme-url '" + le.server + "' \\");
-    console.warn("\t--acme-version '" + le.version + "' \\");
+    console.warn("\t--acme-url '" + gl.server + "' \\");
+    console.warn("\t--acme-version '" + gl.version + "' \\");
     console.warn("");
     console.warn("");
   }
@@ -202,23 +198,23 @@ LE.create = function (le) {
 
   if (-1 !== [
       'https://acme-v02.api.letsencrypt.org/directory'
-    , 'https://acme-staging-v02.api.letsencrypt.org/directory' ].indexOf(le.server)
+    , 'https://acme-staging-v02.api.letsencrypt.org/directory' ].indexOf(gl.server)
   ) {
-    if ('draft-11' !== le.version) {
+    if ('draft-11' !== gl.version) {
       console.warn("Detected Let's Encrypt v02 URL. Changing version to draft-11.");
-      le.version = 'draft-11';
+      gl.version = 'draft-11';
     }
   } else if (-1 !== [
       'https://acme-v01.api.letsencrypt.org/directory'
-    , 'https://acme-staging.api.letsencrypt.org/directory' ].indexOf(le.server)
-    || 'v01' === le.version
+    , 'https://acme-staging.api.letsencrypt.org/directory' ].indexOf(gl.server)
+    || 'v01' === gl.version
   ) {
-    if ('v01' !== le.version) {
+    if ('v01' !== gl.version) {
       console.warn("Detected Let's Encrypt v01 URL (deprecated). Changing version to v01.");
-      le.version = 'v01';
+      gl.version = 'v01';
     }
   }
-  if ('v01' === le.version) {
+  if ('v01' === gl.version) {
     ACME = loadLeV01();
   }
   /////////////////////////
@@ -227,28 +223,28 @@ LE.create = function (le) {
 
 
 
-  le.acme = le.acme || ACME.create({ debug: le.debug });
-  if (le.acme.create) {
-    le.acme = le.acme.create(le);
+  gl.acme = gl.acme || ACME.create({ debug: gl.debug });
+  if (gl.acme.create) {
+    gl.acme = gl.acme.create(gl);
   }
-  le.acme = PromiseA.promisifyAll(le.acme);
-  le._acmeOpts = le.acme.getOptions();
-  Object.keys(le._acmeOpts).forEach(function (key) {
-    if (!(key in le)) {
-      le[key] = le._acmeOpts[key];
+  gl.acme = PromiseA.promisifyAll(gl.acme);
+  gl._acmeOpts = gl.acme.getOptions();
+  Object.keys(gl._acmeOpts).forEach(function (key) {
+    if (!(key in gl)) {
+      gl[key] = gl._acmeOpts[key];
     }
   });
 
-  if (le.store.create) {
-    le.store = le.store.create(le);
+  if (gl.store.create) {
+    gl.store = gl.store.create(gl);
   }
-  le.store = PromiseA.promisifyAll(le.store);
-  le.store.accounts = PromiseA.promisifyAll(le.store.accounts);
-  le.store.certificates = PromiseA.promisifyAll(le.store.certificates);
-  le._storeOpts = le.store.getOptions();
-  Object.keys(le._storeOpts).forEach(function (key) {
-    if (!(key in le)) {
-      le[key] = le._storeOpts[key];
+  gl.store = PromiseA.promisifyAll(gl.store);
+  gl.store.accounts = PromiseA.promisifyAll(gl.store.accounts);
+  gl.store.certificates = PromiseA.promisifyAll(gl.store.certificates);
+  gl._storeOpts = gl.store.getOptions();
+  Object.keys(gl._storeOpts).forEach(function (key) {
+    if (!(key in gl)) {
+      gl[key] = gl._storeOpts[key];
     }
   });
 
@@ -256,118 +252,118 @@ LE.create = function (le) {
   //
   // Backwards compat for <= v2.1.7
   //
-  if (le.challenge) {
-    console.warn("Deprecated use of le.challenge. Use le.challenges['" + LE.challengeType + "'] instead.");
-    le.challenges[le.challengeType] = le.challenge;
+  if (gl.challenge) {
+    console.warn("Deprecated use of gl.challenge. Use gl.challenges['" + Greenlock.challengeType + "'] instead.");
+    gl.challenges[gl.challengeType] = gl.challenge;
   }
 
-  LE.challengeTypes.forEach(function (challengeType) {
-    var challenger = le.challenges[challengeType];
+  Greenlock.challengeTypes.forEach(function (challengeType) {
+    var challenger = gl.challenges[challengeType];
 
     if (!challenger) {
       return;
     }
 
     if (challenger.create) {
-      challenger = le.challenges[challengeType] = challenger.create(le);
+      challenger = gl.challenges[challengeType] = challenger.create(gl);
     }
-    challenger = le.challenges[challengeType] = PromiseA.promisifyAll(challenger);
-    le['_challengeOpts_' + challengeType] = challenger.getOptions();
-    Object.keys(le['_challengeOpts_' + challengeType]).forEach(function (key) {
-      if (!(key in le)) {
-        le[key] = le['_challengeOpts_' + challengeType][key];
+    challenger = gl.challenges[challengeType] = PromiseA.promisifyAll(challenger);
+    gl['_challengeOpts_' + challengeType] = challenger.getOptions();
+    Object.keys(gl['_challengeOpts_' + challengeType]).forEach(function (key) {
+      if (!(key in gl)) {
+        gl[key] = gl['_challengeOpts_' + challengeType][key];
       }
     });
 
     // TODO wrap these here and now with tplCopy?
     if (!challenger.set || 5 !== challenger.set.length) {
-      throw new Error("le.challenges[" + challengeType + "].set receives the wrong number of arguments."
+      throw new Error("gl.challenges[" + challengeType + "].set receives the wrong number of arguments."
         + " You must define setChallenge as function (opts, domain, token, keyAuthorization, cb) { }");
     }
     if (challenger.get && 4 !== challenger.get.length) {
-      throw new Error("le.challenges[" + challengeType + "].get receives the wrong number of arguments."
+      throw new Error("gl.challenges[" + challengeType + "].get receives the wrong number of arguments."
         + " You must define getChallenge as function (opts, domain, token, cb) { }");
     }
     if (!challenger.remove || 4 !== challenger.remove.length) {
-      throw new Error("le.challenges[" + challengeType + "].remove receives the wrong number of arguments."
+      throw new Error("gl.challenges[" + challengeType + "].remove receives the wrong number of arguments."
         + " You must define removeChallenge as function (opts, domain, token, cb) { }");
     }
 
 /*
-    if (!le._challengeWarn && (!challenger.loopback || 4 !== challenger.loopback.length)) {
-      le._challengeWarn = true;
-      console.warn("le.challenges[" + challengeType + "].loopback should be defined as function (opts, domain, token, cb) { ... } and should prove (by external means) that the ACME server challenge '" + challengeType + "' will succeed");
+    if (!gl._challengeWarn && (!challenger.loopback || 4 !== challenger.loopback.length)) {
+      gl._challengeWarn = true;
+      console.warn("gl.challenges[" + challengeType + "].loopback should be defined as function (opts, domain, token, cb) { ... } and should prove (by external means) that the ACME server challenge '" + challengeType + "' will succeed");
     }
-    else if (!le._challengeWarn && (!challenger.test || 5 !== challenger.test.length)) {
-      le._challengeWarn = true;
-      console.warn("le.challenges[" + challengeType + "].test should be defined as function (opts, domain, token, keyAuthorization, cb) { ... } and should prove (by external means) that the ACME server challenge '" + challengeType + "' will succeed");
+    else if (!gl._challengeWarn && (!challenger.test || 5 !== challenger.test.length)) {
+      gl._challengeWarn = true;
+      console.warn("gl.challenges[" + challengeType + "].test should be defined as function (opts, domain, token, keyAuthorization, cb) { ... } and should prove (by external means) that the ACME server challenge '" + challengeType + "' will succeed");
     }
 */
   });
 
-  le.sni = le.sni || null;
-  le.tlsOptions = le.tlsOptions || le.httpsOptions || {};
-  if (!le.tlsOptions.SNICallback) {
-    if (!le.getCertificatesAsync && !le.getCertificates) {
-      if (Array.isArray(le.approveDomains)) {
-        le.approvedDomains = le.approveDomains;
-        le.approveDomains = null;
+  gl.sni = gl.sni || null;
+  gl.tlsOptions = gl.tlsOptions || gl.httpsOptions || {};
+  if (!gl.tlsOptions.SNICallback) {
+    if (!gl.getCertificatesAsync && !gl.getCertificates) {
+      if (Array.isArray(gl.approveDomains)) {
+        gl.approvedDomains = gl.approveDomains;
+        gl.approveDomains = null;
       }
-      if (!le.approveDomains) {
-        le.approvedDomains = le.approvedDomains || [];
-        le.approveDomains = function (lexOpts, certs, cb) {
-          if (!le.email) {
+      if (!gl.approveDomains) {
+        gl.approvedDomains = gl.approvedDomains || [];
+        gl.approveDomains = function (lexOpts, certs, cb) {
+          if (!gl.email) {
             throw new Error("le-sni-auto is not properly configured. Missing email");
           }
-          if (!le.agreeTos) {
+          if (!gl.agreeTos) {
             throw new Error("le-sni-auto is not properly configured. Missing agreeTos");
           }
-          if (!le.approvedDomains.length) {
+          if (!gl.approvedDomains.length) {
             throw new Error("le-sni-auto is not properly configured. Missing approveDomains(domain, certs, callback)");
           }
           if (lexOpts.domains.every(function (domain) {
-            return -1 !== le.approvedDomains.indexOf(domain);
+            return -1 !== gl.approvedDomains.indexOf(domain);
           })) {
-            lexOpts.domains = le.approvedDomains.slice(0);
-            lexOpts.email = le.email;
-            lexOpts.agreeTos = le.agreeTos;
+            lexOpts.domains = gl.approvedDomains.slice(0);
+            lexOpts.email = gl.email;
+            lexOpts.agreeTos = gl.agreeTos;
             lexOpts.communityMember = lexOpts.communityMember;
             return cb(null, { options: lexOpts, certs: certs });
           }
-          log(le.debug, 'unapproved domain', lexOpts.domains, le.approvedDomains);
+          log(gl.debug, 'unapproved domain', lexOpts.domains, gl.approvedDomains);
           cb(new Error("unapproved domain"));
         };
       }
 
-      le.getCertificates = function (domain, certs, cb) {
+      gl.getCertificates = function (domain, certs, cb) {
         // certs come from current in-memory cache, not lookup
-        log(le.debug, 'le.getCertificates called for', domain, 'with certs for', certs && certs.altnames || 'NONE');
+        log(gl.debug, 'gl.getCertificates called for', domain, 'with certs for', certs && certs.altnames || 'NONE');
         var opts = { domain: domain, domains: certs && certs.altnames || [ domain ] };
 
         try {
-          le.approveDomains(opts, certs, function (_err, results) {
+          gl.approveDomains(opts, certs, function (_err, results) {
             if (_err) {
-              log(le.debug, 'le.approveDomains called with error', _err);
+              log(gl.debug, 'gl.approveDomains called with error', _err);
               cb(_err);
               return;
             }
 
-            log(le.debug, 'le.approveDomains called with certs for', results.certs && results.certs.altnames || 'NONE', 'and options:');
-            log(le.debug, results.options);
+            log(gl.debug, 'gl.approveDomains called with certs for', results.certs && results.certs.altnames || 'NONE', 'and options:');
+            log(gl.debug, results.options);
 
             var promise;
 
             if (results.certs) {
-              log(le.debug, 'le renewing');
-              promise = le.core.certificates.renewAsync(results.options, results.certs);
+              log(gl.debug, 'gl renewing');
+              promise = gl.core.certificates.renewAsync(results.options, results.certs);
             }
             else {
-              log(le.debug, 'le getting from disk or registering new');
-              promise = le.core.certificates.getAsync(results.options);
+              log(gl.debug, 'gl getting from disk or registering new');
+              promise = gl.core.certificates.getAsync(results.options);
             }
 
             return promise.then(function (certs) { cb(null, certs); }, function (e) {
-              if (le.debug) { console.debug("Error"); console.debug(e); }
+              if (gl.debug) { console.debug("Error"); console.debug(e); }
               cb(e);
             });
           });
@@ -378,13 +374,13 @@ LE.create = function (le) {
         }
       };
     }
-    le.sni = le.sni || require('le-sni-auto');
-    if (le.sni.create) {
-      le.sni = le.sni.create(le);
+    gl.sni = gl.sni || require('le-sni-auto');
+    if (gl.sni.create) {
+      gl.sni = gl.sni.create(gl);
     }
-    le.tlsOptions.SNICallback = function (domain, cb) {
+    gl.tlsOptions.SNICallback = function (domain, cb) {
       try {
-        le.sni.sniCallback(domain, cb);
+        gl.sni.sniCallback(domain, cb);
       } catch(e) {
         console.error("[ERROR] Something went wrong in the SNICallback:");
         console.error(e);
@@ -395,29 +391,29 @@ LE.create = function (le) {
 
   // We want to move to using tlsOptions instead of httpsOptions, but we also need to make
   // sure anything that uses this object will still work if looking for httpsOptions.
-  le.httpsOptions = le.tlsOptions;
+  gl.httpsOptions = gl.tlsOptions;
 
-  if (le.core.create) {
-    le.core = le.core.create(le);
+  if (gl.core.create) {
+    gl.core = gl.core.create(gl);
   }
 
-  le.renew = function (args, certs) {
-    return le.core.certificates.renewAsync(args, certs);
+  gl.renew = function (args, certs) {
+    return gl.core.certificates.renewAsync(args, certs);
   };
 
-  le.register = function (args) {
-    return le.core.certificates.getAsync(args);
+  gl.register = function (args) {
+    return gl.core.certificates.getAsync(args);
   };
 
-  le.check = function (args) {
+  gl.check = function (args) {
     // TODO must return email, domains, tos, pems
-    return le.core.certificates.checkAsync(args);
+    return gl.core.certificates.checkAsync(args);
   };
 
-  le.middleware = le.middleware || require('./lib/middleware');
-  if (le.middleware.create) {
-    le.middleware = le.middleware.create(le);
+  gl.middleware = gl.middleware || require('./lib/middleware');
+  if (gl.middleware.create) {
+    gl.middleware = gl.middleware.create(gl);
   }
 
-  return le;
+  return gl;
 };
