@@ -6,6 +6,10 @@ Greenlock&trade; for node.js
 Greenlock provides Free SSL, Free Wildcard SSL, and Fully Automated HTTPS <br>
 <small>certificates issued by Let's Encrypt v2 via [ACME](https://git.coolaj86.com/coolaj86/acme-v2.js)</small>
 
+!["Lifetime Downloads"](https://img.shields.io/npm/dt/greenlock.svg "Lifetime Download Count can't be shown")
+!["Monthly Downloads"](https://img.shields.io/npm/dm/greenlock.svg "Monthly Download Count can't be shown")
+!["Weekly Downloads"](https://img.shields.io/npm/dw/greenlock.svg "Weekly Download Count can't be shown")
+
 | Sponsored by [ppl](https://ppl.family) |
 Greenlock works
 in the [Commandline](https://git.coolaj86.com/coolaj86/greenlock-cli.js) (cli),
@@ -29,7 +33,7 @@ Features
     - [x] Let's Encrypt v1
   - [x] [Commandline](https://git.coolaj86.com/coolaj86/greenlock-cli.js) (cli) Utilities
     - [x] Works with `bash`, `fish`, `zsh`, `cmd.exe`, `PowerShell`, and more
-  - [x] [Browser](https://git.coolaj86.com/coolaj86/greenlock.html) (cli) Support
+  - [x] [Browser](https://git.coolaj86.com/coolaj86/greenlock.html) Support
   - [x] Full node.js support, with modules for
     - [x] [http/https](https://git.coolaj86.com/coolaj86/greenlock-express.js/src/branch/master/examples/https-server.js), [Express.js](https://git.coolaj86.com/coolaj86/greenlock-express.js), [cluster](https://git.coolaj86.com/coolaj86/greenlock-cluster.js), [hapi](https://git.coolaj86.com/coolaj86/greenlock-hapi.js), [Koa](https://git.coolaj86.com/coolaj86/greenlock-koa.js), [rill](https://git.coolaj86.com/coolaj86/greenlock-rill.js), [restify](https://git.coolaj86.com/coolaj86/greenlock-restify.js), spdy, etc
   - [x] Great for securing your Raspberry Pi
