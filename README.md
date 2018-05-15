@@ -277,8 +277,8 @@ The configuration consists of 3 components:
 ```javascript
 'use strict';
 
-var LE = require('greenlock');
-var le;
+var Greenlock = require('greenlock');
+var greenlock;
 
 
 // Storage Backend
@@ -300,7 +300,7 @@ function leAgree(opts, agreeCb) {
   agreeCb(null, opts.tosUrl);
 }
 
-le = LE.create({
+greenlock = Greenlock.create({
   version: 'draft-11'                                     // 'draft-11' or 'v01'
                                                           // 'draft-11' is for Let's Encrypt v2 otherwise known as ACME draft 11
                                                           // 'v02' is an alias for 'draft-11'
@@ -331,15 +331,15 @@ le = LE.create({
 
 
 // If using express you should use the middleware
-// app.use('/', le.middleware());
+// app.use('/', greenlock.middleware());
 //
 // Otherwise you should see the test file for usage of this:
-// le.challenges['http-01'].get(opts.domain, key, val, done)
+// greenlock.challenges['http-01'].get(opts.domain, key, val, done)
 
 
 
 // Check in-memory cache of certificates for the named domain
-le.check({ domains: [ 'example.com' ] }).then(function (results) {
+greenlock.check({ domains: [ 'example.com' ] }).then(function (results) {
   if (results) {
     // we already have certificates
     return;
@@ -347,7 +347,7 @@ le.check({ domains: [ 'example.com' ] }).then(function (results) {
 
 
   // Register Certificate manually
-  le.register({
+  greenlock.register({
 
     domains: ['example.com']                                // CHANGE TO YOUR DOMAIN (list for SANS)
   , email: 'user@email.com'                                 // CHANGE TO YOUR EMAIL
@@ -361,8 +361,8 @@ le.check({ domains: [ 'example.com' ] }).then(function (results) {
 
   }, function (err) {
 
-    // Note: you must either use le.middleware() with express,
-    // manually use le.challenges['http-01'].get(opts, domain, key, val, done)
+    // Note: you must either use greenlock.middleware() with express,
+    // manually use greenlock.challenges['http-01'].get(opts, domain, key, val, done)
     // or have a webserver running and responding
     // to /.well-known/acme-challenge at `webrootPath`
     console.error('[Error]: node-greenlock/examples/standalone');
@@ -392,15 +392,15 @@ API
 The full end-user API is exposed in the example above and includes all relevant options.
 
 ```
-le.register(opts)
-le.check(opts)
+greenlock.register(opts)
+greenlock.check(opts)
 ```
 
 ### Helper Functions
 
 We do expose a few helper functions:
 
-* LE.validDomain(hostname) // returns '' or the hostname string if it's a valid ascii or punycode domain name
+* Greenlock.validDomain(hostname) // returns '' or the hostname string if it's a valid ascii or punycode domain name
 
 TODO fetch domain tld list
 
