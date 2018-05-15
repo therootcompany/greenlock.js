@@ -19,8 +19,8 @@ function _log(debug) {
 }
 
 LE.defaults = {
-  productionServerUrl: 'https://acme-v02.api.letsencrypt.org/directory'
-, stagingServerUrl: 'https://acme-staging-v02.api.letsencrypt.org/directory'
+  productionServerUrl: 'https://acme-v01.api.letsencrypt.org/directory'
+, stagingServerUrl: 'https://acme-staging.api.letsencrypt.org/directory'
 
 , rsaKeySize: ACME.rsaKeySize || 2048
 , challengeType: ACME.challengeType || 'http-01'
@@ -111,50 +111,121 @@ LE.create = function (le) {
   if (!le.renewWithin) { le.renewWithin = 14 * DAY; }
   // renewBy has a default in le-sni-auto
 
-  if (!le.server) {
-    throw new Error("opts.server must be set to 'staging' or a production url, such as LE.productionServerUrl'");
-  }
-  if ('staging' === le.server) {
-    le.server = LE.stagingServerUrl;
-  }
-  else if ('production' === le.server) {
-    le.server = LE.productionServerUrl;
+
+
+  ///////////////////////////
+  // BEGIN VERSION MADNESS //
+  ///////////////////////////
+
+  if (!le.version) {
+    //console.warn("Please specify version: 'v01' (Let's Encrypt v1) or 'draft-11' (Let's Encrypt v2 / ACME draft 11)");
+    console.warn("");
+    console.warn("");
+    console.warn("");
+    console.warn("====================================================================");
+    console.warn("==                     greenlock.js (v2.2.0+)                     ==");
+    console.warn("====================================================================");
+    console.warn("");
+    console.warn("Please specify 'version' option:");
+    console.warn("");
+    console.warn("        'draft-11' for Let's Encrypt v2 and ACME draft 11");
+    console.warn("        ('v02' is an alias of 'draft-11'");
+    console.warn("");
+    console.warn("or");
+    console.warn("");
+    console.warn("        'v01' for Let's Encrypt v1 (deprecated)");
+    console.warn("");
+    console.warn("====================================================================");
+    console.warn("==      this will be required from version v2.3 forward           ==");
+    console.warn("====================================================================");
+    console.warn("");
+    console.warn("");
+    console.warn("");
+  } else if ('v02' === le.version) {
+    le.version = 'draft-11';
+  } else if ('v01' !== le.version && 'draft-11' !== le.version) {
+    throw new Error("Unrecognized version '" + le.version + "'");
   }
 
-  if (-1 !== [ 'https://acme-v01.api.letsencrypt.org/directory'
-    , 'https://acme-staging.api.letsencrypt.org/directory' ].indexOf(le.server)) {
-    ACME = require('le-acme-core').ACME;
-    console.warn("Let's Encrypt v1 is deprecated. Please update to Let's Encrypt v2 (ACME draft 11)");
+  if (!le.server) {
+    throw new Error("opts.server must specify an ACME directory URL, such as 'https://acme-staging-v02.api.letsencrypt.org/directory'");
   }
-  else if (-1 !== [ 'https://acme-v02.api.letsencrypt.org/directory'
-    , 'https://acme-staging-v02.api.letsencrypt.org/directory' ].indexOf(le.server)) {
-    if ('v02' !== le.version && 'draft-11' !== le.version) {
-      ACME = require('le-acme-core').ACME;
-      if ('v01' !== le.version) {
-        //console.warn("Please specify version: 'v01' (Let's Encrypt v1) or 'draft-11' (Let's Encrypt v2 / ACME draft 11)");
-        console.warn("");
-        console.warn("");
-        console.warn("");
-        console.warn("====================================================================");
-        console.warn("==                     greenlock.js (v2.2.0+)                     ==");
-        console.warn("====================================================================");
-        console.warn("");
-        console.warn("Please specify 'version' option:");
-        console.warn("");
-        console.warn("        'v01' for Let's Encrypt v1");
-        console.warn("                 or");
-        console.warn("        'draft-11' for Let's Encrypt v2 and ACME draft 11");
-        console.warn("        ('v02' is an alias of 'draft-11'");
-        console.warn("");
-        console.warn("====================================================================");
-        console.warn("==      this will be required from version v2.3 forward           ==");
-        console.warn("====================================================================");
-        console.warn("");
-        console.warn("");
-        console.warn("");
-      }
+  if ('staging' === le.server) {
+    le.server = 'https://acme-staging.api.letsencrypt.org/directory';
+    le.version = 'v01';
+    console.warn("");
+    console.warn("");
+    console.warn("=== WARNING ===");
+    console.warn("");
+    console.warn("Due to versioning issues the 'staging' option is deprecated. Please specify the full url and version.");
+    console.warn("");
+    console.warn("\t--acme-url '" + le.server + "' \\");
+    console.warn("\t--acme-version '" + le.version + "' \\");
+    console.warn("");
+    console.warn("");
+  }
+  else if ('production' === le.server) {
+    le.server = 'https://acme-v01.api.letsencrypt.org/directory';
+    le.version = 'v01';
+    console.warn("");
+    console.warn("");
+    console.warn("=== WARNING ===");
+    console.warn("");
+    console.warn("Due to versioning issues the 'production' option is deprecated. Please specify the full url and version.");
+    console.warn("");
+    console.warn("\t--acme-url '" + le.server + "' \\");
+    console.warn("\t--acme-version '" + le.version + "' \\");
+    console.warn("");
+    console.warn("");
+  }
+
+  function loadLeV01() {
+    console.warn("");
+    console.warn("=== WARNING ===");
+    console.warn("");
+    console.warn("Let's Encrypt v1 is deprecated. Please update to Let's Encrypt v2 (ACME draft 11)");
+    console.warn("");
+    try {
+      return require('le-acme-core').ACME;
+    } catch(e) {
+      console.error(e);
+      console.info("");
+      console.info("");
+      console.info("If you require v01 API support (which is deprecated), you must install it:");
+      console.info("");
+      console.info("\tnpm install le-acme-core");
+      console.info("");
+      console.info("");
+      process.exit(e.code || 13);
     }
   }
+
+  if (-1 !== [
+      'https://acme-v02.api.letsencrypt.org/directory'
+    , 'https://acme-staging-v02.api.letsencrypt.org/directory' ].indexOf(le.server)
+  ) {
+    if ('draft-11' !== le.version) {
+      console.warn("Detected Let's Encrypt v02 URL. Changing version to draft-11.");
+      le.version = 'draft-11';
+    }
+  } else if (-1 !== [
+      'https://acme-v01.api.letsencrypt.org/directory'
+    , 'https://acme-staging.api.letsencrypt.org/directory' ].indexOf(le.server)
+    || 'v01' === le.version
+  ) {
+    if ('v01' !== le.version) {
+      console.warn("Detected Let's Encrypt v01 URL (deprecated). Changing version to v01.");
+      le.version = 'v01';
+    }
+  }
+  if ('v01' === le.version) {
+    ACME = loadLeV01();
+  }
+  /////////////////////////
+  // END VERSION MADNESS //
+  /////////////////////////
+
+
 
   le.acme = le.acme || ACME.create({ debug: le.debug });
   if (le.acme.create) {

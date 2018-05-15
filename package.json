@@ -65,7 +65,6 @@
     "asn1js": "^1.2.12",
     "certpem": "^1.0.0",
     "homedir": "^0.6.0",
-    "le-acme-core": "^2.1.2",
     "le-challenge-fs": "^2.0.2",
     "le-challenge-sni": "^2.0.0",
     "le-sni-auto": "^2.1.3",

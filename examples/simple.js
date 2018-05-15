@@ -5,9 +5,10 @@ var LE = require('../');
 var db = {};
 
 var config = {
-  server: LE.stagingServerUrl                               // or LE.productionServerUrl
+  server: 'https://acme-staging-v02.api.letsencrypt.org/directory'
+, version: 'v02'
 
-, configDir: require('homedir')() + '/letsencrypt/etc'      // or /etc/letsencrypt or wherever
+, configDir: require('os').homedir() + '/acme/etc'          // or /etc/acme or wherever
 
 , privkeyPath: ':config/live/:hostname/privkey.pem'         //
 , fullchainPath: ':config/live/:hostname/fullchain.pem'     // Note: both that :config and :hostname
@@ -34,7 +35,7 @@ var handlers = {
     cb(null);
   }
 , getChallenge: function (opts, hostname, key, cb) {        // this is special because it is called by the webserver
-    cb(null, db[key].val);                                  // (see letsencrypt-cli/bin & letsencrypt-express/standalone),
+    cb(null, db[key].val);                                  // (see greenlock-cli/bin & greenlock-express/standalone),
                                                             // not by the library itself
   }
 , agreeToTerms: function (tosUrl, cb) {                     // gives you an async way to expose the legal agreement
@@ -43,6 +44,8 @@ var handlers = {
 };
 
 var le = LE.create(config, handlers);
+console.error("CHANGE THE EMAIL, DOMAINS, AND AGREE TOS IN THE EXAMPLE BEFORE RUNNING IT");
+process.exit(1);
                                                             // checks :conf/renewal/:hostname.conf
 le.register({                                               // and either renews or registers
   domains: ['example.com']                                  // CHANGE TO YOUR DOMAIN
@@ -55,8 +58,8 @@ le.register({                                               // and either renews
     // Note: you must have a webserver running
     // and expose handlers.getChallenge to it
     // in order to pass validation
-    // See letsencrypt-cli and or letsencrypt-express
-    console.error('[Error]: node-letsencrypt/examples/standalone');
+    // See greenlock-cli and or greenlock-express
+    console.error('[Error]: greenlock/examples/standalone');
     console.error(err.stack);
   } else {
     console.log('success');
