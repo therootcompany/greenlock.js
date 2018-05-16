@@ -1,4 +1,6 @@
-!["Greenlock Logo"](https://git.coolaj86.com/coolaj86/greenlock.js/raw/branch/master/logo/greenlock-1063x250.png)
+!["Greenlock Logo"](https://git.coolaj86.com/coolaj86/greenlock.js/raw/branch/master/logo/greenlock-1063x250.png "Greenlock lock logo and work mark")
+
+!["Greenlock Function"](https://git.coolaj86.com/coolaj86/greenlock.js/raw/branch/master/logo/logo/from-not-secure-to-secure-url-bar.png "from url bar showing not secure to url bar showing secure")
 
 Greenlock&trade; for node.js
 =====
