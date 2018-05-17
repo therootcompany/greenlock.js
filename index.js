@@ -343,7 +343,12 @@ Greenlock.create = function (gl) {
         try {
           gl.approveDomains(opts, certs, function (_err, results) {
             if (_err) {
-              log(gl.debug, 'gl.approveDomains called with error', _err);
+              if (false !== gl.logRejectedDomains) {
+                console.error("logRejectedDomains: tls sni '" + domain + "' was rejected.");
+                console.error("See details at https://git.coolaj86.com/coolaj86/greenlock.js/issues/11.");
+logRejectedDomains
+                console.error(_err);
+              }
               cb(_err);
               return;
             }
@@ -351,21 +356,28 @@ Greenlock.create = function (gl) {
             log(gl.debug, 'gl.approveDomains called with certs for', results.certs && results.certs.altnames || 'NONE', 'and options:');
             log(gl.debug, results.options);
 
-            var promise;
-
             if (results.certs) {
               log(gl.debug, 'gl renewing');
-              promise = gl.core.certificates.renewAsync(results.options, results.certs);
+              return gl.core.certificates.renewAsync(results.options, results.certs).then(
+                function (certs) { cb(null, certs); }
+              , function (e) {
+                  console.debug("Error renewing certificate for '" + domain + "':");
+                  console.debug(e);
+                  cb(e);
+                }
+              );;
             }
             else {
               log(gl.debug, 'gl getting from disk or registering new');
-              promise = gl.core.certificates.getAsync(results.options);
+              return gl.core.certificates.getAsync(results.options).then(
+                function (certs) { cb(null, certs); }
+              , function (e) {
+                  console.debug("Error loading/registering certificate for '" + domain + "':");
+                  console.debug(e);
+                  cb(e);
+                }
+              );
             }
-
-            return promise.then(function (certs) { cb(null, certs); }, function (e) {
-              if (gl.debug) { console.debug("Error"); console.debug(e); }
-              cb(e);
-            });
           });
         } catch(e) {
           console.error("[ERROR] Something went wrong in approveDomains:");
