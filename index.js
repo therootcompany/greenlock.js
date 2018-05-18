@@ -312,6 +312,9 @@ Greenlock.create = function (gl) {
       if (!gl.approveDomains) {
         gl.approvedDomains = gl.approvedDomains || [];
         gl.approveDomains = function (lexOpts, certs, cb) {
+          var err;
+          var emsg;
+
           if (!gl.email) {
             throw new Error("le-sni-auto is not properly configured. Missing email");
           }
@@ -330,8 +333,12 @@ Greenlock.create = function (gl) {
             lexOpts.communityMember = lexOpts.communityMember;
             return cb(null, { options: lexOpts, certs: certs });
           }
-          log(gl.debug, 'unapproved domain', lexOpts.domains, gl.approvedDomains);
-          cb(new Error("unapproved domain"));
+
+          emsg = "tls SNI for '" + lexOpts.domains.join(',') + "' rejected: not in list '" + gl.approvedDomains + "'";
+          log(gl.debug, emsg, lexOpts.domains, gl.approvedDomains);
+          err = new Error(emsg);
+          err.code = 'E_REJECT_SNI';
+          cb(err);
         };
       }
 
@@ -344,10 +351,13 @@ Greenlock.create = function (gl) {
           gl.approveDomains(opts, certs, function (_err, results) {
             if (_err) {
               if (false !== gl.logRejectedDomains) {
-                console.error("logRejectedDomains: tls sni '" + domain + "' was rejected.");
-                console.error("See details at https://git.coolaj86.com/coolaj86/greenlock.js/issues/11.");
-logRejectedDomains
-                console.error(_err);
+                console.error("[Error] approveDomains rejected tls sni '" + domain + "'");
+                console.error("[Error] (see https://git.coolaj86.com/coolaj86/greenlock.js/issues/11)");
+                if ('E_REJECT_SNI' !== _err.code) {
+                  console.error("[Error] This is the rejection message:");
+                  console.error(_err.message);
+                }
+                console.error("");
               }
               cb(_err);
               return;
@@ -363,6 +373,7 @@ logRejectedDomains
               , function (e) {
                   console.debug("Error renewing certificate for '" + domain + "':");
                   console.debug(e);
+                  console.error("");
                   cb(e);
                 }
               );;
@@ -374,6 +385,7 @@ logRejectedDomains
               , function (e) {
                   console.debug("Error loading/registering certificate for '" + domain + "':");
                   console.debug(e);
+                  console.error("");
                   cb(e);
                 }
               );
