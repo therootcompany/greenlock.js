@@ -1,12 +1,12 @@
 'use strict';
 
-//var le = require('greenlock');
-var LE = require('../');
+//var Greenlock = require('greenlock');
+var Greenlock = require('../');
 var db = {};
 
 var config = {
-  server: 'https://acme-staging-v02.api.letsencrypt.org/directory'
-, version: 'v02'
+  server: 'https://acme-v02.api.letsencrypt.org/directory'
+, version: 'draft-11'
 
 , configDir: require('os').homedir() + '/acme/etc'          // or /etc/acme or wherever
 
@@ -43,11 +43,11 @@ var handlers = {
   }
 };
 
-var le = LE.create(config, handlers);
+var greenlock = Greenlock.create(config, handlers);
 console.error("CHANGE THE EMAIL, DOMAINS, AND AGREE TOS IN THE EXAMPLE BEFORE RUNNING IT");
 process.exit(1);
                                                             // checks :conf/renewal/:hostname.conf
-le.register({                                               // and either renews or registers
+greenlock.register({                                        // and either renews or registers
   domains: ['example.com']                                  // CHANGE TO YOUR DOMAIN
 , email: 'user@email.com'                                   // CHANGE TO YOUR EMAIL
 , agreeTos: false                                           // set to true to automatically accept an agreement

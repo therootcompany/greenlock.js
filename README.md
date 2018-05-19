@@ -31,6 +31,7 @@ Features
     - [x] Dynamic Virtual Hosting (vhost)
     - [x] Automatical renewal (10 to 14 days before expiration)
   - [x] Great ACME support via [acme.js](https://git.coolaj86.com/coolaj86/acme-v2.js)
+    - [x] "dry run" with self-diagnostics
     - [x] ACME draft 11
     - [x] Let's Encrypt v2
     - [x] Let's Encrypt v1
@@ -76,6 +77,23 @@ npm install --save greenlock@2.x
 **Note**: Ignore errors related to `ursa`. It is an optional dependency used when available.
 For many people it will not install properly, but it's only necessary on ARM devices (i.e. Raspberry Pi).
 
+### Production vs Staging
+
+If at first you don't succeed, stop and switch to staging.
+
+I've implemented a "dry run" loopback test with self diagnostics
+so it's pretty safe to start off with the production URLs
+and be far less likely to hit the bad request rate limits.
+
+However, if your first attempt to get a certificate fails
+I'd recommend switching to the staging acme server to debug -
+unless you're very clear on what the failure was and how to fix it.
+
+```
+{ server: 'https://acme-staging-v02.api.letsencrypt.org/directory' }
+```
+
+
 Easy as 1, 2, 3... 4
 =====
 
@@ -110,7 +128,6 @@ var path = require('path');
 var os = require('os')
 var Greenlock = require('greenlock');
 
-var acmeEnv = 'staging-';
 var greenlock = Greenlock.create({
   agreeTos: true                      // Accept Let's Encrypt v2 Agreement
 , email: 'user@example.com'           // IMPORTANT: Change email and domains
@@ -118,7 +135,7 @@ var greenlock = Greenlock.create({
 , communityMember: false              // Optionally get important updates (security, api changes, etc)
                                       // and submit stats to help make Greenlock better
 , version: 'draft-11'
-, server: 'https://acme-' + acmeEnv + 'v02.api.letsencrypt.org/directory'
+, server: 'https://acme-v02.api.letsencrypt.org/directory'
 , configDir: path.join(os.homedir(), 'acme/etc')
 });
 
@@ -155,10 +172,9 @@ var path = require('path');
 var os = require('os')
 var Greenlock = require('greenlock');
 
-var acmeEnv = 'staging-';
 var greenlock = Greenlock.create({
   version: 'draft-11'
-, server: 'https://acme-' + acmeEnv + 'v02.api.letsencrypt.org/directory'
+, server: 'https://acme-v02.api.letsencrypt.org/directory'
 
   // approve a growing list of domains
 , approveDomains: approveDomains
@@ -223,7 +239,6 @@ Here's a taste of the API that you might use if building a commandline tool or A
 that doesn't use node's SNICallback.
 
 ```
-var staging = true;
 
 
 /////////////////////
@@ -246,7 +261,7 @@ var opts = {
 
 var greenlock = require('greenlock').create({
   version: 'draft-11'
-, server: 'https://acme-' + (staging ? 'staging-' : '') + 'v02.api.letsencrypt.org/directory'
+, server: 'https://acme-v02.api.letsencrypt.org/directory'
 , configDir: '/tmp/acme/etc'
 });
 
@@ -314,11 +329,11 @@ greenlock = Greenlock.create({
                                                           // 'v01' is for the pre-spec Let's Encrypt v1
   //
   // staging API
-  server: 'https://acme-staging-v02.api.letsencrypt.org/directory'
+  //server: 'https://acme-staging-v02.api.letsencrypt.org/directory'
 
   //
   // production API
-  //server: 'https://acme-v02.api.letsencrypt.org/directory'
+  server: 'https://acme-v02.api.letsencrypt.org/directory'
 
 , store: leStore                                          // handles saving of config, accounts, and certificates
 , challenges: {
