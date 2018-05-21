@@ -118,9 +118,9 @@ Greenlock.create = function (gl) {
     console.warn("");
     console.warn("");
     console.warn("");
-    console.warn("====================================================================");
-    console.warn("==                     greenlock.js (v2.2.0+)                     ==");
-    console.warn("====================================================================");
+    console.warn("==========================================================");
+    console.warn("==                greenlock.js (v2.2.0+)                ==");
+    console.warn("==========================================================");
     console.warn("");
     console.warn("Please specify 'version' option:");
     console.warn("");
@@ -131,10 +131,7 @@ Greenlock.create = function (gl) {
     console.warn("");
     console.warn("        'v01' for Let's Encrypt v1 (deprecated)");
     console.warn("");
-    console.warn("====================================================================");
-    console.warn("==      this will be required from version v2.3 forward           ==");
-    console.warn("====================================================================");
-    console.warn("");
+    console.warn("This will be required in versions v2.3+");
     console.warn("");
     console.warn("");
   } else if ('v02' === gl.version) {
@@ -146,29 +143,29 @@ Greenlock.create = function (gl) {
   if (!gl.server) {
     throw new Error("opts.server must specify an ACME directory URL, such as 'https://acme-staging-v02.api.letsencrypt.org/directory'");
   }
-  if ('staging' === gl.server) {
-    gl.server = 'https://acme-staging.api.letsencrypt.org/directory';
-    gl.version = 'v01';
+  if ('staging' === gl.server || 'production' === gl.server) {
+    if ('staging' === gl.server) {
+      gl.server = 'https://acme-staging.api.letsencrypt.org/directory';
+      gl.version = 'v01';
+      gl._deprecatedServerName = 'staging';
+    }
+    else if ('production' === gl.server) {
+      gl.server = 'https://acme-v01.api.letsencrypt.org/directory';
+      gl.version = 'v01';
+      gl._deprecatedServerName = 'production';
+    }
     console.warn("");
     console.warn("");
     console.warn("=== WARNING ===");
     console.warn("");
-    console.warn("Due to versioning issues the 'staging' option is deprecated. Please specify the full url and version.");
+    console.warn("Due to versioning issues the '" + gl._deprecatedServerName + "' option is deprecated.");
+    console.warn("Please specify the full url and version.");
     console.warn("");
-    console.warn("\t--acme-url '" + gl.server + "' \\");
-    console.warn("\t--acme-version '" + gl.version + "' \\");
+    console.warn("For APIs add:");
+    console.warn("\t, \"version\": \"" + gl.version + "\"");
+    console.warn("\t, \"server\": \"" + gl.server + "\"");
     console.warn("");
-    console.warn("");
-  }
-  else if ('production' === gl.server) {
-    gl.server = 'https://acme-v01.api.letsencrypt.org/directory';
-    gl.version = 'v01';
-    console.warn("");
-    console.warn("");
-    console.warn("=== WARNING ===");
-    console.warn("");
-    console.warn("Due to versioning issues the 'production' option is deprecated. Please specify the full url and version.");
-    console.warn("");
+    console.warn("For the CLI add:");
     console.warn("\t--acme-url '" + gl.server + "' \\");
     console.warn("\t--acme-version '" + gl.version + "' \\");
     console.warn("");
@@ -179,19 +176,22 @@ Greenlock.create = function (gl) {
     console.warn("");
     console.warn("=== WARNING ===");
     console.warn("");
-    console.warn("Let's Encrypt v1 is deprecated. Please update to Let's Encrypt v2 (ACME draft 11)");
+    console.warn("Let's Encrypt v1 is deprecated.");
+    console.warn("Please update to Let's Encrypt v2 (ACME draft 11)");
     console.warn("");
     try {
       return require('le-acme-core').ACME;
     } catch(e) {
-      console.error(e);
-      console.info("");
-      console.info("");
-      console.info("If you require v01 API support (which is deprecated), you must install it:");
-      console.info("");
-      console.info("\tnpm install le-acme-core");
-      console.info("");
-      console.info("");
+      console.error("");
+      console.error("=== Error (easy-to-fix) ===");
+      console.error("");
+      console.error("Hey, this isn't a big deal, but you need to manually add v1 support:");
+      console.error("");
+      console.error("        npm install --save le-acme-core");
+      console.error("");
+      console.error("Just run that real quick, restart, and everything will work great.");
+      console.error("");
+      console.error("");
       process.exit(e.code || 13);
     }
   }
