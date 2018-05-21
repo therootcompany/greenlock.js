@@ -130,6 +130,7 @@ Greenlock.create = function (gl) {
     console.warn("or");
     console.warn("");
     console.warn("        'v01' for Let's Encrypt v1 (deprecated)");
+    console.warn("         (also 'npm install --save le-acme-core' as this legacy dependency will soon be removed)");
     console.warn("");
     console.warn("This will be required in versions v2.3+");
     console.warn("");
