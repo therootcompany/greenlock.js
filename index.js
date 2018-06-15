@@ -72,7 +72,12 @@ Greenlock._undefine = function (gl) {
 Greenlock.create = function (gl) {
   var PromiseA = require('bluebird');
 
-  gl.store = gl.store || require('le-store-certbot').create({ debug: gl.debug });
+  gl.store = gl.store || require('le-store-certbot').create({
+    debug: gl.debug
+  , configDir: gl.configDir
+  , logsDir: gl.logsDir
+  , webrootPath: gl.webrootPath
+  });
   gl.core = require('./lib/core');
   var log = gl.log || _log;
 
@@ -80,7 +85,10 @@ Greenlock.create = function (gl) {
     gl.challenges = {};
   }
   if (!gl.challenges['http-01']) {
-    gl.challenges['http-01'] = require('le-challenge-fs').create({ debug: gl.debug });
+    gl.challenges['http-01'] = require('le-challenge-fs').create({
+      debug: gl.debug
+    , webrootPath: gl.webrootPath
+    });
   }
   if (!gl.challenges['dns-01']) {
     try {
