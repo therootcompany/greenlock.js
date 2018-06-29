@@ -3,6 +3,12 @@
 var DAY = 24 * 60 * 60 * 1000;
 //var MIN = 60 * 1000;
 var ACME = require('acme-v2/compat').ACME;
+var PromiseA;
+try {
+  PromiseA = require('bluebird');
+} catch(e) {
+  PromiseA = global.Promise;
+}
 
 var Greenlock = module.exports;
 Greenlock.Greenlock = Greenlock;
@@ -70,8 +76,6 @@ Greenlock._undefine = function (gl) {
   return gl;
 };
 Greenlock.create = function (gl) {
-  var PromiseA = require('bluebird');
-
   gl.store = gl.store || require('le-store-certbot').create({
     debug: gl.debug
   , configDir: gl.configDir

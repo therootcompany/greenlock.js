@@ -74,19 +74,17 @@ Install
 npm install --save greenlock@2.x
 ```
 
-<small>
 **Optional** dependency for *more efficient* RSA key generation:
+<small>(important for those on ARM devices like Raspberry Pi)</small>
 ```bash
 npm install --save ursa
 ```
-(important for those on ARM devices like Raspberry Pi)
 
 **Optional** dependency for *Let's Encrypt v01* (pre-draft ACME spec) compatibility:
+<small>(important for those on ARM devices like Raspberry Pi)</small>
 ```bash
 npm install --save le-acme-core
 ```
-(important for those on ARM devices like Raspberry Pi)
-</small>
 
 
 ### Production vs Staging
