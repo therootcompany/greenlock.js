@@ -389,7 +389,7 @@ Greenlock.create = function (gl) {
                   console.error("");
                   cb(e);
                 }
-              );;
+              );
             }
             else {
               log(gl.debug, 'gl getting from disk or registering new');
@@ -416,6 +416,17 @@ Greenlock.create = function (gl) {
       gl.sni = gl.sni.create(gl);
     }
     gl.tlsOptions.SNICallback = function (domain, cb) {
+      // format and (lightly) sanitize sni so that users can be naive
+      // and not have to worry about SQL injection or fs discovery
+      domain = (domain||'').toLowerCase();
+      // hostname labels allow a-z, 0-9, -, and are separated by dots
+      // _ is sometimes allowed
+      if (!/^[a-z0-9_\.\-]+$/i.test(domain) || -1 !== domain.indexOf('..')) {
+        log(gl.debug, "invalid sni '" + domain + "'");
+        cb(new Error("invalid SNI"));
+        return;
+      }
+
       try {
         gl.sni.sniCallback(domain, cb);
       } catch(e) {
