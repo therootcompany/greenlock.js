@@ -137,7 +137,7 @@ Greenlock.create = function (gl) {
   ///////////////////////////
 
   if (!gl.version) {
-    //console.warn("Please specify version: 'v01' (Let's Encrypt v1) or 'draft-11' (Let's Encrypt v2 / ACME draft 11)");
+    //console.warn("Please specify version: 'v01' (Let's Encrypt v1) or 'draft-12' (Let's Encrypt v2 / ACME draft 12)");
     console.warn("");
     console.warn("");
     console.warn("");
@@ -147,8 +147,8 @@ Greenlock.create = function (gl) {
     console.warn("");
     console.warn("Please specify 'version' option:");
     console.warn("");
-    console.warn("        'draft-11' for Let's Encrypt v2 and ACME draft 11");
-    console.warn("        ('v02' is an alias of 'draft-11'");
+    console.warn("        'draft-12' for Let's Encrypt v2 and ACME draft 12");
+    console.warn("        ('v02' is an alias of 'draft-12'");
     console.warn("");
     console.warn("or");
     console.warn("");
@@ -160,7 +160,11 @@ Greenlock.create = function (gl) {
     console.warn("");
   } else if ('v02' === gl.version) {
     gl.version = 'draft-11';
-  } else if ('v01' !== gl.version && 'draft-11' !== gl.version) {
+  } else if ('draft-12' === gl.version) {
+    gl.version = 'draft-11';
+  } else if ('draft-11' === gl.version) {
+    // no-op
+  } else if ('v01' !== gl.version) {
     throw new Error("Unrecognized version '" + gl.version + "'");
   }
 
@@ -201,7 +205,7 @@ Greenlock.create = function (gl) {
     console.warn("=== WARNING ===");
     console.warn("");
     console.warn("Let's Encrypt v1 is deprecated.");
-    console.warn("Please update to Let's Encrypt v2 (ACME draft 11)");
+    console.warn("Please update to Let's Encrypt v2 (ACME draft 12)");
     console.warn("");
     try {
       return require('le-acme-core').ACME;
@@ -225,7 +229,7 @@ Greenlock.create = function (gl) {
     , 'https://acme-staging-v02.api.letsencrypt.org/directory' ].indexOf(gl.server)
   ) {
     if ('draft-11' !== gl.version) {
-      console.warn("Detected Let's Encrypt v02 URL. Changing version to draft-11.");
+      console.warn("Detected Let's Encrypt v02 URL. Changing version to draft-12.");
       gl.version = 'draft-11';
     }
   } else if (-1 !== [
