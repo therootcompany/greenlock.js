@@ -32,7 +32,7 @@ Features
     - [x] Automatical renewal (10 to 14 days before expiration)
   - [x] Great ACME support via [acme.js](https://git.coolaj86.com/coolaj86/acme-v2.js)
     - [x] "dry run" with self-diagnostics
-    - [x] ACME draft 11
+    - [x] ACME draft 12
     - [x] Let's Encrypt v2
     - [x] Let's Encrypt v1
   - [x] [Commandline](https://git.coolaj86.com/coolaj86/greenlock-cli.js) (cli) Utilities
@@ -144,7 +144,7 @@ var greenlock = Greenlock.create({
 , approveDomains: [ 'example.com' ]
 , communityMember: false              // Optionally get important updates (security, api changes, etc)
                                       // and submit stats to help make Greenlock better
-, version: 'draft-11'
+, version: 'draft-12'
 , server: 'https://acme-v02.api.letsencrypt.org/directory'
 , configDir: path.join(os.homedir(), 'acme/etc')
 });
@@ -183,7 +183,7 @@ var os = require('os')
 var Greenlock = require('greenlock');
 
 var greenlock = Greenlock.create({
-  version: 'draft-11'
+  version: 'draft-12'
 , server: 'https://acme-v02.api.letsencrypt.org/directory'
 
   // approve a growing list of domains
@@ -270,7 +270,7 @@ var opts = {
 ////////////////////
 
 var greenlock = require('greenlock').create({
-  version: 'draft-11'
+  version: 'draft-12'
 , server: 'https://acme-v02.api.letsencrypt.org/directory'
 , configDir: '/tmp/acme/etc'
 });
@@ -333,9 +333,9 @@ function leAgree(opts, agreeCb) {
 }
 
 greenlock = Greenlock.create({
-  version: 'draft-11'                                     // 'draft-11' or 'v01'
-                                                          // 'draft-11' is for Let's Encrypt v2 otherwise known as ACME draft 11
-                                                          // 'v02' is an alias for 'draft-11'
+  version: 'draft-12'                                     // 'draft-12' or 'v01'
+                                                          // 'draft-12' is for Let's Encrypt v2 otherwise known as ACME draft 12
+                                                          // 'v02' is an alias for 'draft-12'
                                                           // 'v01' is for the pre-spec Let's Encrypt v1
   //
   // staging API
