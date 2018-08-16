@@ -443,6 +443,14 @@ The following variables will be tempalted in any strings passed to the options o
 * `~/` replaced with `os.homedir()` i.e. `/Users/aj`
 * `:hostname` replaced with the first domain in the list i.e. `example.com`
 
+### Dangerous Options
+
+By default SNI is made to lowercase and is automatically rejected if it contains invalid characters for a domain.
+This behavior can be modified:
+
+  * `__dns_allow_dangerous_names` allow SNI names like "Robert'); DROP TABLE Students;"
+  * `__dns_preserve_case` passes SNI names such as "ExAMpLE.coM" without converting to lower case
+
 Developer API
 -------------
 

@@ -432,20 +432,21 @@ Greenlock.create = function (gl) {
     if (gl.sni.create) {
       gl.sni = gl.sni.create(gl);
     }
-    gl.tlsOptions.SNICallback = function (domain, cb) {
+    gl.tlsOptions.SNICallback = function (_domain, cb) {
       // format and (lightly) sanitize sni so that users can be naive
       // and not have to worry about SQL injection or fs discovery
-      domain = (domain||'').toLowerCase();
+      var domain = (_domain||'').toLowerCase();
       // hostname labels allow a-z, 0-9, -, and are separated by dots
       // _ is sometimes allowed
-      if (!/^[a-z0-9_\.\-]+$/i.test(domain) || -1 !== domain.indexOf('..')) {
+      // REGEX // https://www.codeproject.com/Questions/1063023/alphanumeric-validation-javascript-without-regex
+      if (!gl.__sni_allow_dangerous_names && (!/^[a-z0-9_\.\-]+$/i.test(domain) || -1 !== domain.indexOf('..'))) {
         log(gl.debug, "invalid sni '" + domain + "'");
         cb(new Error("invalid SNI"));
         return;
       }
 
       try {
-        gl.sni.sniCallback(domain, cb);
+        gl.sni.sniCallback(gl.__sni_preserve_case && _domain || domain, cb);
       } catch(e) {
         console.error("[ERROR] Something went wrong in the SNICallback:");
         console.error(e);
