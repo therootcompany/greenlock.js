@@ -483,31 +483,43 @@ Greenlock.create = function (gl) {
 
   //var SERVERNAME_RE = /^[a-z0-9\.\-_]+$/;
   var SERVERNAME_G = /[^a-z0-9\.\-_]/;
-  gl.middleware.sanitizeHost = function (req, res, next) {
-    // Get the host:port combo, if it exists
-    var host = (req.headers.host||'').split(':');
+  gl.middleware.sanitizeHost = function (app) {
+    return function (req, res, next) {
+      function realNext() {
+        if ('function' === typeof app) {
+          app(req, res);
+        } else if ('function' === typeof next) {
+          next();
+        } else {
+          res.statusCode = 500;
+          res.end("Error: no middleware assigned");
+        }
+      }
+      // Get the host:port combo, if it exists
+      var host = (req.headers.host||'').split(':');
 
-    // if not, move along
-    if (!host[0]) { next(req, res); return; }
+      // if not, move along
+      if (!host[0]) { realNext(); return; }
 
-    // if so, remove non-allowed characters
-    var safehost = host[0].replace(SERVERNAME_G, '');
+      // if so, remove non-allowed characters
+      var safehost = host[0].replace(SERVERNAME_G, '');
 
-    // if there were unallowed characters, complain
-    if (!gl.__sni_allow_dangerous_name && safehost.length !== host[0].length) {
-      res.statusCode = 400;
-      res.end("Malformed HTTP Header: 'Host: " + host[0] + "'");
-      return;
-    }
+      // if there were unallowed characters, complain
+      if (!gl.__sni_allow_dangerous_name && safehost.length !== host[0].length) {
+        res.statusCode = 400;
+        res.end("Malformed HTTP Header: 'Host: " + host[0] + "'");
+        return;
+      }
 
-    // make lowercase
-    if (!gl.__sni_preserve_case) {
-      host[0] = host[0].toLowerCase();
-      req.headers.host = host.join(':');
-    }
+      // make lowercase
+      if (!gl.__sni_preserve_case) {
+        host[0] = host[0].toLowerCase();
+        req.headers.host = host.join(':');
+      }
 
-    // carry on
-    next(req, res);
+      // carry on
+      realNext();
+    };
   };
 
   return gl;
