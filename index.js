@@ -505,7 +505,7 @@ Greenlock.create = function (gl) {
       var safehost = host[0].replace(SERVERNAME_G, '');
 
       // if there were unallowed characters, complain
-      if (!gl.__sni_allow_dangerous_name && safehost.length !== host[0].length) {
+      if (!gl.__sni_allow_dangerous_names && safehost.length !== host[0].length) {
         res.statusCode = 400;
         res.end("Malformed HTTP Header: 'Host: " + host[0] + "'");
         return;
