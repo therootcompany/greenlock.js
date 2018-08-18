@@ -502,7 +502,7 @@ Greenlock.create = function (gl) {
       if (!host[0]) { realNext(); return; }
 
       // if so, remove non-allowed characters
-      var safehost = host[0].replace(SERVERNAME_G, '');
+      var safehost = host[0].toLowerCase().replace(SERVERNAME_G, '');
 
       // if there were unallowed characters, complain
       if (!gl.__sni_allow_dangerous_names && safehost.length !== host[0].length) {
@@ -513,7 +513,7 @@ Greenlock.create = function (gl) {
 
       // make lowercase
       if (!gl.__sni_preserve_case) {
-        host[0] = host[0].toLowerCase();
+        host[0] = safehost;
         req.headers.host = host.join(':');
       }
 
