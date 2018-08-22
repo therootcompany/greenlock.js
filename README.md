@@ -164,19 +164,30 @@ var greenlock = require('greenlock').create({
 , agreeTos: true                      // Accept Let's Encrypt v2 Agreement
 , communityMember: true               // Optionally get important greenlock updates (security, api changes, etc)
 
-, approveDomains: function (opts, certs, cb) {
-
-    // check for domains you want to receive certificates for
-    if ('example.com' === opts.domain) {
-      cb(null, { options: opts, certs: certs });
-      return;
-    }
-
-    // return error otherwise
-    cb(new Error("bad domain"));
-  }
+, approveDomains: approveDomains
 });
+```
 
+```js
+/////////////////////
+// APPROVE DOMAINS //
+/////////////////////
+
+
+function approveDomains(opts, certs, cb) {
+
+  // check for domains you want to receive certificates for
+  if ('example.com' === opts.domain) {
+    cb(null, { options: opts, certs: certs });
+    return;
+  }
+
+  // return error otherwise
+  cb(new Error("bad domain"));
+}
+```
+
+```js
 ////////////////////
 // CREATE SERVERS //
 ////////////////////
@@ -184,7 +195,7 @@ var greenlock = require('greenlock').create({
 var redir = require('redirect-https')();
 require('http').createServer(greenlock.middleware(redir)).listen(80);
 
-require('https').createServer(greenlock.tlsOptions, function (req, res) {
+require('spdy').createServer(greenlock.tlsOptions, function (req, res) {
   res.end('Hello, Secure World!');
 }).listen(443);
 ```
