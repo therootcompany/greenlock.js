@@ -517,10 +517,27 @@ Greenlock.create = function (gl) {
         req.headers.host = host.join(':');
       }
 
+      if (gl.__sni_allow_fronting) {
+        if (req.socket && 'string' === typeof req.socket.servername) {
+          if (safehost && (safehost !== req.socket.servername.toLowerCase())) {
+            res.statusCode = 400;
+            res.end("Don't be frontin', yo!"
+              + " TLS SNI '" + req.socket.servername.toLowerCase() + "' does not match 'Host: " + safehost + "'");
+            return;
+          }
+        } else if (safehost && !gl.middleware.sanitizeHost._skip_fronting_check) {
+          // TODO how to handle wrapped sockets, as with telebit?
+          console.warn("\n\n\n[greenlock] WARN: no string for req.socket.servername,"
+            + " skipping fronting check for '" + safehost + "'\n\n\n");
+          gl.middleware.sanitizeHost._skip_fronting_check = true;
+        }
+      }
+
       // carry on
       realNext();
     };
   };
+  gl.middleware.sanitizeHost._skip_fronting_check = false;
 
   return gl;
 };
