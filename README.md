@@ -60,6 +60,7 @@ Table of Contents
 =================
 
   * Install
+  * **QuickStart**
   * Simple Examples
   * Example with ALL OPTIONS
   * API
@@ -103,6 +104,25 @@ unless you're very clear on what the failure was and how to fix it.
 { server: 'https://acme-staging-v02.api.letsencrypt.org/directory' }
 ```
 
+### QuickStart Screencast
+
+Watch the QuickStart demonstration: [https://youtu.be/e8vaR4CEZ5s](https://youtu.be/e8vaR4CEZ5s&list=PLZaEVINf2Bq_lrS-OOzTUJB4q3HxarlXk)
+
+<a href="https://www.youtube.com/watch?v=e8vaR4CEZ5s&list=PLZaEVINf2Bq_lrS-OOzTUJB4q3HxarlXk"><img src="https://i.imgur.com/Y8ix6Ts.png" title="QuickStart Video" alt="YouTube Video Preview" /></a>
+
+* [0:00](https://www.youtube.com/watch?v=e8vaR4CEZ5s&list=PLZaEVINf2Bq_lrS-OOzTUJB4q3HxarlXk#t=0) - Intro
+* [2:22](https://www.youtube.com/watch?v=e8vaR4CEZ5s&list=PLZaEVINf2Bq_lrS-OOzTUJB4q3HxarlXk#t=142) - Demonstrating QuickStart Example
+* [6:37](https://www.youtube.com/watch?v=e8vaR4CEZ5s&list=PLZaEVINf2Bq_lrS-OOzTUJB4q3HxarlXk?t=397) - Troubleshooting / Gotchas
+
+#### Production Configuration (Part 2)
+
+* [1:00](https://www.youtube.com/watch?v=bTEn93gxY50&index=2&list=PLZaEVINf2Bq_lrS-OOzTUJB4q3HxarlXk&t=60) - Bringing Greenlock into an Existing Express Project
+* [2:26](https://www.youtube.com/watch?v=bTEn93gxY50&index=2&list=PLZaEVINf2Bq_lrS-OOzTUJB4q3HxarlXk&t=146) - The `approveDomains` callback
+
+#### Security Concerns (Part 3)
+
+* [0:00](https://www.youtube.com/watch?v=aZgVqPzoZTY&index=3&list=PLZaEVINf2Bq_lrS-OOzTUJB4q3HxarlXk) - Potential Attacks, and Mitigation
+
 
 Easy as 1, 2, 3... 4
 =====
@@ -134,19 +154,27 @@ Great when
 // INIT GREENLOCK //
 ////////////////////
 
-var path = require('path');
-var os = require('os')
-var Greenlock = require('greenlock');
+var greenlock = require('greenlock').create({
 
-var greenlock = Greenlock.create({
-  agreeTos: true                      // Accept Let's Encrypt v2 Agreement
-, email: 'user@example.com'           // IMPORTANT: Change email and domains
-, approveDomains: [ 'example.com' ]
-, communityMember: false              // Optionally get important updates (security, api changes, etc)
-                                      // and submit stats to help make Greenlock better
-, version: 'draft-12'
+  version: 'draft-12'
 , server: 'https://acme-v02.api.letsencrypt.org/directory'
-, configDir: path.join(os.homedir(), 'acme/etc')
+, configDir: '~/.config/acme'
+
+, email: 'user@example.com'           // IMPORTANT: Change email and domains
+, agreeTos: true                      // Accept Let's Encrypt v2 Agreement
+, communityMember: true               // Optionally get important greenlock updates (security, api changes, etc)
+
+, approveDomains: function (opts, certs, cb) {
+
+    // check for domains you want to receive certificates for
+    if ('example.com' === opts.domain) {
+      cb(null, { options: opts, certs: certs });
+      return;
+    }
+
+    // return error otherwise
+    cb(new Error("bad domain"));
+  }
 });
 
 ////////////////////
