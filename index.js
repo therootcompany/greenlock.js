@@ -517,7 +517,7 @@ Greenlock.create = function (gl) {
         req.headers.host = host.join(':');
       }
 
-      if (gl.__sni_allow_fronting) {
+      if (!gl.__sni_allow_domain_fronting) {
         if (req.socket && 'string' === typeof req.socket.servername) {
           if (safehost && (safehost !== req.socket.servername.toLowerCase())) {
             res.statusCode = 400;
