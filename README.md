@@ -162,7 +162,8 @@ var greenlock = require('greenlock').create({
 
 , email: 'user@example.com'           // IMPORTANT: Change email and domains
 , agreeTos: true                      // Accept Let's Encrypt v2 Agreement
-, communityMember: true               // Optionally get important greenlock updates (security, api changes, etc)
+, communityMember: true               // Get (rare) non-mandatory updates about cool greenlock-related stuff (default false)
+, securityUpdates: true               // Important and mandatory notices related to security or breaking API changes (default true)
 
 , approveDomains: approveDomains
 });
@@ -530,6 +531,8 @@ See https://git.coolaj86.com/coolaj86/le-challenge-fs.js
 
 Change History
 ==============
+* v2.4
+  * v2.4.3 - add security updates (default true) independent of community updates (default false)
 * v2.2 - Let's Encrypt v2 Support
   * v2.2.11 - documentation updates
   * v2.2.10 - don't let SNICallback swallow approveDomains errors 6286883fc2a6ebfff711a540a2e4d92f3ac2907c
