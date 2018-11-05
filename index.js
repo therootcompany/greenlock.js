@@ -398,8 +398,8 @@ Greenlock.create = function (gl) {
             lexOpts.domains = gl.approvedDomains.slice(0);
             lexOpts.email = gl.email;
             lexOpts.agreeTos = gl.agreeTos;
-            lexOpts.communityMember = lexOpts.communityMember;
-            lexOpts.telemetry = lexOpts.telemetry;
+            lexOpts.communityMember = gl.communityMember;
+            lexOpts.telemetry = gl.telemetry;
             return cb(null, { options: lexOpts, certs: certs });
           }
 
