@@ -3,6 +3,7 @@
 var DAY = 24 * 60 * 60 * 1000;
 //var MIN = 60 * 1000;
 var ACME = require('acme-v2/compat').ACME;
+var package = require('./package.json');
 var PromiseA;
 try {
   PromiseA = require('bluebird');
@@ -123,6 +124,11 @@ Greenlock.create = function (gl) {
   gl.challengeType = gl.challengeType || Greenlock.challengeType;
   gl._ipc = ipc;
   gl._communityPackage = gl._communityPackage || 'greenlock.js';
+  if ('greenlock.js' === gl._communityPackage) {
+    gl._communityPackageVersion = package.version;
+  } else {
+    gl._communityPackageVersion = gl._communityPackageVersion || ('greenlock.js-' + package.version);
+  }
   gl.agreeToTerms = gl.agreeToTerms || function (args, agreeCb) {
     agreeCb(new Error("'agreeToTerms' was not supplied to Greenlock and 'agreeTos' was not supplied to Greenlock.register"));
   };
@@ -393,6 +399,7 @@ Greenlock.create = function (gl) {
             lexOpts.email = gl.email;
             lexOpts.agreeTos = gl.agreeTos;
             lexOpts.communityMember = lexOpts.communityMember;
+            lexOpts.telemetry = lexOpts.telemetry;
             return cb(null, { options: lexOpts, certs: certs });
           }
 
