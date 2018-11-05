@@ -409,58 +409,81 @@ Greenlock.create = function (gl) {
         log(gl.debug, 'gl.getCertificates called for', domain, 'with certs for', certs && certs.altnames || 'NONE');
         var opts = { domain: domain, domains: certs && certs.altnames || [ domain ] };
 
-        try {
-          gl.approveDomains(opts, certs, function (_err, results) {
-            if (_err) {
-              if (false !== gl.logRejectedDomains) {
-                console.error("[Error] approveDomains rejected tls sni '" + domain + "'");
-                console.error("[Error] (see https://git.coolaj86.com/coolaj86/greenlock.js/issues/11)");
-                if ('E_REJECT_SNI' !== _err.code) {
-                  console.error("[Error] This is the rejection message:");
-                  console.error(_err.message);
-                }
-                console.error("");
+        function onApproved(results) {
+          var certificate = results.certificate || results.certs;
+          var options = results.options || results;
+          if (results.certificate) {
+            results.certificate = null;
+          }
+
+          log(gl.debug, 'gl.approveDomains called with certs for', certificate && certificate.altnames || 'NONE', 'and options:');
+          log(gl.debug, options);
+
+          if (certificate) {
+            log(gl.debug, 'gl renewing');
+            return gl.core.certificates.renewAsync(options, certificate).then(
+              function (certs) {
+                // Workaround for https://github.com/nodejs/node/issues/22389
+                gl._updateServernames(certs);
+                cb(null, certs);
               }
-              cb(_err);
-              return;
+            , function (e) {
+                console.debug("Error renewing certificate for '" + domain + "':");
+                console.debug(e);
+                console.error("");
+                cb(e);
+              }
+            );
+          }
+          else {
+            log(gl.debug, 'gl getting from disk or registering new');
+            return gl.core.certificates.getAsync(options).then(
+              function (certs) {
+                // Workaround for https://github.com/nodejs/node/issues/22389
+                gl._updateServernames(certs);
+                cb(null, certs);
+              }
+            , function (e) {
+                console.debug("Error loading/registering certificate for '" + domain + "':");
+                console.debug(e);
+                console.error("");
+                cb(e);
+              }
+            );
+          }
+        }
+        function onRejected(_err) {
+          if (false !== gl.logRejectedDomains) {
+            console.error("[Error] approveDomains rejected tls sni '" + domain + "'");
+            console.error("[Error] (see https://git.coolaj86.com/coolaj86/greenlock.js/issues/11)");
+            if ('E_REJECT_SNI' !== _err.code) {
+              console.error("[Error] This is the rejection message:");
+              console.error(_err.message);
             }
+            console.error("");
+          }
+          cb(_err);
+        }
+        function onMaybe(_err, results) {
+          if (_err) { onRejected(_err); return; }
+          onApproved(results);
+        }
 
-            log(gl.debug, 'gl.approveDomains called with certs for', results.certs && results.certs.altnames || 'NONE', 'and options:');
-            log(gl.debug, results.options);
-
-            if (results.certs) {
-              log(gl.debug, 'gl renewing');
-              return gl.core.certificates.renewAsync(results.options, results.certs).then(
-                function (certs) {
-                  // Workaround for https://github.com/nodejs/node/issues/22389
-                  gl._updateServernames(certs);
-                  cb(null, certs);
-                }
-              , function (e) {
-                  console.debug("Error renewing certificate for '" + domain + "':");
-                  console.debug(e);
-                  console.error("");
-                  cb(e);
-                }
-              );
-            }
-            else {
-              log(gl.debug, 'gl getting from disk or registering new');
-              return gl.core.certificates.getAsync(results.options).then(
-                function (certs) {
-                  // Workaround for https://github.com/nodejs/node/issues/22389
-                  gl._updateServernames(certs);
-                  cb(null, certs);
-                }
-              , function (e) {
-                  console.debug("Error loading/registering certificate for '" + domain + "':");
-                  console.debug(e);
-                  console.error("");
-                  cb(e);
-                }
-              );
-            }
-          });
+        if (certs) {
+          opts.certificate = certs;
+          //opts.subject = certs.subject;
+          //opts.altnames = certs.altnames;
+          opts.servernames = [certs.subject].concat(certs.altnames);
+          opts.servername = opts.domain;
+        }
+        try {
+          if (1 === gl.approveDomains.length) {
+            return gl.approveDomains(opts).then(onApproved, onRejected);
+          } else if (2 === gl.approveDomains.length) {
+            gl.approveDomains(opts, onMaybe);
+          } else {
+            gl.approveDomains(opts, certs, onMaybe);
+          }
         } catch(e) {
           console.error("[ERROR] Something went wrong in approveDomains:");
           console.error(e);
