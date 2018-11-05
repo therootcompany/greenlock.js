@@ -521,8 +521,13 @@ Greenlock.create = function (gl) {
         if (req.socket && 'string' === typeof req.socket.servername) {
           if (safehost && (safehost !== req.socket.servername.toLowerCase())) {
             res.statusCode = 400;
-            res.end("Don't be frontin', yo!"
-              + " TLS SNI '" + req.socket.servername.toLowerCase() + "' does not match 'Host: " + safehost + "'");
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            res.end(
+                "<h1>Domain Fronting Error</h1>"
+              + "<p>This connection was secured using TLS/SSL for '" + req.socket.servername.toLowerCase() + "'</p>"
+              + "<p>The HTTP request specified 'Host: " + safehost + "', which is (obviously) different.</p>"
+              + "<p>Because this looks like a domain fronting attack, the connection has been terminated.</p>"
+            );
             return;
           }
         } else if (safehost && !gl.middleware.sanitizeHost._skip_fronting_check) {
