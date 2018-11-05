@@ -333,6 +333,38 @@ Greenlock.create = function (gl) {
 
   gl.sni = gl.sni || null;
   gl.tlsOptions = gl.tlsOptions || gl.httpsOptions || {};
+
+  // Workaround for https://github.com/nodejs/node/issues/22389
+  gl._updateServernames = function (cert) {
+    if (!gl._certnames) { gl._certnames = {}; }
+
+    // Note: Any given domain could exist on multiple certs
+    // (especially during renewal where some may be added)
+    // hence we use a separate object for each domain and list each domain on it
+    // to get the minimal full set associated with each cert and domain
+    var allDomains = [cert.subject].concat(cert.altnames.slice(0));
+    allDomains.forEach(function (name) {
+      name = name.toLowerCase();
+      if (!gl._certnames[name]) {
+        gl._certnames[name] = {};
+      }
+      allDomains.forEach(function (name2) {
+        name2 = name2.toLowerCase();
+        gl._certnames[name][name2] = true;
+      });
+    });
+  };
+  gl._checkServername = function (safeHost, servername) {
+    // odd, but acceptable
+    if (!safeHost || !servername) { return true; }
+    if (safeHost === servername) { return true; }
+    // connection established with servername and session is re-used for allowed name
+    if (gl._certnames[servername] && gl._certnames[servername][safeHost]) {
+      return true;
+    }
+    return false;
+  };
+
   if (!gl.tlsOptions.SNICallback) {
     if (!gl.getCertificatesAsync && !gl.getCertificates) {
       if (Array.isArray(gl.approveDomains)) {
@@ -399,7 +431,11 @@ Greenlock.create = function (gl) {
             if (results.certs) {
               log(gl.debug, 'gl renewing');
               return gl.core.certificates.renewAsync(results.options, results.certs).then(
-                function (certs) { cb(null, certs); }
+                function (certs) {
+                  // Workaround for https://github.com/nodejs/node/issues/22389
+                  gl._updateServernames(certs);
+                  cb(null, certs);
+                }
               , function (e) {
                   console.debug("Error renewing certificate for '" + domain + "':");
                   console.debug(e);
@@ -411,7 +447,11 @@ Greenlock.create = function (gl) {
             else {
               log(gl.debug, 'gl getting from disk or registering new');
               return gl.core.certificates.getAsync(results.options).then(
-                function (certs) { cb(null, certs); }
+                function (certs) {
+                  // Workaround for https://github.com/nodejs/node/issues/22389
+                  gl._updateServernames(certs);
+                  cb(null, certs);
+                }
               , function (e) {
                   console.debug("Error loading/registering certificate for '" + domain + "':");
                   console.debug(e);
@@ -519,7 +559,8 @@ Greenlock.create = function (gl) {
 
       if (!gl.__sni_allow_domain_fronting) {
         if (req.socket && 'string' === typeof req.socket.servername) {
-          if (safehost && (safehost !== req.socket.servername.toLowerCase())) {
+          // Workaround for https://github.com/nodejs/node/issues/22389
+          if (!gl._checkServername(safehost, req.socket.servername.toLowerCase())) {
             res.statusCode = 400;
             res.setHeader('Content-Type', 'text/html; charset=utf-8');
             res.end(
