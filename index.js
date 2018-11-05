@@ -478,7 +478,7 @@ Greenlock.create = function (gl) {
         }
         try {
           if (1 === gl.approveDomains.length) {
-            return gl.approveDomains(opts).then(onApproved, onRejected);
+            return PromiseA.resolve(gl.approveDomains(opts)).then(onApproved, onRejected);
           } else if (2 === gl.approveDomains.length) {
             gl.approveDomains(opts, onMaybe);
           } else {
