@@ -557,7 +557,8 @@ Greenlock.create = function (gl) {
         req.headers.host = host.join(':');
       }
 
-      if (!gl.__sni_allow_domain_fronting) {
+      // Note: This sanitize function is also called on plain sockets, which don't need Domain Fronting checks
+      if (req.socket.encrypted && !gl.__sni_allow_domain_fronting) {
         if (req.socket && 'string' === typeof req.socket.servername) {
           // Workaround for https://github.com/nodejs/node/issues/22389
           if (!gl._checkServername(safehost, req.socket.servername.toLowerCase())) {
