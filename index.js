@@ -133,7 +133,7 @@ Greenlock.create = function (gl) {
     agreeCb(new Error("'agreeToTerms' was not supplied to Greenlock and 'agreeTos' was not supplied to Greenlock.register"));
   };
 
-  if (!gl.renewWithin) { gl.renewWithin = 14 * DAY; }
+  if (!gl.renewWithin) { gl.renewWithin = 30 * DAY; }
   // renewBy has a default in le-sni-auto
 
 

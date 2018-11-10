@@ -29,7 +29,7 @@ Features
     - [x] Free Wildcard SSL
     - [x] Multiple domain support (up to 100 altnames per SAN)
     - [x] Dynamic Virtual Hosting (vhost)
-    - [x] Automatical renewal (10 to 14 days before expiration)
+    - [x] Automatical renewal (30 to 21 days before expiration)
   - [x] Great ACME support via [acme.js](https://git.coolaj86.com/coolaj86/acme-v2.js)
     - [x] "dry run" with self-diagnostics
     - [x] ACME draft 12
@@ -394,8 +394,8 @@ greenlock = Greenlock.create({
 //, sni: require('le-sni-auto').create({})                // handles sni callback
 
                                                           // renewals happen at a random time within this window
-, renewWithin: 14 * 24 * 60 * 60 * 1000                   // certificate renewal may begin at this time
-, renewBy:     10 * 24 * 60 * 60 * 1000                   // certificate renewal should happen by this time
+, renewWithin: 30 * 24 * 60 * 60 * 1000                   // certificate renewal may begin at this time
+, renewBy:     21 * 24 * 60 * 60 * 1000                   // certificate renewal should happen by this time
 
 , debug: false
 //, log: function (debug) {console.log.apply(console, args);} // handles debug outputs
@@ -540,7 +540,7 @@ Change History
   * v2.2.7 - bugfix for wildcard support
   * v2.2.5 - node v6.x compat
   * v2.2.4 - don't promisify all of `dns`
-  * v2.2.3 - `renewWithin` default to 14 days
+  * v2.2.3 - `renewWithin` default to 30 days
   * v2.2.2 - replace git dependency with npm
   * v2.2.1 - April 2018 **Let's Encrypt v2** support
 * v2.1.17 - Nov 5th 2017 migrate back to personal repo
