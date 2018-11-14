@@ -164,6 +164,7 @@ var greenlock = require('greenlock').create({
 , agreeTos: true                      // Accept Let's Encrypt v2 Agreement
 , communityMember: true               // Get (rare) non-mandatory updates about cool greenlock-related stuff (default false)
 , securityUpdates: true               // Important and mandatory notices related to security or breaking API changes (default true)
+, telemetry: true                     // Contribute project telemetry (default true)
 
 , approveDomains: approveDomains
 });
