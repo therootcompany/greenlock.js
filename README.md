@@ -565,4 +565,6 @@ Dual-licensed MIT and Apache-2.0
 
 See LICENSE
 
-Greenlock&trade; is a trademark of AJ ONeal
+Greenlock&trade; is a [trademark](https://greenlock.domains/legal/#trademark) of AJ ONeal
+
+Greenlock [Terms of Service](https://greenlock.domains/legal/#terms) and [Privacy Policy](https://greenlock.domains/legal/#privacy).
