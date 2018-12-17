@@ -2,8 +2,7 @@
 
 !["Greenlock Function"](https://git.coolaj86.com/coolaj86/greenlock.js/raw/branch/master/logo/from-not-secure-to-secure-url-bar.png "from url bar showing not secure to url bar showing secure")
 
-Greenlock&trade; for node.js
-=====
+# [Greenlock](https://git.coolaj86.com/coolaj86/greenlock.js)&trade; for node.js
 
 Greenlock provides Free SSL, Free Wildcard SSL, and Fully Automated HTTPS <br>
 <small>certificates issued by Let's Encrypt v2 via [ACME](https://git.coolaj86.com/coolaj86/acme-v2.js)</small>
@@ -13,17 +12,18 @@ Greenlock provides Free SSL, Free Wildcard SSL, and Fully Automated HTTPS <br>
 !["Weekly Downloads"](https://img.shields.io/npm/dw/greenlock.svg "Weekly Download Count can't be shown")
 !["Stackoverflow Questions"](https://img.shields.io/stackexchange/stackoverflow/t/greenlock.svg "S.O. Question count can't be shown")
 
-| Sponsored by [ppl](https://ppl.family) |
+| A [Root](https://therootcompany.com) Project |
 Greenlock works
 in the [Commandline](https://git.coolaj86.com/coolaj86/greenlock-cli.js) (cli),
-as a [Web Server](https://git.coolaj86.com/coolaj86/greenlock-server.js),
-in [Web Browsers](https://git.coolaj86.com/coolaj86/greenlock.html) (WebCrypto),
+as a [Web Server](https://git.coolaj86.com/coolaj86/greenlock-express.js),
+in [Web Browsers](https://greenlock.domains) (WebCrypto),
 and with **node.js** ([npm](https://www.npmjs.com/package/greenlock)).
 
-Features
-========
+# Features
 
   - [x] Actively Maintained and Supported
+    - [x] VanillaJS
+    - [x] Limited Dependencies
   - [x] Automatic HTTPS
     - [x] Free SSL
     - [x] Free Wildcard SSL
@@ -39,7 +39,7 @@ Features
     - [x] Works with `bash`, `fish`, `zsh`, `cmd.exe`, `PowerShell`, and more
   - [x] [Browser](https://git.coolaj86.com/coolaj86/greenlock.html) Support
   - [x] Full node.js support, with modules for
-    - [x] [http/https](https://git.coolaj86.com/coolaj86/greenlock-express.js/src/branch/master/examples/https-server.js), [Express.js](https://git.coolaj86.com/coolaj86/greenlock-express.js), [cluster](https://git.coolaj86.com/coolaj86/greenlock-cluster.js), [hapi](https://git.coolaj86.com/coolaj86/greenlock-hapi.js), [Koa](https://git.coolaj86.com/coolaj86/greenlock-koa.js), [rill](https://git.coolaj86.com/coolaj86/greenlock-rill.js), [restify](https://git.coolaj86.com/coolaj86/greenlock-restify.js), spdy, etc
+    - [x] [http/https](https://git.coolaj86.com/coolaj86/greenlock-express.js/src/branch/master/examples), [Express.js](https://git.coolaj86.com/coolaj86/greenlock-express.js), [cluster](https://git.coolaj86.com/coolaj86/greenlock-cluster.js), [hapi](https://git.coolaj86.com/coolaj86/greenlock-hapi.js), [Koa](https://git.coolaj86.com/coolaj86/greenlock-koa.js), [rill](https://git.coolaj86.com/coolaj86/greenlock-rill.js), spdy, etc
   - [x] Great for securing your Raspberry Pi
   - [x] Extensible Plugin Support
     - [x] AWS S3, AWS Route53, Azure, CloudFlare, Consul, Digital Ocean, etcd, Redis
@@ -48,13 +48,12 @@ Greenlock.js for Middleware
 ------
 
 Documentation for using Greenlock with
-[http/https](https://git.coolaj86.com/coolaj86/greenlock-express.js/src/branch/master/examples/https-server.js),
+[http/https](https://git.coolaj86.com/coolaj86/greenlock-express.js/src/branch/master/examples),
 [Express.js](https://git.coolaj86.com/coolaj86/greenlock-express.js),
 [cluster](https://git.coolaj86.com/coolaj86/greenlock-cluster.js),
 [hapi](https://git.coolaj86.com/coolaj86/greenlock-hapi.js),
 [Koa](https://git.coolaj86.com/coolaj86/greenlock-koa.js),
 [rill](https://git.coolaj86.com/coolaj86/greenlock-rill.js).
-[restify](https://git.coolaj86.com/coolaj86/greenlock-restify.js).
 
 Table of Contents
 =================
@@ -106,7 +105,7 @@ unless you're very clear on what the failure was and how to fix it.
 
 ### QuickStart Screencast
 
-Watch the QuickStart demonstration: [https://youtu.be/e8vaR4CEZ5s](https://youtu.be/e8vaR4CEZ5s&list=PLZaEVINf2Bq_lrS-OOzTUJB4q3HxarlXk)
+Watch the QuickStart demonstration: [https://youtu.be/e8vaR4CEZ5s](https://youtu.be/e8vaR4CEZ5s)
 
 <a href="https://www.youtube.com/watch?v=e8vaR4CEZ5s&list=PLZaEVINf2Bq_lrS-OOzTUJB4q3HxarlXk"><img src="https://i.imgur.com/Y8ix6Ts.png" title="QuickStart Video" alt="YouTube Video Preview" /></a>
 
@@ -529,8 +528,11 @@ See https://git.coolaj86.com/coolaj86/le-challenge-fs.js
 * `.get(opts, domain, key, cb);`                // opts will be retrieved by domain/key
 * `.remove(opts, domain, key, cb);`             // opts will be retrieved by domain/key
 
-Change History
-==============
+# Change History
+
+* v2.5
+  * bugfix JWK (update rsa-compat)
+  * eliminate all external non-optional dependencies
 * v2.4
   * v2.4.3 - add security updates (default true) independent of community updates (default false)
 * v2.2 - Let's Encrypt v2 Support
@@ -557,11 +559,11 @@ Change History
 * v1.0.2 Works with node-letsencrypt-python
 * v1.0.0 Thar be dragons
 
-LICENSE
-=======
+# Legal
 
-Dual-licensed MIT and Apache-2.0
+Greenlock&trade; is a [trademark](https://greenlock.domains/legal/#trademark) of AJ ONeal
 
-See LICENSE
-
-Greenlock&trade; is a trademark of AJ ONeal
+[greenlock.js](https://git.coolaj86.com/coolaj86/greenlock.js) |
+MPL-2.0 |
+[Terms of Use](https://therootcompany.com/legal/#terms) |
+[Privacy Policy](https://therootcompany.com/legal/#privacy)

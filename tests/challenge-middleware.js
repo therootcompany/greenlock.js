@@ -2,7 +2,7 @@
 
 var PromiseA = require('bluebird');
 var path = require('path');
-var requestAsync = PromiseA.promisify(require('request'));
+var requestAsync = PromiseA.promisify(require('@coolaj86/request'));
 var LE = require('../').LE;
 var le = LE.create({
   server: 'staging'
