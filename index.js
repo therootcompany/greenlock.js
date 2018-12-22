@@ -390,9 +390,6 @@ Greenlock.create = function (gl) {
           if (!gl.agreeTos) {
             throw new Error("le-sni-auto is not properly configured. Missing agreeTos");
           }
-          if (!gl.approvedDomains.length) {
-            throw new Error("le-sni-auto is not properly configured. Missing approveDomains(domain, certs, callback)");
-          }
           if (!/[a-z]/i.test(lexOpts.domain)) {
             throw new Error("le-sni-auto does not allow IP addresses by default");
           }
