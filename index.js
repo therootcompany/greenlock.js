@@ -143,7 +143,7 @@ Greenlock.create = function (gl) {
   ///////////////////////////
 
   gl.version = gl.version || 'draft-11';
-  gl.server = gl.server || 'https://acme-v01.api.letsencrypt.org/directory';
+  gl.server = gl.server || 'https://acme-v02.api.letsencrypt.org/directory';
   if (!gl.version) {
     //console.warn("Please specify version: 'v01' (Let's Encrypt v1) or 'draft-12' (Let's Encrypt v2 / ACME draft 12)");
     console.warn("");
