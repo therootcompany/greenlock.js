@@ -154,37 +154,13 @@ Great when
 ////////////////////
 
 var greenlock = require('greenlock').create({
-
-  version: 'draft-12'
-, server: 'https://acme-v02.api.letsencrypt.org/directory'
-, configDir: '~/.config/acme'
-
-, email: 'user@example.com'           // IMPORTANT: Change email and domains
+  email: 'user@example.com'           // IMPORTANT: Change email and domains
 , agreeTos: true                      // Accept Let's Encrypt v2 Agreement
+, configDir: '~/.config/acme'         // A writable folder (a non-fs plugin)
+
 , communityMember: true               // Get (rare) non-mandatory updates about cool greenlock-related stuff (default false)
 , securityUpdates: true               // Important and mandatory notices related to security or breaking API changes (default true)
-
-, approveDomains: approveDomains
 });
-```
-
-```js
-/////////////////////
-// APPROVE DOMAINS //
-/////////////////////
-
-
-function approveDomains(opts, certs, cb) {
-
-  // check for domains you want to receive certificates for
-  if ('example.com' === opts.domain) {
-    cb(null, { options: opts, certs: certs });
-    return;
-  }
-
-  // return error otherwise
-  cb(new Error("bad domain"));
-}
 ```
 
 ```js
@@ -225,7 +201,8 @@ var greenlock = Greenlock.create({
   version: 'draft-12'
 , server: 'https://acme-v02.api.letsencrypt.org/directory'
 
-  // approve a growing list of domains
+  // Use the approveDomains callback to set per-domain config
+  // (default: approve any domain that passes self-test of built-in challenges)
 , approveDomains: approveDomains
 
   // If you wish to replace the default account and domain key storage plugin
@@ -253,13 +230,10 @@ function approveDomains(opts, certs, cb) {
 
   // The domains being approved for the first time are listed in opts.domains
   // Certs being renewed are listed in certs.altnames
-  if (certs) {
-    opts.domains = certs.altnames;
-  }
-  else {
-    opts.email = 'john.doe@example.com';
-    opts.agreeTos = true;
-  }
+  // certs.domains;
+  // certs.altnames;
+  opts.email = 'john.doe@example.com';
+  opts.agreeTos = true;
 
   // NOTE: you can also change other options such as `challengeType` and `challenge`
   // opts.challengeType = 'http-01';
@@ -530,6 +504,9 @@ See https://git.coolaj86.com/coolaj86/le-challenge-fs.js
 
 # Change History
 
+* v2.6
+  * better defaults, fewer explicit options
+  * better pre-flight self-tests, explicit domains not required
 * v2.5
   * bugfix JWK (update rsa-compat)
   * eliminate all external non-optional dependencies

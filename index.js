@@ -142,6 +142,8 @@ Greenlock.create = function (gl) {
   // BEGIN VERSION MADNESS //
   ///////////////////////////
 
+  gl.version = gl.version || 'draft-11';
+  gl.server = gl.server || 'https://acme-v01.api.letsencrypt.org/directory';
   if (!gl.version) {
     //console.warn("Please specify version: 'v01' (Let's Encrypt v1) or 'draft-12' (Let's Encrypt v2 / ACME draft 12)");
     console.warn("");
@@ -378,7 +380,6 @@ Greenlock.create = function (gl) {
         gl.approveDomains = null;
       }
       if (!gl.approveDomains) {
-        gl.approvedDomains = gl.approvedDomains || [];
         gl.approveDomains = function (lexOpts, certs, cb) {
           var err;
           var emsg;
@@ -392,6 +393,14 @@ Greenlock.create = function (gl) {
           if (!gl.approvedDomains.length) {
             throw new Error("le-sni-auto is not properly configured. Missing approveDomains(domain, certs, callback)");
           }
+
+          if (!Array.isArray(gl.approvedDomains)) {
+            // The acme-v2 package uses pre-flight test challenges to
+            // verify that each requested domain is hosted by the server
+            // these checks are sufficient for most use cases
+            return cb(null, { options: lexOpts, certs: certs });
+          }
+
           if (lexOpts.domains.every(function (domain) {
             return -1 !== gl.approvedDomains.indexOf(domain);
           })) {
