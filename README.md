@@ -205,6 +205,9 @@ var greenlock = Greenlock.create({
   // (default: approve any domain that passes self-test of built-in challenges)
 , approveDomains: approveDomains
 
+  // the default servername to use when the client doesn't specify
+, servername: 'example.com'
+
   // If you wish to replace the default account and domain key storage plugin
 , store: require('le-store-certbot').create({
     configDir: path.join(os.homedir(), 'acme/etc')
