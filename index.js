@@ -395,7 +395,8 @@ Greenlock.create = function (gl) {
           if (lexOpts.domains.every(function (domain) {
             return -1 !== gl.approvedDomains.indexOf(domain);
           })) {
-            lexOpts.domains = gl.approvedDomains.slice(0);
+            // commented this out because people expect to be able to edit the list of domains
+            // lexOpts.domains = gl.approvedDomains.slice(0);
             lexOpts.email = gl.email;
             lexOpts.agreeTos = gl.agreeTos;
             lexOpts.communityMember = gl.communityMember;
