@@ -14,7 +14,7 @@ var util = require('util');
 function promisifyAllSelf(obj) {
   if (obj.__promisified) { return obj; }
   Object.keys(obj).forEach(function (key) {
-    if ('function' === typeof obj[key]) {
+    if ('function' === typeof obj[key] && !/Async$/.test(key)) {
       obj[key + 'Async'] = util.promisify(obj[key]);
     }
   });
@@ -271,13 +271,19 @@ Greenlock.create = function (gl) {
     }
   });
 
-  if (gl.store.create) {
-    gl.store = gl.store.create(gl);
+  try {
+    if (gl.store.create) { gl.store = gl.store.create(gl); }
+    gl.store = promisifyAllSelf(gl.store);
+    gl.store.accounts = promisifyAllSelf(gl.store.accounts);
+    gl.store.certificates = promisifyAllSelf(gl.store.certificates);
+    gl._storeOpts = gl.store.options || gl.store.getOptions();
+  } catch(e) {
+    console.error(e);
+    console.error("\nPROBABLE CAUSE:\n"
+      + "\tYour le-store module should have a create function and return { options, accounts, certificates }\n");
+    process.exit(18);
+    return;
   }
-  gl.store = promisifyAllSelf(gl.store);
-  gl.store.accounts = promisifyAllSelf(gl.store.accounts);
-  gl.store.certificates = promisifyAllSelf(gl.store.certificates);
-  gl._storeOpts = gl.store.getOptions();
   Object.keys(gl._storeOpts).forEach(function (key) {
     if (!(key in gl)) {
       gl[key] = gl._storeOpts[key];
