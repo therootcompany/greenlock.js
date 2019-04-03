@@ -1,6 +1,6 @@
 {
   "name": "greenlock",
-  "version": "2.7.3",
+  "version": "2.7.4",
   "description": "Let's Encrypt for node.js on npm",
   "main": "index.js",
   "files": [
@@ -31,7 +31,7 @@
   },
   "homepage": "https://git.coolaj86.com/coolaj86/greenlock.js",
   "devDependencies": {
-    "@coolaj86/urequest": "^1.3.6"
+    "@coolaj86/urequest": "^1.3.7"
   },
   "trulyOptionalDependencies": {
     "bluebird": "^3.5.1",
@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "acme": "^1.3.0",
-    "acme-v2": "^1.6.0",
+    "acme-v2": "^1.7.4",
     "cert-info": "^1.5.1",
     "keypairs": "^1.2.14",
     "le-challenge-dns": "^2.3.2",
