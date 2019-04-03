@@ -264,7 +264,7 @@ Greenlock.create = function (gl) {
     gl.acme = gl.acme.create(gl);
   }
   gl.acme = promisifyAllSelf(gl.acme);
-  gl._acmeOpts = gl.acme.getOptions();
+  gl._acmeOpts = gl.acme.options || gl.acme.getOptions();
   Object.keys(gl._acmeOpts).forEach(function (key) {
     if (!(key in gl)) {
       gl[key] = gl._acmeOpts[key];
@@ -309,10 +309,8 @@ Greenlock.create = function (gl) {
     if (challenger.create) {
       challenger = gl.challenges[challengeType] = challenger.create(gl);
     }
-    if (!challenger.getOptionsAsync) {
-      challenger = gl.challenges[challengeType] = promisifyAllSelf(challenger);
-    }
-    gl['_challengeOpts_' + challengeType] = challenger.getOptions();
+    challenger = gl.challenges[challengeType] = promisifyAllSelf(challenger);
+    gl['_challengeOpts_' + challengeType] = challenger.options || challenger.getOptions();
     Object.keys(gl['_challengeOpts_' + challengeType]).forEach(function (key) {
       if (!(key in gl)) {
         gl[key] = gl['_challengeOpts_' + challengeType][key];
@@ -320,17 +318,17 @@ Greenlock.create = function (gl) {
     });
 
     // TODO wrap these here and now with tplCopy?
-    if (!challenger.set || 5 !== challenger.set.length) {
+    if (!challenger.set || ![5,2,1].includes(challenger.set.length)) {
       throw new Error("gl.challenges[" + challengeType + "].set receives the wrong number of arguments."
-        + " You must define setChallenge as function (opts, domain, token, keyAuthorization, cb) { }");
+        + " You must define setChallenge as function (opts) { return Promise.resolve(); }");
     }
-    if (challenger.get && 4 !== challenger.get.length) {
+    if (challenger.get && ![4,2,1].includes(challenger.get.length)) {
       throw new Error("gl.challenges[" + challengeType + "].get receives the wrong number of arguments."
-        + " You must define getChallenge as function (opts, domain, token, cb) { }");
+        + " You must define getChallenge as function (opts) { return Promise.resolve(); }");
     }
-    if (!challenger.remove || 4 !== challenger.remove.length) {
+    if (!challenger.remove || ![4,2,1].includes(challenger.remove.length)) {
       throw new Error("gl.challenges[" + challengeType + "].remove receives the wrong number of arguments."
-        + " You must define removeChallenge as function (opts, domain, token, cb) { }");
+        + " You must define removeChallenge as function (opts) { return Promise.resolve(); }");
     }
 
 /*
