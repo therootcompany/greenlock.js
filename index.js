@@ -58,7 +58,7 @@ var u; // undefined
 Greenlock._undefined = {
   acme: u
 , store: u
-, challenge: u
+//, challenge: u
 , challenges: u
 , sni: u
 , tlsOptions: u
@@ -297,14 +297,11 @@ Greenlock.create = function (gl) {
   if (gl.challenge) {
     console.warn("Deprecated use of gl.challenge. Use gl.challenges['" + Greenlock.challengeType + "'] instead.");
     gl.challenges[gl.challengeType] = gl.challenge;
+    gl.challenge = undefined;
   }
 
-  Greenlock.challengeTypes.forEach(function (challengeType) {
+  Object.keys(gl.challenges||{}).forEach(function (challengeType) {
     var challenger = gl.challenges[challengeType];
-
-    if (!challenger) {
-      return;
-    }
 
     if (challenger.create) {
       challenger = gl.challenges[challengeType] = challenger.create(gl);
@@ -384,7 +381,7 @@ Greenlock.create = function (gl) {
         gl.approveDomains = null;
       }
       if (!gl.approveDomains) {
-        gl.approveDomains = function (lexOpts, certs, cb) {
+        gl.approveDomains = function (lexOpts, cb) {
           var err;
           var emsg;
 
@@ -403,7 +400,7 @@ Greenlock.create = function (gl) {
             // The acme-v2 package uses pre-flight test challenges to
             // verify that each requested domain is hosted by the server
             // these checks are sufficient for most use cases
-            return cb(null, { options: lexOpts, certs: certs });
+            return cb(null, lexOpts);
           }
 
           if (lexOpts.domains.every(function (domain) {
@@ -415,7 +412,7 @@ Greenlock.create = function (gl) {
             lexOpts.agreeTos = gl.agreeTos;
             lexOpts.communityMember = gl.communityMember;
             lexOpts.telemetry = gl.telemetry;
-            return cb(null, { options: lexOpts, certs: certs });
+            return cb(null, lexOpts);
           }
 
           emsg = "tls SNI for '" + lexOpts.domains.join(',') + "' rejected: not in list '" + gl.approvedDomains + "'";
@@ -429,60 +426,71 @@ Greenlock.create = function (gl) {
       gl.getCertificates = function (domain, certs, cb) {
         // certs come from current in-memory cache, not lookup
         log(gl.debug, 'gl.getCertificates called for', domain, 'with certs for', certs && certs.altnames || 'NONE');
-        var opts = { domain: domain, domains: certs && certs.altnames || [ domain ] };
+        var opts = { domain: domain, domains: certs && certs.altnames || [ domain ], certs: certs };
+
+        function cb2(results) {
+          log(gl.debug, 'gl.approveDomains called with certs for', results.certs && results.certs.altnames || 'NONE', 'and options:');
+          log(gl.debug, results.options);
+
+          var options = results.options || results;
+          if (results.certs) {
+            log(gl.debug, 'gl renewing');
+            return gl.core.certificates.renewAsync(options, results.certs).then(
+              function (certs) {
+                // Workaround for https://github.com/nodejs/node/issues/22389
+                gl._updateServernames(certs);
+                cb(null, certs);
+              }
+            , function (e) {
+                console.debug("Error renewing certificate for '" + domain + "':");
+                console.debug(e);
+                console.error("");
+                cb(e);
+              }
+            );
+          } else {
+            log(gl.debug, 'gl getting from disk or registering new');
+            return gl.core.certificates.getAsync(options).then(
+              function (certs) {
+                // Workaround for https://github.com/nodejs/node/issues/22389
+                gl._updateServernames(certs);
+                cb(null, certs);
+              }
+            , function (e) {
+                console.debug("Error loading/registering certificate for '" + domain + "':");
+                console.debug(e);
+                console.error("");
+                cb(e);
+              }
+            );
+          }
+        }
+        function eb2(_err) {
+          if (false !== gl.logRejectedDomains) {
+            console.error("[Error] approveDomains rejected tls sni '" + domain + "'");
+            console.error("[Error] (see https://git.coolaj86.com/coolaj86/greenlock.js/issues/11)");
+            if ('E_REJECT_SNI' !== _err.code) {
+              console.error("[Error] This is the rejection message:");
+              console.error(_err.message);
+            }
+            console.error("");
+          }
+          cb(_err);
+          return;
+        }
+        function mb2(_err, results) {
+          if (_err) { eb2(_err); return; }
+          cb2(results);
+        }
 
         try {
-          gl.approveDomains(opts, certs, function (_err, results) {
-            if (_err) {
-              if (false !== gl.logRejectedDomains) {
-                console.error("[Error] approveDomains rejected tls sni '" + domain + "'");
-                console.error("[Error] (see https://git.coolaj86.com/coolaj86/greenlock.js/issues/11)");
-                if ('E_REJECT_SNI' !== _err.code) {
-                  console.error("[Error] This is the rejection message:");
-                  console.error(_err.message);
-                }
-                console.error("");
-              }
-              cb(_err);
-              return;
-            }
-
-            log(gl.debug, 'gl.approveDomains called with certs for', results.certs && results.certs.altnames || 'NONE', 'and options:');
-            log(gl.debug, results.options);
-
-            if (results.certs) {
-              log(gl.debug, 'gl renewing');
-              return gl.core.certificates.renewAsync(results.options, results.certs).then(
-                function (certs) {
-                  // Workaround for https://github.com/nodejs/node/issues/22389
-                  gl._updateServernames(certs);
-                  cb(null, certs);
-                }
-              , function (e) {
-                  console.debug("Error renewing certificate for '" + domain + "':");
-                  console.debug(e);
-                  console.error("");
-                  cb(e);
-                }
-              );
-            }
-            else {
-              log(gl.debug, 'gl getting from disk or registering new');
-              return gl.core.certificates.getAsync(results.options).then(
-                function (certs) {
-                  // Workaround for https://github.com/nodejs/node/issues/22389
-                  gl._updateServernames(certs);
-                  cb(null, certs);
-                }
-              , function (e) {
-                  console.debug("Error loading/registering certificate for '" + domain + "':");
-                  console.debug(e);
-                  console.error("");
-                  cb(e);
-                }
-              );
-            }
-          });
+          if (1 === gl.approveDomains.length) {
+            gl.approveDomains(opts).then(cb2).catch(eb2);
+          } else if (2 === gl.approveDomains.length) {
+            gl.approveDomains(opts, mb2);
+          } else {
+            gl.approveDomains(opts, certs, mb2);
+          }
         } catch(e) {
           console.error("[ERROR] Something went wrong in approveDomains:");
           console.error(e);
