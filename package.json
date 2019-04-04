@@ -1,6 +1,6 @@
 {
   "name": "greenlock",
-  "version": "2.7.5",
+  "version": "2.7.6",
   "description": "Let's Encrypt for node.js on npm",
   "main": "index.js",
   "files": [
@@ -42,11 +42,11 @@
     "acme-v2": "^1.7.4",
     "cert-info": "^1.5.1",
     "keypairs": "^1.2.14",
-    "le-challenge-dns": "^3.0.1",
+    "le-challenge-dns": "^3.0.2",
     "le-challenge-fs": "^2.0.2",
     "le-sni-auto": "^2.1.8",
     "le-store-certbot": "^2.2.1",
-    "le-store-fs": "^1.0.0",
+    "le-store-fs": "^1.0.1",
     "rsa-compat": "^2.0.6"
   },
   "engines": {
