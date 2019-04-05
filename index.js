@@ -21,6 +21,25 @@ function promisifyAllSelf(obj) {
   obj.__promisified = true;
   return obj;
 }
+function promisifyAllStore(obj) {
+  Object.keys(obj).forEach(function (key) {
+    if ('function' !== typeof obj[key] || /Async$/.test(key)) { return; }
+
+    var p;
+    if (1 === obj[key].length) {
+      // wrap just in case it's synchronous (or improperly throws)
+      p = function (opts) {
+        return PromiseA.resolve(obj[key](opts));
+      };
+    } else {
+      p = util.promisify(obj[key]);
+    }
+    // internal backwards compat
+    obj[key + 'Async'] = util.promisify(obj[key]);
+  });
+  obj.__promisified = true;
+  return obj;
+}
 
 var Greenlock = module.exports;
 Greenlock.Greenlock = Greenlock;
@@ -88,12 +107,17 @@ Greenlock._undefine = function (gl) {
   return gl;
 };
 Greenlock.create = function (gl) {
-  gl.store = gl.store || require('le-store-certbot').create({
-    debug: gl.debug
-  , configDir: gl.configDir
-  , logsDir: gl.logsDir
-  , webrootPath: gl.webrootPath
-  });
+  if (!gl.store) {
+    console.warn("Deprecation Notice: You're haven't chosen a storage strategy."
+      + " The old default is 'le-store-certbot', but the new default will be 'le-store-fs'."
+      + " Please explicitly set `{ store: require('le-store-fs') }`.");
+    gl.store = require('le-store-certbot').create({
+      debug: gl.debug
+    , configDir: gl.configDir
+    , logsDir: gl.logsDir
+    , webrootPath: gl.webrootPath
+    });
+  }
   gl.core = require('./lib/core');
   var log = gl.log || _log;
 
@@ -264,7 +288,7 @@ Greenlock.create = function (gl) {
     gl.acme = gl.acme.create(gl);
   }
   gl.acme = promisifyAllSelf(gl.acme);
-  gl._acmeOpts = gl.acme.options || gl.acme.getOptions();
+  gl._acmeOpts = gl.acme.getOptions && gl.acme.getOptions() || gl.acme.options || {};
   Object.keys(gl._acmeOpts).forEach(function (key) {
     if (!(key in gl)) {
       gl[key] = gl._acmeOpts[key];
@@ -274,8 +298,8 @@ Greenlock.create = function (gl) {
   try {
     if (gl.store.create) { gl.store = gl.store.create(gl); }
     gl.store = promisifyAllSelf(gl.store);
-    gl.store.accounts = promisifyAllSelf(gl.store.accounts);
-    gl.store.certificates = promisifyAllSelf(gl.store.certificates);
+    gl.store.accounts = promisifyAllStore(gl.store.accounts);
+    gl.store.certificates = promisifyAllStore(gl.store.certificates);
     gl._storeOpts = gl.store.options || gl.store.getOptions();
   } catch(e) {
     console.error(e);
@@ -491,7 +515,7 @@ Greenlock.create = function (gl) {
 
         try {
           if (1 === gl.approveDomains.length) {
-            gl.approveDomains(opts).then(cb2).catch(eb2);
+            PromiseA.resolve(gl.approveDomains(opts)).then(cb2).catch(eb2);
           } else if (2 === gl.approveDomains.length) {
             gl.approveDomains(opts, mb2);
           } else {
