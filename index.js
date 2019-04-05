@@ -426,13 +426,19 @@ Greenlock.create = function (gl) {
       gl.getCertificates = function (domain, certs, cb) {
         // certs come from current in-memory cache, not lookup
         log(gl.debug, 'gl.getCertificates called for', domain, 'with certs for', certs && certs.altnames || 'NONE');
-        var opts = { domain: domain, domains: certs && certs.altnames || [ domain ], certs: certs };
+        var opts = {
+          domain: domain, domains: certs && certs.altnames || [ domain ]
+        , certs: certs, certificate: {}, account: {}
+        };
 
         function cb2(results) {
           log(gl.debug, 'gl.approveDomains called with certs for', results.certs && results.certs.altnames || 'NONE', 'and options:');
           log(gl.debug, results.options);
 
           var options = results.options || results;
+          // just in case we get a completely different object from the one we originally created
+          if (!options.account) { options.account = {}; }
+          if (!options.certificate) { options.certificate = {}; }
           if (results.certs) {
             log(gl.debug, 'gl renewing');
             return gl.core.certificates.renewAsync(options, results.certs).then(
