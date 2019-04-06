@@ -28,14 +28,12 @@ function promisifyAllStore(obj) {
     var p;
     if (1 === obj[key].length) {
       // wrap just in case it's synchronous (or improperly throws)
-      p = function (opts) {
-        return PromiseA.resolve(obj[key](opts));
-      };
+      p = function (opts) { return PromiseA.resolve().then(function () { obj[key](opts); }) };
     } else {
       p = util.promisify(obj[key]);
     }
     // internal backwards compat
-    obj[key + 'Async'] = util.promisify(obj[key]);
+    obj[key + 'Async'] = p;
   });
   obj.__promisified = true;
   return obj;
