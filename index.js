@@ -456,6 +456,13 @@ Greenlock.create = function (gl) {
         function cb2(results) {
           log(gl.debug, 'gl.approveDomains called with certs for', results.certs && results.certs.altnames || 'NONE', 'and options:');
           log(gl.debug, results.options);
+          var err;
+          if (!results) {
+            err = new Error('E_REJECT_SNI');
+            err.code = 'E_REJECT_SNI';
+            eb2(err);
+            return;
+          }
 
           var options = results.options || results;
           if (opts !== options) {
