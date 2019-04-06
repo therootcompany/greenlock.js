@@ -452,6 +452,7 @@ Greenlock.create = function (gl) {
           domain: domain, domains: certs && certs.altnames || [ domain ]
         , certs: certs, certificate: {}, account: {}
         };
+        opts.wildname = '*.' + (domain||'').split('.').slice(1).join('.');
 
         function cb2(results) {
           log(gl.debug, 'gl.approveDomains called with certs for', results.certs && results.certs.altnames || 'NONE', 'and options:');
