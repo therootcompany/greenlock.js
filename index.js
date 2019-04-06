@@ -458,6 +458,14 @@ Greenlock.create = function (gl) {
           log(gl.debug, results.options);
 
           var options = results.options || results;
+          if (opts !== options) {
+            Object.keys(options).forEach(function (key) {
+              if ('undefined' !== typeof options[key]) {
+                opts[key] = options[key];
+              }
+            });
+            options = opts;
+          }
           // just in case we get a completely different object from the one we originally created
           if (!options.account) { options.account = {}; }
           if (!options.certificate) { options.certificate = {}; }
