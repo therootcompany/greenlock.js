@@ -298,7 +298,7 @@ Greenlock.create = function (gl) {
     gl.store = promisifyAllSelf(gl.store);
     gl.store.accounts = promisifyAllStore(gl.store.accounts);
     gl.store.certificates = promisifyAllStore(gl.store.certificates);
-    gl._storeOpts = gl.store.options || gl.store.getOptions();
+    gl._storeOpts = gl.store.getOptions && gl.store.getOptions() || gl.store.options || {};
   } catch(e) {
     console.error(e);
     console.error("\nPROBABLE CAUSE:\n"
@@ -329,7 +329,7 @@ Greenlock.create = function (gl) {
       challenger = gl.challenges[challengeType] = challenger.create(gl);
     }
     challenger = gl.challenges[challengeType] = promisifyAllSelf(challenger);
-    gl['_challengeOpts_' + challengeType] = challenger.options || challenger.getOptions();
+    gl['_challengeOpts_' + challengeType] = challenger.getOptions && challenger.getOptions() || challenger.options || {};
     Object.keys(gl['_challengeOpts_' + challengeType]).forEach(function (key) {
       if (!(key in gl)) {
         gl[key] = gl['_challengeOpts_' + challengeType][key];
