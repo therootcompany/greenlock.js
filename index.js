@@ -28,7 +28,7 @@ function promisifyAllStore(obj) {
     var p;
     if (1 === obj[key].length) {
       // wrap just in case it's synchronous (or improperly throws)
-      p = function (opts) { return PromiseA.resolve().then(function () { obj[key](opts); }) };
+      p = function (opts) { return PromiseA.resolve().then(function () { obj[key](opts); }); };
     } else {
       p = util.promisify(obj[key]);
     }
@@ -468,11 +468,14 @@ Greenlock.create = function (gl) {
           var options = results.options || results;
           if (opts !== options) {
             Object.keys(options).forEach(function (key) {
-              if ('undefined' !== typeof options[key]) {
+              if ('undefined' !== typeof options[key] && 'domain' !== key) {
                 opts[key] = options[key];
               }
             });
             options = opts;
+          }
+          if (Array.isArray(options.altnames) && options.altnames.length) {
+            options.domains = options.altnames;
           }
           // just in case we get a completely different object from the one we originally created
           if (!options.account) { options.account = {}; }

@@ -1,6 +1,6 @@
 {
   "name": "greenlock",
-  "version": "2.7.12",
+  "version": "2.7.13",
   "description": "Let's Encrypt for node.js on npm",
   "main": "index.js",
   "files": [
