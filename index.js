@@ -1,5 +1,9 @@
 'use strict';
 
+// I hate this code so much.
+// Soooo many shims for backwards compatibility (some stuff dating back to v1)
+// v3 will be a clean break and I'll delete half of the code...
+
 var DAY = 24 * 60 * 60 * 1000;
 //var MIN = 60 * 1000;
 var ACME = require('acme-v2/compat').ACME;
@@ -109,8 +113,8 @@ Greenlock._undefine = function (gl) {
 Greenlock.create = function (gl) {
   if (!gl.store) {
     console.warn("Deprecation Notice: You're haven't chosen a storage strategy."
-      + " The old default is 'le-store-certbot', but the new default will be 'le-store-fs'."
-      + " Please explicitly set `{ store: require('le-store-fs') }`.");
+      + " The old default is 'le-store-certbot', but the new default will be 'greenlock-store-fs'."
+      + " Please `npm install greenlock-store-fs@3` and explicitly set `{ store: require('greenlock-store-fs') }`.");
     gl.store = require('le-store-certbot').create({
       debug: gl.debug
     , configDir: gl.configDir
@@ -304,7 +308,7 @@ Greenlock.create = function (gl) {
   } catch(e) {
     console.error(e);
     console.error("\nPROBABLE CAUSE:\n"
-      + "\tYour le-store module should have a create function and return { options, accounts, certificates }\n");
+      + "\tYour greenlock-store module should have a create function and return { options, accounts, certificates }\n");
     process.exit(18);
     return;
   }
@@ -479,6 +483,7 @@ Greenlock.create = function (gl) {
           if (Array.isArray(options.altnames) && options.altnames.length) {
             options.domains = options.altnames;
           }
+          options.altnames = options.domains;
           // just in case we get a completely different object from the one we originally created
           if (!options.account) { options.account = {}; }
           if (!options.certificate) { options.certificate = {}; }
