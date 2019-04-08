@@ -10,12 +10,14 @@ try {
 } catch(e) {
   PromiseA = global.Promise;
 }
-var util = require('util');
+if (!PromiseA.promisify) {
+  PromiseA.promisify = require('util');
+}
 function promisifyAllSelf(obj) {
   if (obj.__promisified) { return obj; }
   Object.keys(obj).forEach(function (key) {
     if ('function' === typeof obj[key] && !/Async$/.test(key)) {
-      obj[key + 'Async'] = util.promisify(obj[key]);
+      obj[key + 'Async'] = PromiseA.promisify(obj[key]);
     }
   });
   obj.__promisified = true;
@@ -30,7 +32,7 @@ function promisifyAllStore(obj) {
       // wrap just in case it's synchronous (or improperly throws)
       p = function (opts) { return PromiseA.resolve().then(function () { obj[key](opts); }); };
     } else {
-      p = util.promisify(obj[key]);
+      p = PromiseA.promisify(obj[key]);
     }
     // internal backwards compat
     obj[key + 'Async'] = p;
