@@ -28,7 +28,7 @@ function promisifyAllStore(obj) {
     if ('function' !== typeof obj[key] || /Async$/.test(key)) { return; }
 
     var p;
-    if (1 === obj[key].length) {
+    if (0 === obj[key].length || 1 === obj[key].length) {
       // wrap just in case it's synchronous (or improperly throws)
       p = function (opts) { return PromiseA.resolve().then(function () { return obj[key](opts); }); };
     } else {
