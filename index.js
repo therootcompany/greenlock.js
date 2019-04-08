@@ -11,7 +11,7 @@ try {
   PromiseA = global.Promise;
 }
 if (!PromiseA.promisify) {
-  PromiseA.promisify = require('util');
+  PromiseA.promisify = require('util').promisify;
 }
 function promisifyAllSelf(obj) {
   if (obj.__promisified) { return obj; }
@@ -30,7 +30,7 @@ function promisifyAllStore(obj) {
     var p;
     if (1 === obj[key].length) {
       // wrap just in case it's synchronous (or improperly throws)
-      p = function (opts) { return PromiseA.resolve().then(function () { obj[key](opts); }); };
+      p = function (opts) { return PromiseA.resolve().then(function () { return obj[key](opts); }); };
     } else {
       p = PromiseA.promisify(obj[key]);
     }
