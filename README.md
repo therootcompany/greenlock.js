@@ -2,7 +2,7 @@
 
 !["Greenlock Function"](https://git.coolaj86.com/coolaj86/greenlock.js/raw/branch/master/logo/from-not-secure-to-secure-url-bar.png "from url bar showing not secure to url bar showing secure")
 
-# [Greenlock](https://git.coolaj86.com/coolaj86/greenlock.js)&trade; for node.js
+# [Greenlock](https://git.coolaj86.com/coolaj86/greenlock.js)&trade; for node.js | a [Root](https://rootprojects.org) project
 
 Greenlock provides Free SSL, Free Wildcard SSL, and Fully Automated HTTPS <br>
 <small>certificates issued by Let's Encrypt v2 via [ACME](https://git.coolaj86.com/coolaj86/acme-v2.js)</small>
@@ -12,7 +12,7 @@ Greenlock provides Free SSL, Free Wildcard SSL, and Fully Automated HTTPS <br>
 !["Weekly Downloads"](https://img.shields.io/npm/dw/greenlock.svg "Weekly Download Count can't be shown")
 !["Stackoverflow Questions"](https://img.shields.io/stackexchange/stackoverflow/t/greenlock.svg "S.O. Question count can't be shown")
 
-| A [Root](https://therootcompany.com) Project |
+
 Greenlock works
 in the [Commandline](https://git.coolaj86.com/coolaj86/greenlock-cli.js) (cli),
 as a [Web Server](https://git.coolaj86.com/coolaj86/greenlock-express.js),
@@ -21,9 +21,11 @@ and with **node.js** ([npm](https://www.npmjs.com/package/greenlock)).
 
 # Features
 
-  - [x] Actively Maintained and Supported
+  - [x] Actively Maintained and Commercially Supported
     - [x] VanillaJS
     - [x] Limited Dependencies
+    - [x] MPL-2.0 licensed (great for hobbyists and DIYers)
+    - [x] [Contact us](mailto:support@rootprojects.org?subject=Greenlock%20Commercial%20Support) for Business Support Plans and Commercial LTS Licensing (great for IoT, On-Prem, Web Hosting, etc)
   - [x] Automatic HTTPS
     - [x] Free SSL
     - [x] Free Wildcard SSL
@@ -34,18 +36,17 @@ and with **node.js** ([npm](https://www.npmjs.com/package/greenlock)).
     - [x] "dry run" with self-diagnostics
     - [x] ACME draft 12
     - [x] Let's Encrypt v2
-    - [x] Let's Encrypt v1
+    - [x] ~Let's Encrypt v1~ (deprecated)
   - [x] [Commandline](https://git.coolaj86.com/coolaj86/greenlock-cli.js) (cli) Utilities
     - [x] Works with `bash`, `fish`, `zsh`, `cmd.exe`, `PowerShell`, and more
   - [x] [Browser](https://git.coolaj86.com/coolaj86/greenlock.html) Support
   - [x] Full node.js support, with modules for
     - [x] [http/https](https://git.coolaj86.com/coolaj86/greenlock-express.js/src/branch/master/examples), [Express.js](https://git.coolaj86.com/coolaj86/greenlock-express.js), [cluster](https://git.coolaj86.com/coolaj86/greenlock-cluster.js), [hapi](https://git.coolaj86.com/coolaj86/greenlock-hapi.js), [Koa](https://git.coolaj86.com/coolaj86/greenlock-koa.js), [rill](https://git.coolaj86.com/coolaj86/greenlock-rill.js), spdy, etc
-  - [x] Great for securing your Raspberry Pi
+  - [x] Great for securing your Raspberry Pi and IoT projects
   - [x] Extensible Plugin Support
     - [x] AWS S3, AWS Route53, Azure, CloudFlare, Consul, Digital Ocean, etcd, Redis
 
-Greenlock.js for Middleware
-------
+## Greenlock.js for Middleware
 
 Documentation for using Greenlock with
 [http/https](https://git.coolaj86.com/coolaj86/greenlock-express.js/src/branch/master/examples),
@@ -55,8 +56,7 @@ Documentation for using Greenlock with
 [Koa](https://git.coolaj86.com/coolaj86/greenlock-koa.js),
 [rill](https://git.coolaj86.com/coolaj86/greenlock-rill.js).
 
-Table of Contents
-=================
+# Table of Contents
 
   * Install
   * **QuickStart**
@@ -67,24 +67,14 @@ Table of Contents
   * Change History
   * License
 
-Install
-=======
+# Install
 
 ```bash
 npm install --save greenlock@2.x
 ```
 
-**Optional** dependency for *more efficient* RSA key generation:
+**Optional** for *more efficient* RSA key generation you must use node v10.12+
 <small>(important for those on ARM devices like Raspberry Pi)</small>
-```bash
-npm install --save ursa
-```
-
-**Optional** dependency for *Let's Encrypt v01* (pre-draft ACME spec) compatibility:
-<small>(important for those on ARM devices like Raspberry Pi)</small>
-```bash
-npm install --save le-acme-core
-```
 
 
 ### Production vs Staging
@@ -123,8 +113,7 @@ Watch the QuickStart demonstration: [https://youtu.be/e8vaR4CEZ5s](https://youtu
 * [0:00](https://www.youtube.com/watch?v=aZgVqPzoZTY&index=3&list=PLZaEVINf2Bq_lrS-OOzTUJB4q3HxarlXk) - Potential Attacks, and Mitigation
 
 
-Easy as 1, 2, 3... 4
-=====
+# Easy as 1, 2, 3... 4
 
 Greenlock is built to incredibly easy to use, without sacrificing customization or extensibility.
 
@@ -135,8 +124,8 @@ to more robust examples that you might start with for an enterprise-grade use of
 * Fully Automatic HTTPS (for multi-domain vhosts)
 * Manual HTTPS (for API integration)
 
-Automatic HTTPS
----------------
+## Automatic HTTPS
+
 
 **Note**: For (fully) automatic HTTPS you may prefer
 the [Express.js module](https://git.coolaj86.com/coolaj86/greenlock-express.js)
@@ -176,8 +165,7 @@ require('spdy').createServer(greenlock.tlsOptions, function (req, res) {
 }).listen(443);
 ```
 
-Fully Automatic HTTPS
-------------
+## Fully Automatic HTTPS
 
 **Note**: For (fully) automatic HTTPS you may prefer
 the [Express.js module](https://git.coolaj86.com/coolaj86/greenlock-express.js)
@@ -209,7 +197,7 @@ var greenlock = Greenlock.create({
 , servername: 'example.com'
 
   // If you wish to replace the default account and domain key storage plugin
-, store: require('le-store-certbot').create({
+, store: require('le-store-fs').create({
     configDir: path.join(os.homedir(), 'acme/etc')
   , webrootPath: '/tmp/acme-challenges'
   })
@@ -258,8 +246,7 @@ require('https').createServer(greenlock.tlsOptions, function (req, res) {
 }).listen(443);
 ```
 
-Manual HTTPS
--------------
+## Manual HTTPS
 
 Here's a taste of the API that you might use if building a commandline tool or API integration
 that doesn't use node's SNICallback.
@@ -313,8 +300,7 @@ require('https').createServer(tlsOptions, function (req, res) {
 }).listen(443);
 ```
 
-Example with ALL OPTIONS
-=========
+# Example with ALL OPTIONS
 
 The configuration consists of 3 components:
 
@@ -330,7 +316,7 @@ var greenlock;
 
 
 // Storage Backend
-var leStore = require('le-store-certbot').create({
+var leStore = require('greenlock-store-fs').create({
   configDir: '~/acme/etc'                                 // or /etc/letsencrypt or wherever
 , debug: false
 });
@@ -467,46 +453,49 @@ This behavior can be modified:
   * `__dns_allow_dangerous_names` allow SNI names like "Robert'); DROP TABLE Students;"
   * `__dns_preserve_case` passes SNI names such as "ExAMpLE.coM" without converting to lower case
 
-Developer API
--------------
+## Developer API
 
 If you are developing an `le-store-*` or `le-challenge-*` plugin you need to be aware of
 additional internal API expectations.
 
 **IMPORTANT**:
 
-Use `v2.0.0` as your initial version - NOT v0.1.0 and NOT v1.0.0 and NOT v3.0.0.
-This is to indicate that your module is compatible with v2.x of node-greenlock.
+Use `v3.0.0` as your initial version - NOT v0.1.0 and NOT v1.0.0 and NOT v2.0.0.
+This is to indicate that your module is compatible with v3 (v2.7+) of node-greenlock.
 
 Since the public API for your module is defined by node-greenlock the major version
 should be kept in sync.
 
 ### store implementation
 
-See <https://git.coolaj86.com/coolaj86/le-store-SPEC.js>
+See [greenlock-store-test](https://git.rootprojects.org/root/greenlock-store-test.js) and [greenlock-store-fs](https://git.rootprojects.org/root/greenlock-store-fs.js)
 
-* getOptions()
 * accounts.
-  * checkKeypair(opts, cb)
-  * check(opts, cb)
-  * setKeypair(opts, keypair, cb)
-  * set(opts, reg, cb)
+  * checkKeypair(opts)
+  * check(opts)
+  * setKeypair(opts)
+  * set(opts)
 * certificates.
-  * checkKeypair(opts, cb)
-  * check(opts, cb)
-  * setKeypair(opts, keypair, cb)
-  * set(opts, reg, cb)
+  * checkKeypair(opts)
+  * check(opts)
+  * setKeypair(opts)
+  * set(opts)
 
 ### challenge implementation
 
-See https://git.coolaj86.com/coolaj86/le-challenge-fs.js
+See [greenlock-challenge-test](https://git.rootprojects.org/root/greenlock-challenge-test.js), [greenlock-challenge-http](https://git.rootprojects.org/root/greenlock-challenge-http.js), and [greenlock-challenge-dns](https://git.rootprojects.org/root/greenlock-challenge-dns.js)
 
-* `.set(opts, domain, key, value, cb);`         // opts will be saved with domain/key
-* `.get(opts, domain, key, cb);`                // opts will be retrieved by domain/key
-* `.remove(opts, domain, key, cb);`             // opts will be retrieved by domain/key
+* `.set(opts);`
+* `.get(opts);`
+* `.remove(opts);`
 
 # Change History
-
+* v2.7
+  * API: transitional for v3 API (Promies, async/await)
+  * Security: Zero external dependencies
+  * Plugins: `greenlock-store-fs` replaces `le-store-certbot` as the default storage plugin
+  * Features: Full wildcard support
+  * Licensing: Commercial licensing and support plans now available
 * v2.6
   * better defaults, fewer explicit options
   * better pre-flight self-tests, explicit domains not required
@@ -538,6 +527,11 @@ See https://git.coolaj86.com/coolaj86/le-challenge-fs.js
 * v1.1.0 Added letiny-core, removed node-letsencrypt-python
 * v1.0.2 Works with node-letsencrypt-python
 * v1.0.0 Thar be dragons
+
+# Commercial Licensing
+As the number of businesses using Greenlock commercially has increased, we've become more aware of the need for quick-turnaround support and licenses that allow for local private modifications. Currently we offer LTS support and commercial licensing models for IoT, On-Prem, and Web Hosting. Please [contact us](mailto:support@rootprojects.org?subject=Greenlock%20Commercial%20Support) to learn more.
+
+Our [trademark policy](https://therootcompany.com/legal/#trademark) is pretty much "attribute, but don't confuse". Your users should understand that your product _uses_ Greenlock and not be confused to think that it _is_ Greenlock.
 
 # Legal
 
