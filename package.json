@@ -41,12 +41,12 @@
     "acme": "^1.3.0",
     "acme-v2": "^1.7.7",
     "cert-info": "^1.5.1",
-    "keypairs": "^1.2.14",
     "greenlock-challenge-dns": "^3.0.0",
+    "greenlock-store-fs": "^3.0.2",
+    "keypairs": "^1.2.14",
     "le-challenge-fs": "^2.0.2",
-    "le-sni-auto": "^2.1.8",
+    "le-sni-auto": "^2.1.9",
     "le-store-certbot": "^2.2.2",
-    "greenlock-store-fs": "^3.0.0",
     "rsa-compat": "^2.0.6"
   },
   "engines": {
