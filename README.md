@@ -467,7 +467,8 @@ should be kept in sync.
 
 ### store implementation
 
-See [greenlock-store-test](https://git.rootprojects.org/root/greenlock-store-test.js) and [greenlock-store-fs](https://git.rootprojects.org/root/greenlock-store-fs.js)
+See [greenlock-store-test](https://git.rootprojects.org/root/greenlock-store-test.js)
+and [greenlock-store-fs](https://git.rootprojects.org/root/greenlock-store-fs.js)
 
 * accounts.
   * checkKeypair(opts)
@@ -482,7 +483,9 @@ See [greenlock-store-test](https://git.rootprojects.org/root/greenlock-store-tes
 
 ### challenge implementation
 
-See [greenlock-challenge-test](https://git.rootprojects.org/root/greenlock-challenge-test.js), [greenlock-challenge-http](https://git.rootprojects.org/root/greenlock-challenge-http.js), and [greenlock-challenge-dns](https://git.rootprojects.org/root/greenlock-challenge-dns.js)
+See [greenlock-challenge-test](https://git.rootprojects.org/root/greenlock-challenge-test.js),
+[acme-http-01-cli](https://git.rootprojects.org/root/acme-http-01-cli.js),
+and [acme-dns-01-cli](https://git.rootprojects.org/root/acme-dns-01-cli.js)
 
 * `.set(opts);`
 * `.get(opts);`
