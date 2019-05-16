@@ -1,11 +1,11 @@
-!["Greenlock Logo"](https://git.coolaj86.com/coolaj86/greenlock.js/raw/branch/master/logo/greenlock-1063x250.png "Greenlock lock logo and work mark")
+!["Greenlock Logo"](https://git.rootprojects.org/root/greenlock.js/raw/branch/master/logo/greenlock-1063x250.png "Greenlock lock logo and work mark")
 
-!["Greenlock Function"](https://git.coolaj86.com/coolaj86/greenlock.js/raw/branch/master/logo/from-not-secure-to-secure-url-bar.png "from url bar showing not secure to url bar showing secure")
+!["Greenlock Function"](https://git.rootprojects.org/root/greenlock.js/raw/branch/master/logo/from-not-secure-to-secure-url-bar.png "from url bar showing not secure to url bar showing secure")
 
-# [Greenlock](https://git.coolaj86.com/coolaj86/greenlock.js)&trade; for node.js | a [Root](https://rootprojects.org) project
+# [Greenlock](https://git.rootprojects.org/root/greenlock.js)&trade; for node.js | a [Root](https://rootprojects.org) project
 
 Greenlock provides Free SSL, Free Wildcard SSL, and Fully Automated HTTPS <br>
-<small>certificates issued by Let's Encrypt v2 via [ACME](https://git.coolaj86.com/coolaj86/acme-v2.js)</small>
+<small>certificates issued by Let's Encrypt v2 via [ACME](https://git.rootprojects.org/root/acme-v2.js)</small>
 
 !["Lifetime Downloads"](https://img.shields.io/npm/dt/greenlock.svg "Lifetime Download Count can't be shown")
 !["Monthly Downloads"](https://img.shields.io/npm/dm/greenlock.svg "Monthly Download Count can't be shown")
@@ -14,8 +14,8 @@ Greenlock provides Free SSL, Free Wildcard SSL, and Fully Automated HTTPS <br>
 
 
 Greenlock works
-in the [Commandline](https://git.coolaj86.com/coolaj86/greenlock-cli.js) (cli),
-as a [Web Server](https://git.coolaj86.com/coolaj86/greenlock-express.js),
+in the [Commandline](https://git.rootprojects.org/root/greenlock-cli.js) (cli),
+as a [Web Server](https://git.rootprojects.org/root/greenlock-express.js),
 in [Web Browsers](https://greenlock.domains) (WebCrypto),
 and with **node.js** ([npm](https://www.npmjs.com/package/greenlock)).
 
@@ -32,16 +32,16 @@ and with **node.js** ([npm](https://www.npmjs.com/package/greenlock)).
     - [x] Multiple domain support (up to 100 altnames per SAN)
     - [x] Dynamic Virtual Hosting (vhost)
     - [x] Automatical renewal (10 to 14 days before expiration)
-  - [x] Great ACME support via [acme.js](https://git.coolaj86.com/coolaj86/acme-v2.js)
+  - [x] Great ACME support via [acme.js](https://git.rootprojects.org/root/acme-v2.js)
     - [x] "dry run" with self-diagnostics
     - [x] ACME draft 12
     - [x] Let's Encrypt v2
     - [x] ~Let's Encrypt v1~ (deprecated)
-  - [x] [Commandline](https://git.coolaj86.com/coolaj86/greenlock-cli.js) (cli) Utilities
+  - [x] [Commandline](https://git.rootprojects.org/root/greenlock-cli.js) (cli) Utilities
     - [x] Works with `bash`, `fish`, `zsh`, `cmd.exe`, `PowerShell`, and more
-  - [x] [Browser](https://git.coolaj86.com/coolaj86/greenlock.html) Support
+  - [x] [Browser](https://git.rootprojects.org/root/greenlock.html) Support
   - [x] Full node.js support, with modules for
-    - [x] [http/https](https://git.coolaj86.com/coolaj86/greenlock-express.js/src/branch/master/examples), [Express.js](https://git.coolaj86.com/coolaj86/greenlock-express.js), [cluster](https://git.coolaj86.com/coolaj86/greenlock-cluster.js), [hapi](https://git.coolaj86.com/coolaj86/greenlock-hapi.js), [Koa](https://git.coolaj86.com/coolaj86/greenlock-koa.js), [rill](https://git.coolaj86.com/coolaj86/greenlock-rill.js), spdy, etc
+    - [x] [http/https](https://git.rootprojects.org/root/greenlock-express.js/src/branch/master/examples), [Express.js](https://git.rootprojects.org/root/greenlock-express.js), [hapi](https://git.rootprojects.org/root/greenlock-hapi.js), [Koa](https://git.rootprojects.org/root/greenlock-koa.js), [rill](https://git.rootprojects.org/root/greenlock-rill.js), spdy, etc
   - [x] Great for securing your Raspberry Pi and IoT projects
   - [x] Extensible Plugin Support
     - [x] AWS S3, AWS Route53, Azure, CloudFlare, Consul, Digital Ocean, etcd, Redis
@@ -49,12 +49,11 @@ and with **node.js** ([npm](https://www.npmjs.com/package/greenlock)).
 ## Greenlock.js for Middleware
 
 Documentation for using Greenlock with
-[http/https](https://git.coolaj86.com/coolaj86/greenlock-express.js/src/branch/master/examples),
-[Express.js](https://git.coolaj86.com/coolaj86/greenlock-express.js),
-[cluster](https://git.coolaj86.com/coolaj86/greenlock-cluster.js),
-[hapi](https://git.coolaj86.com/coolaj86/greenlock-hapi.js),
-[Koa](https://git.coolaj86.com/coolaj86/greenlock-koa.js),
-[rill](https://git.coolaj86.com/coolaj86/greenlock-rill.js).
+[http/https](https://git.rootprojects.org/root/greenlock-express.js/src/branch/master/examples),
+[Express.js](https://git.rootprojects.org/root/greenlock-express.js),
+[hapi](https://git.rootprojects.org/root/greenlock-hapi.js),
+[Koa](https://git.rootprojects.org/root/greenlock-koa.js),
+[rill](https://git.rootprojects.org/root/greenlock-rill.js).
 
 # Table of Contents
 
@@ -128,7 +127,7 @@ to more robust examples that you might start with for an enterprise-grade use of
 
 
 **Note**: For (fully) automatic HTTPS you may prefer
-the [Express.js module](https://git.coolaj86.com/coolaj86/greenlock-express.js)
+the [Express.js module](https://git.rootprojects.org/root/greenlock-express.js)
 
 This works for most people, but it's not as fun as some of the other examples.
 
@@ -168,7 +167,7 @@ require('spdy').createServer(greenlock.tlsOptions, function (req, res) {
 ## Fully Automatic HTTPS
 
 **Note**: For (fully) automatic HTTPS you may prefer
-the [Express.js module](https://git.coolaj86.com/coolaj86/greenlock-express.js)
+the [Express.js module](https://git.rootprojects.org/root/greenlock-express.js)
 
 Great when
 
@@ -533,11 +532,18 @@ As the number of businesses using Greenlock commercially has increased, we've be
 
 Our [trademark policy](https://therootcompany.com/legal/#trademark) is pretty much "attribute, but don't confuse". Your users should understand that your product _uses_ Greenlock and not be confused to think that it _is_ Greenlock.
 
-# Legal
+# Legal &amp; Rules of the Road
 
-Greenlock&trade; is a [trademark](https://greenlock.domains/legal/#trademark) of AJ ONeal
+Greenlock&trade; are [trademarks](https://rootprojects.org/legal/#trademark) of AJ ONeal
 
-[greenlock.js](https://git.coolaj86.com/coolaj86/greenlock.js) |
+The rule of thumb is "attribute, but don't confuse". For example:
+
+> Built with [Greenlock.js](https://git.rootprojects.org/root/greenlock-cli.js) (a [Root](https://rootprojects.org) project).
+
+Please [contact us](mailto:aj@therootcompany.com) if you have any questions in regards to our trademark,
+attribution, and/or visible source policies. We want to build great software and a great community.
+
+[Greenlock&trade;](https://git.rootprojects.org/root/greenlock.js) |
 MPL-2.0 |
 [Terms of Use](https://therootcompany.com/legal/#terms) |
 [Privacy Policy](https://therootcompany.com/legal/#privacy)

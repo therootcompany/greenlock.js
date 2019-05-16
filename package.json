@@ -1,6 +1,6 @@
 {
   "name": "greenlock",
-  "version": "2.7.18",
+  "version": "2.7.19",
   "description": "Let's Encrypt for node.js on npm",
   "main": "index.js",
   "files": [
@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://git.coolaj86.com/coolaj86/greenlock.js.git"
+    "url": "https://git.rootprojects.org/root/greenlock.js.git"
   },
   "keywords": [
     "Let's Encrypt",
@@ -24,14 +24,10 @@
     "tls",
     "https"
   ],
-  "author": "AJ ONeal <coolaj86@gmail.com> (https://coolaj86.com/)",
+  "author": "AJ ONeal <solderjs@gmail.com> (https://solderjs.com/)",
   "license": "MPL-2.0",
   "bugs": {
-    "url": "https://git.coolaj86.com/coolaj86/greenlock.js/issues"
-  },
-  "homepage": "https://git.coolaj86.com/coolaj86/greenlock.js",
-  "devDependencies": {
-    "@coolaj86/urequest": "^1.3.7"
+    "url": "https://git.rootprojects.org/root/greenlock.js/issues"
   },
   "trulyOptionalDependencies": {
     "bluebird": "^3.5.1",
