@@ -534,11 +534,11 @@ Our [trademark policy](https://therootcompany.com/legal/#trademark) is pretty mu
 
 # Legal &amp; Rules of the Road
 
-Greenlock&trade; are [trademarks](https://rootprojects.org/legal/#trademark) of AJ ONeal
+Greenlock&trade; is a [trademark](https://rootprojects.org/legal/#trademark) of AJ ONeal
 
 The rule of thumb is "attribute, but don't confuse". For example:
 
-> Built with [Greenlock.js](https://git.rootprojects.org/root/greenlock-cli.js) (a [Root](https://rootprojects.org) project).
+> Built with [Greenlock.js](https://git.rootprojects.org/root/greenlock.js) (a [Root](https://rootprojects.org) project).
 
 Please [contact us](mailto:aj@therootcompany.com) if you have any questions in regards to our trademark,
 attribution, and/or visible source policies. We want to build great software and a great community.
