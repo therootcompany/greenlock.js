@@ -1,7 +1,8 @@
 {
   "name": "greenlock",
-  "version": "2.7.20",
-  "description": "Let's Encrypt for node.js on npm",
+  "version": "2.7.21",
+  "description": "Greenlock is Let's Encrypt (ACME) client for node.js",
+  "homepage": "https://greenlock.domains",
   "main": "index.js",
   "files": [
     "lib"
