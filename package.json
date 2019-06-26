@@ -1,6 +1,6 @@
 {
   "name": "greenlock",
-  "version": "2.8.1",
+  "version": "2.8.2",
   "description": "Greenlock is Let's Encrypt (ACME) client for node.js",
   "homepage": "https://greenlock.domains/",
   "main": "index.js",
