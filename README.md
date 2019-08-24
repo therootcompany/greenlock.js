@@ -1,6 +1,6 @@
-!["Greenlock Logo"](https://git.rootprojects.org/root/greenlock.js/raw/branch/master/logo/greenlock-1063x250.png "Greenlock lock logo and work mark")
+!["Greenlock Logo"](https://git.rootprojects.org/root/greenlock.js/raw/branch/master/logo/greenlock-1063x250.png 'Greenlock lock logo and work mark')
 
-!["Greenlock Function"](https://git.rootprojects.org/root/greenlock.js/raw/branch/master/logo/from-not-secure-to-secure-url-bar.png "from url bar showing not secure to url bar showing secure")
+!["Greenlock Function"](https://git.rootprojects.org/root/greenlock.js/raw/branch/master/logo/from-not-secure-to-secure-url-bar.png 'from url bar showing not secure to url bar showing secure')
 
 # [Greenlock](https://git.rootprojects.org/root/greenlock.js)&trade; for node.js | a [Root](https://rootprojects.org) project
 
@@ -12,7 +12,6 @@ Greenlock provides Free SSL, Free Wildcard SSL, and Fully Automated HTTPS <br>
 !["Weekly Downloads"](https://img.shields.io/npm/dw/greenlock.svg "Weekly Download Count can't be shown")
 !["Stackoverflow Questions"](https://img.shields.io/stackexchange/stackoverflow/t/greenlock.svg "S.O. Question count can't be shown")
 
-
 Greenlock works
 in the [Commandline](https://git.rootprojects.org/root/greenlock-cli.js) (cli),
 as a [Web Server](https://git.rootprojects.org/root/greenlock-express.js),
@@ -21,30 +20,30 @@ and with **node.js** ([npm](https://www.npmjs.com/package/greenlock)).
 
 # Features
 
-  - [x] Actively Maintained and Commercially Supported
-    - [x] VanillaJS
-    - [x] Limited Dependencies
-    - [x] MPL-2.0 licensed (great for hobbyists and DIYers)
-    - [x] [Contact us](mailto:support@rootprojects.org?subject=Greenlock%20Commercial%20Support) for Business Support Plans and Commercial LTS Licensing (great for IoT, On-Prem, Web Hosting, etc)
-  - [x] Automatic HTTPS
-    - [x] Free SSL
-    - [x] Free Wildcard SSL
-    - [x] Multiple domain support (up to 100 altnames per SAN)
-    - [x] Dynamic Virtual Hosting (vhost)
-    - [x] Automatical renewal (10 to 14 days before expiration)
-  - [x] Great ACME support via [acme.js](https://git.rootprojects.org/root/acme-v2.js)
-    - [x] "dry run" with self-diagnostics
-    - [x] ACME draft 12
-    - [x] Let's Encrypt v2
-    - [x] ~Let's Encrypt v1~ (deprecated)
-  - [x] [Commandline](https://git.rootprojects.org/root/greenlock-cli.js) (cli) Utilities
-    - [x] Works with `bash`, `fish`, `zsh`, `cmd.exe`, `PowerShell`, and more
-  - [x] [Browser](https://git.rootprojects.org/root/greenlock.html) Support
-  - [x] Full node.js support, with modules for
-    - [x] [http/https](https://git.rootprojects.org/root/greenlock-express.js/src/branch/master/examples), [Express.js](https://git.rootprojects.org/root/greenlock-express.js), [hapi](https://git.rootprojects.org/root/greenlock-hapi.js), [Koa](https://git.rootprojects.org/root/greenlock-koa.js), [rill](https://git.rootprojects.org/root/greenlock-rill.js), spdy, etc
-  - [x] Great for securing your Raspberry Pi and IoT projects
-  - [x] Extensible Plugin Support
-    - [x] AWS S3, AWS Route53, Azure, CloudFlare, Consul, Digital Ocean, etcd, Redis
+-   [x] Actively Maintained and Commercially Supported
+    -   [x] VanillaJS
+    -   [x] Limited Dependencies
+    -   [x] MPL-2.0 licensed (great for hobbyists and DIYers)
+    -   [x] [Contact us](mailto:support@rootprojects.org?subject=Greenlock%20Commercial%20Support) for Business Support Plans and Commercial LTS Licensing (great for IoT, On-Prem, Web Hosting, etc)
+-   [x] Automatic HTTPS
+    -   [x] Free SSL
+    -   [x] Free Wildcard SSL
+    -   [x] Multiple domain support (up to 100 altnames per SAN)
+    -   [x] Dynamic Virtual Hosting (vhost)
+    -   [x] Automatical renewal (10 to 14 days before expiration)
+-   [x] Great ACME support via [acme.js](https://git.rootprojects.org/root/acme-v2.js)
+    -   [x] "dry run" with self-diagnostics
+    -   [x] ACME draft 12
+    -   [x] Let's Encrypt v2
+    -   [x] ~Let's Encrypt v1~ (deprecated)
+-   [x] [Commandline](https://git.rootprojects.org/root/greenlock-cli.js) (cli) Utilities
+    -   [x] Works with `bash`, `fish`, `zsh`, `cmd.exe`, `PowerShell`, and more
+-   [x] [Browser](https://git.rootprojects.org/root/greenlock.html) Support
+-   [x] Full node.js support, with modules for
+    -   [x] [http/https](https://git.rootprojects.org/root/greenlock-express.js/src/branch/master/examples), [Express.js](https://git.rootprojects.org/root/greenlock-express.js), [hapi](https://git.rootprojects.org/root/greenlock-hapi.js), [Koa](https://git.rootprojects.org/root/greenlock-koa.js), [rill](https://git.rootprojects.org/root/greenlock-rill.js), spdy, etc
+-   [x] Great for securing your Raspberry Pi and IoT projects
+-   [x] Extensible Plugin Support
+    -   [x] AWS S3, AWS Route53, Azure, CloudFlare, Consul, Digital Ocean, etcd, Redis
 
 ## Greenlock.js for Middleware
 
@@ -57,14 +56,14 @@ Documentation for using Greenlock with
 
 # Table of Contents
 
-  * Install
-  * **QuickStart**
-  * Simple Examples
-  * Example with ALL OPTIONS
-  * API
-  * Developer API
-  * Change History
-  * License
+-   Install
+-   **QuickStart**
+-   Simple Examples
+-   Example with ALL OPTIONS
+-   API
+-   Developer API
+-   Change History
+-   License
 
 # Install
 
@@ -72,9 +71,8 @@ Documentation for using Greenlock with
 npm install --save greenlock@2.x
 ```
 
-**Optional** for *more efficient* RSA key generation you must use node v10.12+
+**Optional** for _more efficient_ RSA key generation you must use node v10.12+
 <small>(important for those on ARM devices like Raspberry Pi)</small>
-
 
 ### Production vs Staging
 
@@ -98,19 +96,18 @@ Watch the QuickStart demonstration: [https://youtu.be/e8vaR4CEZ5s](https://youtu
 
 <a href="https://www.youtube.com/watch?v=e8vaR4CEZ5s&list=PLZaEVINf2Bq_lrS-OOzTUJB4q3HxarlXk"><img src="https://i.imgur.com/Y8ix6Ts.png" title="QuickStart Video" alt="YouTube Video Preview" /></a>
 
-* [0:00](https://www.youtube.com/watch?v=e8vaR4CEZ5s&list=PLZaEVINf2Bq_lrS-OOzTUJB4q3HxarlXk#t=0) - Intro
-* [2:22](https://www.youtube.com/watch?v=e8vaR4CEZ5s&list=PLZaEVINf2Bq_lrS-OOzTUJB4q3HxarlXk#t=142) - Demonstrating QuickStart Example
-* [6:37](https://www.youtube.com/watch?v=e8vaR4CEZ5s&list=PLZaEVINf2Bq_lrS-OOzTUJB4q3HxarlXk?t=397) - Troubleshooting / Gotchas
+-   [0:00](https://www.youtube.com/watch?v=e8vaR4CEZ5s&list=PLZaEVINf2Bq_lrS-OOzTUJB4q3HxarlXk#t=0) - Intro
+-   [2:22](https://www.youtube.com/watch?v=e8vaR4CEZ5s&list=PLZaEVINf2Bq_lrS-OOzTUJB4q3HxarlXk#t=142) - Demonstrating QuickStart Example
+-   [6:37](https://www.youtube.com/watch?v=e8vaR4CEZ5s&list=PLZaEVINf2Bq_lrS-OOzTUJB4q3HxarlXk?t=397) - Troubleshooting / Gotchas
 
 #### Production Configuration (Part 2)
 
-* [1:00](https://www.youtube.com/watch?v=bTEn93gxY50&index=2&list=PLZaEVINf2Bq_lrS-OOzTUJB4q3HxarlXk&t=60) - Bringing Greenlock into an Existing Express Project
-* [2:26](https://www.youtube.com/watch?v=bTEn93gxY50&index=2&list=PLZaEVINf2Bq_lrS-OOzTUJB4q3HxarlXk&t=146) - The `approveDomains` callback
+-   [1:00](https://www.youtube.com/watch?v=bTEn93gxY50&index=2&list=PLZaEVINf2Bq_lrS-OOzTUJB4q3HxarlXk&t=60) - Bringing Greenlock into an Existing Express Project
+-   [2:26](https://www.youtube.com/watch?v=bTEn93gxY50&index=2&list=PLZaEVINf2Bq_lrS-OOzTUJB4q3HxarlXk&t=146) - The `approveDomains` callback
 
 #### Security Concerns (Part 3)
 
-* [0:00](https://www.youtube.com/watch?v=aZgVqPzoZTY&index=3&list=PLZaEVINf2Bq_lrS-OOzTUJB4q3HxarlXk) - Potential Attacks, and Mitigation
-
+-   [0:00](https://www.youtube.com/watch?v=aZgVqPzoZTY&index=3&list=PLZaEVINf2Bq_lrS-OOzTUJB4q3HxarlXk) - Potential Attacks, and Mitigation
 
 # Easy as 1, 2, 3... 4
 
@@ -119,12 +116,11 @@ Greenlock is built to incredibly easy to use, without sacrificing customization 
 The following examples range from just a few lines of code for getting started,
 to more robust examples that you might start with for an enterprise-grade use of the ACME api.
 
-* Automatic HTTPS (for single sites)
-* Fully Automatic HTTPS (for multi-domain vhosts)
-* Manual HTTPS (for API integration)
+-   Automatic HTTPS (for single sites)
+-   Fully Automatic HTTPS (for multi-domain vhosts)
+-   Manual HTTPS (for API integration)
 
 ## Automatic HTTPS
-
 
 **Note**: For (fully) automatic HTTPS you may prefer
 the [Express.js module](https://git.rootprojects.org/root/greenlock-express.js)
@@ -133,8 +129,8 @@ This works for most people, but it's not as fun as some of the other examples.
 
 Great when
 
- - [x] You only need a limited number of certificates
- - [x] You want to use the bare node http and https modules without fluff
+-   [x] You only need a limited number of certificates
+-   [x] You want to use the bare node http and https modules without fluff
 
 ```js
 ////////////////////
@@ -142,12 +138,12 @@ Great when
 ////////////////////
 
 var greenlock = require('greenlock').create({
-  email: 'user@example.com'           // IMPORTANT: Change email and domains
-, agreeTos: true                      // Accept Let's Encrypt v2 Agreement
-, configDir: '~/.config/acme'         // A writable folder (a non-fs plugin)
+	email: 'user@example.com', // IMPORTANT: Change email and domains
+	agreeTos: true, // Accept Let's Encrypt v2 Agreement
+	configDir: '~/.config/acme', // A writable folder (a non-fs plugin)
 
-, communityMember: true               // Get (rare) non-mandatory updates about cool greenlock-related stuff (default false)
-, securityUpdates: true               // Important and mandatory notices related to security or breaking API changes (default true)
+	communityMember: true, // Get (rare) non-mandatory updates about cool greenlock-related stuff (default false)
+	securityUpdates: true // Important and mandatory notices related to security or breaking API changes (default true)
 });
 ```
 
@@ -157,11 +153,15 @@ var greenlock = require('greenlock').create({
 ////////////////////
 
 var redir = require('redirect-https')();
-require('http').createServer(greenlock.middleware(redir)).listen(80);
+require('http')
+	.createServer(greenlock.middleware(redir))
+	.listen(80);
 
-require('spdy').createServer(greenlock.tlsOptions, function (req, res) {
-  res.end('Hello, Secure World!');
-}).listen(443);
+require('spdy')
+	.createServer(greenlock.tlsOptions, function(req, res) {
+		res.end('Hello, Secure World!');
+	})
+	.listen(443);
 ```
 
 ## Fully Automatic HTTPS
@@ -171,9 +171,9 @@ the [Express.js module](https://git.rootprojects.org/root/greenlock-express.js)
 
 Great when
 
- - [x] You have a growing number of domains
- - [x] You're integrating into your own hosting solution
- - [x] Customize ACME http-01 or dns-01 challenge
+-   [x] You have a growing number of domains
+-   [x] You're integrating into your own hosting solution
+-   [x] Customize ACME http-01 or dns-01 challenge
 
 ```js
 ////////////////////
@@ -181,68 +181,72 @@ Great when
 ////////////////////
 
 var path = require('path');
-var os = require('os')
+var os = require('os');
 var Greenlock = require('greenlock');
 
 var greenlock = Greenlock.create({
-  version: 'draft-12'
-, server: 'https://acme-v02.api.letsencrypt.org/directory'
+	version: 'draft-12',
+	server: 'https://acme-v02.api.letsencrypt.org/directory',
 
-  // Use the approveDomains callback to set per-domain config
-  // (default: approve any domain that passes self-test of built-in challenges)
-, approveDomains: approveDomains
+	// Use the approveDomains callback to set per-domain config
+	// (default: approve any domain that passes self-test of built-in challenges)
+	approveDomains: approveDomains,
 
-  // the default servername to use when the client doesn't specify
-, servername: 'example.com'
+	// the default servername to use when the client doesn't specify
+	servername: 'example.com',
 
-  // If you wish to replace the default account and domain key storage plugin
-, store: require('le-store-fs').create({
-    configDir: path.join(os.homedir(), 'acme/etc')
-  , webrootPath: '/tmp/acme-challenges'
-  })
+	// If you wish to replace the default account and domain key storage plugin
+	store: require('le-store-fs').create({
+		configDir: path.join(os.homedir(), 'acme/etc'),
+		webrootPath: '/tmp/acme-challenges'
+	})
 });
-
 
 /////////////////////
 // APPROVE DOMAINS //
 /////////////////////
 
-var http01 = require('le-challenge-fs').create({ webrootPath: '/tmp/acme-challenges' });
+var http01 = require('le-challenge-fs').create({
+	webrootPath: '/tmp/acme-challenges'
+});
 function approveDomains(opts, certs, cb) {
-  // This is where you check your database and associated
-  // email addresses with domains and agreements and such
+	// This is where you check your database and associated
+	// email addresses with domains and agreements and such
 
-  // Opt-in to submit stats and get important updates
-  opts.communityMember = true;
+	// Opt-in to submit stats and get important updates
+	opts.communityMember = true;
 
-  // If you wish to replace the default challenge plugin, you may do so here
-  opts.challenges = { 'http-01': http01 };
+	// If you wish to replace the default challenge plugin, you may do so here
+	opts.challenges = { 'http-01': http01 };
 
-  // The domains being approved for the first time are listed in opts.domains
-  // Certs being renewed are listed in certs.altnames
-  // certs.domains;
-  // certs.altnames;
-  opts.email = 'john.doe@example.com';
-  opts.agreeTos = true;
+	// The domains being approved for the first time are listed in opts.domains
+	// Certs being renewed are listed in certs.altnames
+	// certs.domains;
+	// certs.altnames;
+	opts.email = 'john.doe@example.com';
+	opts.agreeTos = true;
 
-  // NOTE: you can also change other options such as `challengeType` and `challenge`
-  // opts.challengeType = 'http-01';
-  // opts.challenge = require('le-challenge-fs').create({});
+	// NOTE: you can also change other options such as `challengeType` and `challenge`
+	// opts.challengeType = 'http-01';
+	// opts.challenge = require('le-challenge-fs').create({});
 
-  cb(null, { options: opts, certs: certs });
+	cb(null, { options: opts, certs: certs });
 }
-
 
 ////////////////////
 // CREATE SERVERS //
 ////////////////////
 
 var redir = require('redirect-https')();
-require('http').createServer(greenlock.middleware(redir)).listen(80);
+require('http')
+	.createServer(greenlock.middleware(redir))
+	.listen(80);
 
-require('https').createServer(greenlock.tlsOptions, function (req, res) {
-  res.end('Hello, Secure World!');
-}).listen(443);
+require('https')
+	.createServer(greenlock.tlsOptions, function(req, res) {
+		res.end('Hello, Secure World!');
+	})
+	.listen(443);
 ```
 
 ## Manual HTTPS
@@ -293,19 +297,24 @@ greenlock.register(opts).then(function (certs) {
 The domain key and ssl certificates you get back can be used in a webserver like this:
 
 ```js
-var tlsOptions = { key: certs.privkey, cert: certs.cert + '\r\n' + certs.chain };
-require('https').createServer(tlsOptions, function (req, res) {
-  res.end('Hello, Secure World!');
-}).listen(443);
+var tlsOptions = {
+	key: certs.privkey,
+	cert: certs.cert + '\r\n' + certs.chain
+};
+require('https')
+	.createServer(tlsOptions, function(req, res) {
+		res.end('Hello, Secure World!');
+	})
+	.listen(443);
 ```
 
 # Example with ALL OPTIONS
 
 The configuration consists of 3 components:
 
-* Storage Backend (search npm for projects starting with 'le-store-')
-* ACME Challenge Handlers (search npm for projects starting with 'le-challenge-')
-* Letsencryt Config (this is all you)
+-   Storage Backend (search npm for projects starting with 'le-store-')
+-   ACME Challenge Handlers (search npm for projects starting with 'le-challenge-')
+-   Letsencryt Config (this is all you)
 
 ```javascript
 'use strict';
@@ -419,8 +428,7 @@ Here's what `results` looks like:
 }
 ```
 
-API
----
+## API
 
 The full end-user API is exposed in the example above and includes all relevant options.
 
@@ -433,7 +441,7 @@ greenlock.check(opts)
 
 We do expose a few helper functions:
 
-* Greenlock.validDomain(hostname) // returns '' or the hostname string if it's a valid ascii or punycode domain name
+-   Greenlock.validDomain(hostname) // returns '' or the hostname string if it's a valid ascii or punycode domain name
 
 TODO fetch domain tld list
 
@@ -441,16 +449,16 @@ TODO fetch domain tld list
 
 The following variables will be tempalted in any strings passed to the options object:
 
-* `~/` replaced with `os.homedir()` i.e. `/Users/aj`
-* `:hostname` replaced with the first domain in the list i.e. `example.com`
+-   `~/` replaced with `os.homedir()` i.e. `/Users/aj`
+-   `:hostname` replaced with the first domain in the list i.e. `example.com`
 
 ### Dangerous Options
 
 By default SNI is made to lowercase and is automatically rejected if it contains invalid characters for a domain.
 This behavior can be modified:
 
-  * `__dns_allow_dangerous_names` allow SNI names like "Robert'); DROP TABLE Students;"
-  * `__dns_preserve_case` passes SNI names such as "ExAMpLE.coM" without converting to lower case
+-   `__dns_allow_dangerous_names` allow SNI names like "Robert'); DROP TABLE Students;"
+-   `__dns_preserve_case` passes SNI names such as "ExAMpLE.coM" without converting to lower case
 
 ## Developer API
 
@@ -470,16 +478,16 @@ should be kept in sync.
 See [greenlock-store-test](https://git.rootprojects.org/root/greenlock-store-test.js)
 and [greenlock-store-fs](https://git.rootprojects.org/root/greenlock-store-fs.js)
 
-* accounts.
-  * checkKeypair(opts)
-  * check(opts)
-  * setKeypair(opts)
-  * set(opts)
-* certificates.
-  * checkKeypair(opts)
-  * check(opts)
-  * setKeypair(opts)
-  * set(opts)
+-   accounts.
+    -   checkKeypair(opts)
+    -   check(opts)
+    -   setKeypair(opts)
+    -   set(opts)
+-   certificates.
+    -   checkKeypair(opts)
+    -   check(opts)
+    -   setKeypair(opts)
+    -   set(opts)
 
 ### challenge implementation
 
@@ -487,50 +495,52 @@ See [greenlock-challenge-test](https://git.rootprojects.org/root/greenlock-chall
 [acme-http-01-cli](https://git.rootprojects.org/root/acme-http-01-cli.js),
 and [acme-dns-01-cli](https://git.rootprojects.org/root/acme-dns-01-cli.js)
 
-* `.set(opts);`
-* `.get(opts);`
-* `.remove(opts);`
+-   `.set(opts);`
+-   `.get(opts);`
+-   `.remove(opts);`
 
 # Change History
-* v2.7
-  * API: transitional for v3 API (Promies, async/await)
-  * Security: Zero external dependencies
-  * Plugins: `greenlock-store-fs` replaces `le-store-certbot` as the default storage plugin
-  * Features: Full wildcard support
-  * Licensing: Commercial licensing and support plans now available
-* v2.6
-  * better defaults, fewer explicit options
-  * better pre-flight self-tests, explicit domains not required
-* v2.5
-  * bugfix JWK (update rsa-compat)
-  * eliminate all external non-optional dependencies
-* v2.4
-  * v2.4.3 - add security updates (default true) independent of community updates (default false)
-* v2.2 - Let's Encrypt v2 Support
-  * v2.2.11 - documentation updates
-  * v2.2.10 - don't let SNICallback swallow approveDomains errors 6286883fc2a6ebfff711a540a2e4d92f3ac2907c
-  * v2.2.8 - communityMember option support
-  * v2.2.7 - bugfix for wildcard support
-  * v2.2.5 - node v6.x compat
-  * v2.2.4 - don't promisify all of `dns`
-  * v2.2.3 - `renewWithin` default to 14 days
-  * v2.2.2 - replace git dependency with npm
-  * v2.2.1 - April 2018 **Let's Encrypt v2** support
-* v2.1.17 - Nov 5th 2017 migrate back to personal repo
-* v2.1.9 - Jan 18th 2017 renamed to greenlock
-* v2.0.2 - Aug 9th 2016 update readme
-* v2.0.1 - Aug 9th 2016
-  * major refactor
-  * simplified API
-  * modular plugins
-  * knock out bugs
-* v1.5.0 now using letiny-core v2.0.0 and rsa-compat
-* v1.4.x I can't remember... but it's better!
-* v1.1.0 Added letiny-core, removed node-letsencrypt-python
-* v1.0.2 Works with node-letsencrypt-python
-* v1.0.0 Thar be dragons
+
+-   v2.7
+    -   API: transitional for v3 API (Promies, async/await)
+    -   Security: Zero external dependencies
+    -   Plugins: `greenlock-store-fs` replaces `le-store-certbot` as the default storage plugin
+    -   Features: Full wildcard support
+    -   Licensing: Commercial licensing and support plans now available
+-   v2.6
+    -   better defaults, fewer explicit options
+    -   better pre-flight self-tests, explicit domains not required
+-   v2.5
+    -   bugfix JWK (update rsa-compat)
+    -   eliminate all external non-optional dependencies
+-   v2.4
+    -   v2.4.3 - add security updates (default true) independent of community updates (default false)
+-   v2.2 - Let's Encrypt v2 Support
+    -   v2.2.11 - documentation updates
+    -   v2.2.10 - don't let SNICallback swallow approveDomains errors 6286883fc2a6ebfff711a540a2e4d92f3ac2907c
+    -   v2.2.8 - communityMember option support
+    -   v2.2.7 - bugfix for wildcard support
+    -   v2.2.5 - node v6.x compat
+    -   v2.2.4 - don't promisify all of `dns`
+    -   v2.2.3 - `renewWithin` default to 14 days
+    -   v2.2.2 - replace git dependency with npm
+    -   v2.2.1 - April 2018 **Let's Encrypt v2** support
+-   v2.1.17 - Nov 5th 2017 migrate back to personal repo
+-   v2.1.9 - Jan 18th 2017 renamed to greenlock
+-   v2.0.2 - Aug 9th 2016 update readme
+-   v2.0.1 - Aug 9th 2016
+    -   major refactor
+    -   simplified API
+    -   modular plugins
+    -   knock out bugs
+-   v1.5.0 now using letiny-core v2.0.0 and rsa-compat
+-   v1.4.x I can't remember... but it's better!
+-   v1.1.0 Added letiny-core, removed node-letsencrypt-python
+-   v1.0.2 Works with node-letsencrypt-python
+-   v1.0.0 Thar be dragons
 
 # Commercial Licensing
+
 As the number of businesses using Greenlock commercially has increased, we've become more aware of the need for quick-turnaround support and licenses that allow for local private modifications. Currently we offer LTS support and commercial licensing models for IoT, On-Prem, and Web Hosting. Please [contact us](mailto:support@rootprojects.org?subject=Greenlock%20Commercial%20Support) to learn more.
 
 Our [trademark policy](https://therootcompany.com/legal/#trademark) is pretty much "attribute, but don't confuse". Your users should understand that your product _uses_ Greenlock and not be confused to think that it _is_ Greenlock.
