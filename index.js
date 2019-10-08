@@ -1,6 +1,6 @@
-"use strict";
+'use strict';
 /*global Promise*/
-require("./lib/compat.js");
+require('./lib/compat.js');
 
 // I hate this code so much.
 // Soooo many shims for backwards compatibility (some stuff dating back to v1)
@@ -8,17 +8,17 @@ require("./lib/compat.js");
 
 var DAY = 24 * 60 * 60 * 1000;
 //var MIN = 60 * 1000;
-var ACME = require("acme-v2/compat").ACME;
-var pkg = require("./package.json");
-var util = require("util");
+var ACME = require('acme-v2/compat').ACME;
+var pkg = require('./package.json');
+var util = require('util');
 
 function promisifyAllSelf(obj) {
 	if (obj.__promisified) {
 		return obj;
 	}
 	Object.keys(obj).forEach(function(key) {
-		if ("function" === typeof obj[key] && !/Async$/.test(key)) {
-			obj[key + "Async"] = util.promisify(obj[key]);
+		if ('function' === typeof obj[key] && !/Async$/.test(key)) {
+			obj[key + 'Async'] = util.promisify(obj[key]);
 		}
 	});
 	obj.__promisified = true;
@@ -26,7 +26,7 @@ function promisifyAllSelf(obj) {
 }
 function promisifyAllStore(obj) {
 	Object.keys(obj).forEach(function(key) {
-		if ("function" !== typeof obj[key] || /Async$/.test(key)) {
+		if ('function' !== typeof obj[key] || /Async$/.test(key)) {
 			return;
 		}
 
@@ -42,7 +42,7 @@ function promisifyAllStore(obj) {
 			p = util.promisify(obj[key]);
 		}
 		// internal backwards compat
-		obj[key + "Async"] = p;
+		obj[key + 'Async'] = p;
 	});
 	obj.__promisified = true;
 	return obj;
@@ -58,18 +58,18 @@ function _log(debug) {
 	if (debug) {
 		var args = Array.prototype.slice.call(arguments);
 		args.shift();
-		args.unshift("[gl/index.js]");
+		args.unshift('[gl/index.js]');
 		console.log.apply(console, args);
 	}
 }
 
 Greenlock.defaults = {
-	productionServerUrl: "https://acme-v01.api.letsencrypt.org/directory",
-	stagingServerUrl: "https://acme-staging.api.letsencrypt.org/directory",
+	productionServerUrl: 'https://acme-v01.api.letsencrypt.org/directory',
+	stagingServerUrl: 'https://acme-staging.api.letsencrypt.org/directory',
 
 	rsaKeySize: ACME.rsaKeySize || 2048,
-	challengeType: ACME.challengeType || "http-01",
-	challengeTypes: ACME.challengeTypes || ["http-01", "dns-01"],
+	challengeType: ACME.challengeType || 'http-01',
+	challengeTypes: ACME.challengeTypes || ['http-01', 'dns-01'],
 
 	acmeChallengePrefix: ACME.acmeChallengePrefix
 };
@@ -120,33 +120,33 @@ Greenlock.create = function(gl) {
 				" The old default is 'le-store-certbot', but the new default will be 'greenlock-store-fs'." +
 				" Please `npm install greenlock-store-fs@3` and explicitly set `{ store: require('greenlock-store-fs') }`."
 		);
-		gl.store = require("le-store-certbot").create({
+		gl.store = require('le-store-certbot').create({
 			debug: gl.debug,
 			configDir: gl.configDir,
 			logsDir: gl.logsDir,
 			webrootPath: gl.webrootPath
 		});
 	}
-	gl.core = require("./lib/core");
+	gl.core = require('./lib/core');
 	var log = gl.log || _log;
 
 	if (!gl.challenges) {
 		gl.challenges = {};
 	}
-	if (!gl.challenges["http-01"]) {
-		gl.challenges["http-01"] = require("le-challenge-fs").create({
+	if (!gl.challenges['http-01']) {
+		gl.challenges['http-01'] = require('le-challenge-fs').create({
 			debug: gl.debug,
 			webrootPath: gl.webrootPath
 		});
 	}
-	if (!gl.challenges["dns-01"]) {
+	if (!gl.challenges['dns-01']) {
 		try {
-			gl.challenges["dns-01"] = require("le-challenge-ddns").create({
+			gl.challenges['dns-01'] = require('le-challenge-ddns').create({
 				debug: gl.debug
 			});
 		} catch (e) {
 			try {
-				gl.challenges["dns-01"] = require("le-challenge-dns").create({
+				gl.challenges['dns-01'] = require('le-challenge-dns').create({
 					debug: gl.debug
 				});
 			} catch (e) {
@@ -160,12 +160,12 @@ Greenlock.create = function(gl) {
 	gl.rsaKeySize = gl.rsaKeySize || Greenlock.rsaKeySize;
 	gl.challengeType = gl.challengeType || Greenlock.challengeType;
 	gl._ipc = ipc;
-	gl._communityPackage = gl._communityPackage || "greenlock.js";
-	if ("greenlock.js" === gl._communityPackage) {
+	gl._communityPackage = gl._communityPackage || 'greenlock.js';
+	if ('greenlock.js' === gl._communityPackage) {
 		gl._communityPackageVersion = pkg.version;
 	} else {
 		gl._communityPackageVersion =
-			gl._communityPackageVersion || "greenlock.js-" + pkg.version;
+			gl._communityPackageVersion || 'greenlock.js-' + pkg.version;
 	}
 	gl.agreeToTerms =
 		gl.agreeToTerms ||
@@ -186,39 +186,47 @@ Greenlock.create = function(gl) {
 	// BEGIN VERSION MADNESS //
 	///////////////////////////
 
-	gl.version = gl.version || "draft-11";
-	gl.server = gl.server || "https://acme-v02.api.letsencrypt.org/directory";
+	gl.version = gl.version || 'draft-11';
+	gl.server = gl.server || 'https://acme-v02.api.letsencrypt.org/directory';
 	if (!gl.version) {
 		//console.warn("Please specify version: 'v01' (Let's Encrypt v1) or 'draft-12' (Let's Encrypt v2 / ACME draft 12)");
-		console.warn("");
-		console.warn("");
-		console.warn("");
-		console.warn("==========================================================");
-		console.warn("==                greenlock.js (v2.2.0+)                ==");
-		console.warn("==========================================================");
-		console.warn("");
+		console.warn('');
+		console.warn('');
+		console.warn('');
+		console.warn(
+			'=========================================================='
+		);
+		console.warn(
+			'==                greenlock.js (v2.2.0+)                =='
+		);
+		console.warn(
+			'=========================================================='
+		);
+		console.warn('');
 		console.warn("Please specify 'version' option:");
-		console.warn("");
-		console.warn("        'draft-12' for Let's Encrypt v2 and ACME draft 12");
+		console.warn('');
+		console.warn(
+			"        'draft-12' for Let's Encrypt v2 and ACME draft 12"
+		);
 		console.warn("        ('v02' is an alias of 'draft-12'");
-		console.warn("");
-		console.warn("or");
-		console.warn("");
+		console.warn('');
+		console.warn('or');
+		console.warn('');
 		console.warn("        'v01' for Let's Encrypt v1 (deprecated)");
 		console.warn(
 			"         (also 'npm install --save le-acme-core' as this legacy dependency will soon be removed)"
 		);
-		console.warn("");
-		console.warn("This will be required in versions v2.3+");
-		console.warn("");
-		console.warn("");
-	} else if ("v02" === gl.version) {
-		gl.version = "draft-11";
-	} else if ("draft-12" === gl.version) {
-		gl.version = "draft-11";
-	} else if ("draft-11" === gl.version) {
+		console.warn('');
+		console.warn('This will be required in versions v2.3+');
+		console.warn('');
+		console.warn('');
+	} else if ('v02' === gl.version) {
+		gl.version = 'draft-11';
+	} else if ('draft-12' === gl.version) {
+		gl.version = 'draft-11';
+	} else if ('draft-11' === gl.version) {
 		// no-op
-	} else if ("v01" !== gl.version) {
+	} else if ('v01' !== gl.version) {
 		throw new Error("Unrecognized version '" + gl.version + "'");
 	}
 
@@ -227,62 +235,62 @@ Greenlock.create = function(gl) {
 			"opts.server must specify an ACME directory URL, such as 'https://acme-staging-v02.api.letsencrypt.org/directory'"
 		);
 	}
-	if ("staging" === gl.server || "production" === gl.server) {
-		if ("staging" === gl.server) {
-			gl.server = "https://acme-staging.api.letsencrypt.org/directory";
-			gl.version = "v01";
-			gl._deprecatedServerName = "staging";
-		} else if ("production" === gl.server) {
-			gl.server = "https://acme-v01.api.letsencrypt.org/directory";
-			gl.version = "v01";
-			gl._deprecatedServerName = "production";
+	if ('staging' === gl.server || 'production' === gl.server) {
+		if ('staging' === gl.server) {
+			gl.server = 'https://acme-staging.api.letsencrypt.org/directory';
+			gl.version = 'v01';
+			gl._deprecatedServerName = 'staging';
+		} else if ('production' === gl.server) {
+			gl.server = 'https://acme-v01.api.letsencrypt.org/directory';
+			gl.version = 'v01';
+			gl._deprecatedServerName = 'production';
 		}
-		console.warn("");
-		console.warn("");
-		console.warn("=== WARNING ===");
-		console.warn("");
+		console.warn('');
+		console.warn('');
+		console.warn('=== WARNING ===');
+		console.warn('');
 		console.warn(
 			"Due to versioning issues the '" +
 				gl._deprecatedServerName +
 				"' option is deprecated."
 		);
-		console.warn("Please specify the full url and version.");
-		console.warn("");
-		console.warn("For APIs add:");
+		console.warn('Please specify the full url and version.');
+		console.warn('');
+		console.warn('For APIs add:');
 		console.warn('\t, "version": "' + gl.version + '"');
 		console.warn('\t, "server": "' + gl.server + '"');
-		console.warn("");
-		console.warn("For the CLI add:");
+		console.warn('');
+		console.warn('For the CLI add:');
 		console.warn("\t--acme-url '" + gl.server + "' \\");
 		console.warn("\t--acme-version '" + gl.version + "' \\");
-		console.warn("");
-		console.warn("");
+		console.warn('');
+		console.warn('');
 	}
 
 	function loadLeV01() {
-		console.warn("");
-		console.warn("=== WARNING ===");
-		console.warn("");
+		console.warn('');
+		console.warn('=== WARNING ===');
+		console.warn('');
 		console.warn("Let's Encrypt v1 is deprecated.");
 		console.warn("Please update to Let's Encrypt v2 (ACME draft 12)");
-		console.warn("");
+		console.warn('');
 		try {
-			return require("le-acme-core").ACME;
+			return require('le-acme-core').ACME;
 		} catch (e) {
-			console.error("");
-			console.error("=== Error (easy-to-fix) ===");
-			console.error("");
+			console.error('');
+			console.error('=== Error (easy-to-fix) ===');
+			console.error('');
 			console.error(
 				"Hey, this isn't a big deal, but you need to manually add v1 support:"
 			);
-			console.error("");
-			console.error("        npm install --save le-acme-core");
-			console.error("");
+			console.error('');
+			console.error('        npm install --save le-acme-core');
+			console.error('');
 			console.error(
-				"Just run that real quick, restart, and everything will work great."
+				'Just run that real quick, restart, and everything will work great.'
 			);
-			console.error("");
-			console.error("");
+			console.error('');
+			console.error('');
 			process.exit(e.code || 13);
 		}
 	}
@@ -290,32 +298,32 @@ Greenlock.create = function(gl) {
 	if (
 		-1 !==
 		[
-			"https://acme-v02.api.letsencrypt.org/directory",
-			"https://acme-staging-v02.api.letsencrypt.org/directory"
+			'https://acme-v02.api.letsencrypt.org/directory',
+			'https://acme-staging-v02.api.letsencrypt.org/directory'
 		].indexOf(gl.server)
 	) {
-		if ("draft-11" !== gl.version) {
+		if ('draft-11' !== gl.version) {
 			console.warn(
 				"Detected Let's Encrypt v02 URL. Changing version to draft-12."
 			);
-			gl.version = "draft-11";
+			gl.version = 'draft-11';
 		}
 	} else if (
 		-1 !==
 			[
-				"https://acme-v01.api.letsencrypt.org/directory",
-				"https://acme-staging.api.letsencrypt.org/directory"
+				'https://acme-v01.api.letsencrypt.org/directory',
+				'https://acme-staging.api.letsencrypt.org/directory'
 			].indexOf(gl.server) ||
-		"v01" === gl.version
+		'v01' === gl.version
 	) {
-		if ("v01" !== gl.version) {
+		if ('v01' !== gl.version) {
 			console.warn(
 				"Detected Let's Encrypt v01 URL (deprecated). Changing version to v01."
 			);
-			gl.version = "v01";
+			gl.version = 'v01';
 		}
 	}
-	if ("v01" === gl.version) {
+	if ('v01' === gl.version) {
 		ACME = loadLeV01();
 	}
 	/////////////////////////
@@ -349,12 +357,14 @@ Greenlock.create = function(gl) {
 		gl.store.accounts = promisifyAllStore(gl.store.accounts);
 		gl.store.certificates = promisifyAllStore(gl.store.certificates);
 		gl._storeOpts =
-			(gl.store.getOptions && gl.store.getOptions()) || gl.store.options || {};
+			(gl.store.getOptions && gl.store.getOptions()) ||
+			gl.store.options ||
+			{};
 	} catch (e) {
 		console.error(e);
 		console.error(
-			"\nPROBABLE CAUSE:\n" +
-				"\tYour greenlock-store module should have a create function and return { options, accounts, certificates }\n"
+			'\nPROBABLE CAUSE:\n' +
+				'\tYour greenlock-store module should have a create function and return { options, accounts, certificates }\n'
 		);
 		process.exit(18);
 		return;
@@ -384,40 +394,47 @@ Greenlock.create = function(gl) {
 		if (challenger.create) {
 			challenger = gl.challenges[challengeType] = challenger.create(gl);
 		}
-		challenger = gl.challenges[challengeType] = promisifyAllSelf(challenger);
-		gl["_challengeOpts_" + challengeType] =
+		challenger = gl.challenges[challengeType] = promisifyAllSelf(
+			challenger
+		);
+		gl['_challengeOpts_' + challengeType] =
 			(challenger.getOptions && challenger.getOptions()) ||
 			challenger.options ||
 			{};
-		Object.keys(gl["_challengeOpts_" + challengeType]).forEach(function(key) {
+		Object.keys(gl['_challengeOpts_' + challengeType]).forEach(function(
+			key
+		) {
 			if (!(key in gl)) {
-				gl[key] = gl["_challengeOpts_" + challengeType][key];
+				gl[key] = gl['_challengeOpts_' + challengeType][key];
 			}
 		});
 
 		// TODO wrap these here and now with tplCopy?
 		if (!challenger.set || ![5, 2, 1].includes(challenger.set.length)) {
 			throw new Error(
-				"gl.challenges[" +
+				'gl.challenges[' +
 					challengeType +
-					"].set receives the wrong number of arguments." +
-					" You must define setChallenge as function (opts) { return Promise.resolve(); }"
+					'].set receives the wrong number of arguments.' +
+					' You must define setChallenge as function (opts) { return Promise.resolve(); }'
 			);
 		}
 		if (challenger.get && ![4, 2, 1].includes(challenger.get.length)) {
 			throw new Error(
-				"gl.challenges[" +
+				'gl.challenges[' +
 					challengeType +
-					"].get receives the wrong number of arguments." +
-					" You must define getChallenge as function (opts) { return Promise.resolve(); }"
+					'].get receives the wrong number of arguments.' +
+					' You must define getChallenge as function (opts) { return Promise.resolve(); }'
 			);
 		}
-		if (!challenger.remove || ![4, 2, 1].includes(challenger.remove.length)) {
+		if (
+			!challenger.remove ||
+			![4, 2, 1].includes(challenger.remove.length)
+		) {
 			throw new Error(
-				"gl.challenges[" +
+				'gl.challenges[' +
 					challengeType +
-					"].remove receives the wrong number of arguments." +
-					" You must define removeChallenge as function (opts) { return Promise.resolve(); }"
+					'].remove receives the wrong number of arguments.' +
+					' You must define removeChallenge as function (opts) { return Promise.resolve(); }'
 			);
 		}
 
@@ -486,16 +503,20 @@ Greenlock.create = function(gl) {
 
 					if (!gl.email) {
 						throw new Error(
-							"le-sni-auto is not properly configured. Missing email"
+							'le-sni-auto is not properly configured. Missing email'
 						);
 					}
 					if (!gl.agreeTos) {
 						throw new Error(
-							"le-sni-auto is not properly configured. Missing agreeTos"
+							'le-sni-auto is not properly configured. Missing agreeTos'
 						);
 					}
 					if (!/[a-z]/i.test(lexOpts.domain)) {
-						cb(new Error("le-sni-auto does not allow IP addresses in SNI"));
+						cb(
+							new Error(
+								'le-sni-auto does not allow IP addresses in SNI'
+							)
+						);
 						return;
 					}
 
@@ -522,13 +543,13 @@ Greenlock.create = function(gl) {
 
 					emsg =
 						"tls SNI for '" +
-						lexOpts.domains.join(",") +
+						lexOpts.domains.join(',') +
 						"' rejected: not in list '" +
 						gl.approvedDomains +
 						"'";
 					log(gl.debug, emsg, lexOpts.domains, gl.approvedDomains);
 					err = new Error(emsg);
-					err.code = "E_REJECT_SNI";
+					err.code = 'E_REJECT_SNI';
 					cb(err);
 				};
 			}
@@ -537,10 +558,10 @@ Greenlock.create = function(gl) {
 				// certs come from current in-memory cache, not lookup
 				log(
 					gl.debug,
-					"gl.getCertificates called for",
+					'gl.getCertificates called for',
 					domain,
-					"with certs for",
-					(certs && certs.altnames) || "NONE"
+					'with certs for',
+					(certs && certs.altnames) || 'NONE'
 				);
 				var opts = {
 					domain: domain,
@@ -550,24 +571,24 @@ Greenlock.create = function(gl) {
 					account: {}
 				};
 				opts.wildname =
-					"*." +
-					(domain || "")
-						.split(".")
+					'*.' +
+					(domain || '')
+						.split('.')
 						.slice(1)
-						.join(".");
+						.join('.');
 
 				function cb2(results) {
 					log(
 						gl.debug,
-						"gl.approveDomains called with certs for",
-						(results.certs && results.certs.altnames) || "NONE",
-						"and options:"
+						'gl.approveDomains called with certs for',
+						(results.certs && results.certs.altnames) || 'NONE',
+						'and options:'
 					);
 					log(gl.debug, results.options || results);
 					var err;
 					if (!results) {
-						err = new Error("E_REJECT_SNI");
-						err.code = "E_REJECT_SNI";
+						err = new Error('E_REJECT_SNI');
+						err.code = 'E_REJECT_SNI';
 						eb2(err);
 						return;
 					}
@@ -575,13 +596,19 @@ Greenlock.create = function(gl) {
 					var options = results.options || results;
 					if (opts !== options) {
 						Object.keys(options).forEach(function(key) {
-							if ("undefined" !== typeof options[key] && "domain" !== key) {
+							if (
+								'undefined' !== typeof options[key] &&
+								'domain' !== key
+							) {
 								opts[key] = options[key];
 							}
 						});
 						options = opts;
 					}
-					if (Array.isArray(options.altnames) && options.altnames.length) {
+					if (
+						Array.isArray(options.altnames) &&
+						options.altnames.length
+					) {
 						options.domains = options.altnames;
 					}
 					options.altnames = options.domains;
@@ -593,24 +620,31 @@ Greenlock.create = function(gl) {
 						options.certificate = {};
 					}
 					if (results.certs) {
-						log(gl.debug, "gl renewing");
-						return gl.core.certificates.renewAsync(options, results.certs).then(
-							function(certs) {
-								// Workaround for https://github.com/nodejs/node/issues/22389
-								gl._updateServernames(certs);
-								cb(null, certs);
-							},
-							function(e) {
-								console.debug(
-									"Error renewing certificate for '" + domain + "':"
-								);
-								console.debug(e);
-								console.error("");
-								cb(e);
-							}
-						);
+						log(gl.debug, 'gl renewing');
+						return gl.core.certificates
+							.renewAsync(options, results.certs)
+							.then(
+								function(certs) {
+									// Workaround for https://github.com/nodejs/node/issues/22389
+									gl._updateServernames(certs);
+									cb(null, certs);
+								},
+								function(e) {
+									console.debug(
+										"Error renewing certificate for '" +
+											domain +
+											"':"
+									);
+									console.debug(e);
+									console.error('');
+									cb(e);
+								}
+							);
 					} else {
-						log(gl.debug, "gl getting from disk or registering new");
+						log(
+							gl.debug,
+							'gl getting from disk or registering new'
+						);
 						return gl.core.certificates.getAsync(options).then(
 							function(certs) {
 								// Workaround for https://github.com/nodejs/node/issues/22389
@@ -619,10 +653,12 @@ Greenlock.create = function(gl) {
 							},
 							function(e) {
 								console.debug(
-									"Error loading/registering certificate for '" + domain + "':"
+									"Error loading/registering certificate for '" +
+										domain +
+										"':"
 								);
 								console.debug(e);
-								console.error("");
+								console.error('');
 								cb(e);
 							}
 						);
@@ -631,16 +667,20 @@ Greenlock.create = function(gl) {
 				function eb2(_err) {
 					if (false !== gl.logRejectedDomains) {
 						console.error(
-							"[Error] approveDomains rejected tls sni '" + domain + "'"
+							"[Error] approveDomains rejected tls sni '" +
+								domain +
+								"'"
 						);
 						console.error(
-							"[Error] (see https://git.coolaj86.com/coolaj86/greenlock.js/issues/11)"
+							'[Error] (see https://git.coolaj86.com/coolaj86/greenlock.js/issues/11)'
 						);
-						if ("E_REJECT_SNI" !== _err.code) {
-							console.error("[Error] This is the rejection message:");
+						if ('E_REJECT_SNI' !== _err.code) {
+							console.error(
+								'[Error] This is the rejection message:'
+							);
 							console.error(_err.message);
 						}
-						console.error("");
+						console.error('');
 					}
 					cb(_err);
 					return;
@@ -664,7 +704,9 @@ Greenlock.create = function(gl) {
 						gl.approveDomains(opts, certs, mb2);
 					}
 				} catch (e) {
-					console.error("[ERROR] Something went wrong in approveDomains:");
+					console.error(
+						'[ERROR] Something went wrong in approveDomains:'
+					);
 					console.error(e);
 					console.error(
 						"BUT WAIT! Good news: It's probably your fault, so you can probably fix it."
@@ -672,30 +714,36 @@ Greenlock.create = function(gl) {
 				}
 			};
 		}
-		gl.sni = gl.sni || require("le-sni-auto");
+		gl.sni = gl.sni || require('le-sni-auto');
 		if (gl.sni.create) {
 			gl.sni = gl.sni.create(gl);
 		}
 		gl.tlsOptions.SNICallback = function(_domain, cb) {
 			// format and (lightly) sanitize sni so that users can be naive
 			// and not have to worry about SQL injection or fs discovery
-			var domain = (_domain || "").toLowerCase();
+			var domain = (_domain || '').toLowerCase();
 			// hostname labels allow a-z, 0-9, -, and are separated by dots
 			// _ is sometimes allowed
 			// REGEX // https://www.codeproject.com/Questions/1063023/alphanumeric-validation-javascript-without-regex
 			if (
 				!gl.__sni_allow_dangerous_names &&
-				(!/^[a-z0-9_\.\-]+$/i.test(domain) || -1 !== domain.indexOf(".."))
+				(!/^[a-z0-9_\.\-]+$/i.test(domain) ||
+					-1 !== domain.indexOf('..'))
 			) {
 				log(gl.debug, "invalid sni '" + domain + "'");
-				cb(new Error("invalid SNI"));
+				cb(new Error('invalid SNI'));
 				return;
 			}
 
 			try {
-				gl.sni.sniCallback((gl.__sni_preserve_case && _domain) || domain, cb);
+				gl.sni.sniCallback(
+					(gl.__sni_preserve_case && _domain) || domain,
+					cb
+				);
 			} catch (e) {
-				console.error("[ERROR] Something went wrong in the SNICallback:");
+				console.error(
+					'[ERROR] Something went wrong in the SNICallback:'
+				);
 				console.error(e);
 				cb(e);
 			}
@@ -723,7 +771,7 @@ Greenlock.create = function(gl) {
 		return gl.core.certificates.checkAsync(args);
 	};
 
-	gl.middleware = gl.middleware || require("./lib/middleware");
+	gl.middleware = gl.middleware || require('./lib/middleware');
 	if (gl.middleware.create) {
 		gl.middleware = gl.middleware.create(gl);
 	}
@@ -733,17 +781,17 @@ Greenlock.create = function(gl) {
 	gl.middleware.sanitizeHost = function(app) {
 		return function(req, res, next) {
 			function realNext() {
-				if ("function" === typeof app) {
+				if ('function' === typeof app) {
 					app(req, res);
-				} else if ("function" === typeof next) {
+				} else if ('function' === typeof next) {
 					next();
 				} else {
 					res.statusCode = 500;
-					res.end("Error: no middleware assigned");
+					res.end('Error: no middleware assigned');
 				}
 			}
 			// Get the host:port combo, if it exists
-			var host = (req.headers.host || "").split(":");
+			var host = (req.headers.host || '').split(':');
 
 			// if not, move along
 			if (!host[0]) {
@@ -752,7 +800,7 @@ Greenlock.create = function(gl) {
 			}
 
 			// if so, remove non-allowed characters
-			var safehost = host[0].toLowerCase().replace(SERVERNAME_G, "");
+			var safehost = host[0].toLowerCase().replace(SERVERNAME_G, '');
 
 			// if there were unallowed characters, complain
 			if (
@@ -767,27 +815,33 @@ Greenlock.create = function(gl) {
 			// make lowercase
 			if (!gl.__sni_preserve_case) {
 				host[0] = safehost;
-				req.headers.host = host.join(":");
+				req.headers.host = host.join(':');
 			}
 
 			// Note: This sanitize function is also called on plain sockets, which don't need Domain Fronting checks
 			if (req.socket.encrypted && !gl.__sni_allow_domain_fronting) {
-				if (req.socket && "string" === typeof req.socket.servername) {
+				if (req.socket && 'string' === typeof req.socket.servername) {
 					// Workaround for https://github.com/nodejs/node/issues/22389
 					if (
-						!gl._checkServername(safehost, req.socket.servername.toLowerCase())
+						!gl._checkServername(
+							safehost,
+							req.socket.servername.toLowerCase()
+						)
 					) {
 						res.statusCode = 400;
-						res.setHeader("Content-Type", "text/html; charset=utf-8");
+						res.setHeader(
+							'Content-Type',
+							'text/html; charset=utf-8'
+						);
 						res.end(
-							"<h1>Domain Fronting Error</h1>" +
+							'<h1>Domain Fronting Error</h1>' +
 								"<p>This connection was secured using TLS/SSL for '" +
 								req.socket.servername.toLowerCase() +
 								"'</p>" +
 								"<p>The HTTP request specified 'Host: " +
 								safehost +
 								"', which is (obviously) different.</p>" +
-								"<p>Because this looks like a domain fronting attack, the connection has been terminated.</p>"
+								'<p>Because this looks like a domain fronting attack, the connection has been terminated.</p>'
 						);
 						return;
 					}
@@ -797,7 +851,7 @@ Greenlock.create = function(gl) {
 				) {
 					// TODO how to handle wrapped sockets, as with telebit?
 					console.warn(
-						"\n\n\n[greenlock] WARN: no string for req.socket.servername," +
+						'\n\n\n[greenlock] WARN: no string for req.socket.servername,' +
 							" skipping fronting check for '" +
 							safehost +
 							"'\n\n\n"
