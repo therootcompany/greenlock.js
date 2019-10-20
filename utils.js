@@ -174,8 +174,8 @@ U._importKeypair = function(keypair) {
 		throw new Error('missing private key');
 	}
 
-	return Keypairs.import({ pem: keypair.privateKeyPem }).then(function(pair) {
-		return U._jwkToSet(pair.private);
+	return Keypairs.import({ pem: keypair.privateKeyPem }).then(function(priv) {
+		return U._jwkToSet(priv);
 	});
 };
 

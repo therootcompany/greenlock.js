@@ -61,7 +61,7 @@ C._rawGetOrOrder = function(
 				args
 			).then(function(newPems) {
 				// do not wait on notify
-				greenlock.notify('cert_issue', {
+				greenlock._notify('cert_issue', {
 					options: args,
 					subject: args.subject,
 					altnames: args.altnames,
@@ -92,7 +92,7 @@ C._rawGetOrOrder = function(
 			args
 		).then(function(renewedPems) {
 			// do not wait on notify
-			greenlock.notify('cert_renewal', {
+			greenlock._notify('cert_renewal', {
 				options: args,
 				subject: args.subject,
 				altnames: args.altnames,
@@ -144,7 +144,7 @@ C._rawOrder = function(greenlock, db, acme, challenges, account, email, args) {
 				})
 				.then(function(csr) {
 					function notify() {
-						greenlock.notify('challenge_status', {
+						greenlock._notify('challenge_status', {
 							options: args,
 							subject: args.subject,
 							altnames: args.altnames,
@@ -176,6 +176,7 @@ C._rawOrder = function(greenlock, db, acme, challenges, account, email, args) {
 					if (kresult.exists) {
 						return pems;
 					}
+					query.keypair = serverKeypair;
 					return db.setKeypair(query, serverKeypair).then(function() {
 						return pems;
 					});

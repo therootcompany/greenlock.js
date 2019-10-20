@@ -7,11 +7,9 @@ var E = require('./errors.js');
 var pending = {};
 
 A._getOrCreate = function(greenlock, db, acme, args) {
-	console.log('[debug] A get or create', args);
 	var email = args.subscriberEmail || greenlock._defaults.subscriberEmail;
 
 	if (!email) {
-		console.log('[debug] throw no sub');
 		throw E.NO_SUBSCRIBER('get account', args.subject);
 	}
 
@@ -21,9 +19,7 @@ A._getOrCreate = function(greenlock, db, acme, args) {
 			throw E.NO_SUBSCRIBER('get account', args.subcriberEmail);
 		})
 		.then(function() {
-			console.log('[debug] valid email');
 			if (pending[email]) {
-				console.log('[debug] return pending');
 				return pending[email];
 			}
 
@@ -37,7 +33,6 @@ A._getOrCreate = function(greenlock, db, acme, args) {
 					return result;
 				});
 
-			console.log('[debug] return new');
 			return pending[email];
 		});
 };
@@ -52,7 +47,6 @@ A._rawGetOrCreate = function(greenlock, db, acme, args, email) {
 	}
 
 	return p.then(function(fullAccount) {
-		console.log('[debug] full account', fullAccount);
 		if (!fullAccount) {
 			return A._newAccount(greenlock, db, acme, args, email, null);
 		}
@@ -83,7 +77,6 @@ A._newAccount = function(greenlock, db, acme, args, email, fullAccount) {
 				accountKeypair: keypair,
 				debug: args.debug
 			};
-			console.log('[debug] create account', accReg);
 			return acme.accounts.create(accReg).then(function(receipt) {
 				var reg = {
 					keypair: keypair,

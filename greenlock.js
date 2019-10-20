@@ -4,6 +4,7 @@ var pkg = require('./package.json');
 
 var ACME = require('@root/acme');
 var Greenlock = module.exports;
+var homedir = require('os').homedir();
 
 var G = Greenlock;
 var U = require('./utils.js');
@@ -201,7 +202,6 @@ G.create = function(gconf) {
 		return greenlock.manager.find(args).then(function(sites) {
 			// Note: the manager must guaranteed that these are mutable copies
 
-			console.log('[debug] found what?', sites);
 			var renewedOrFailed = [];
 
 			function next() {
@@ -267,7 +267,6 @@ G.create = function(gconf) {
 
 	greenlock.order = function(args) {
 		return greenlock._acme(args).then(function(acme) {
-			console.log('[debug] acme meta', acme);
 			var storeConf = args.store || greenlock._defaults.store;
 			return P._load(storeConf.module).then(function(plugin) {
 				var store = Greenlock._normalizeStore(
@@ -275,20 +274,19 @@ G.create = function(gconf) {
 					plugin.create(storeConf)
 				);
 
-				console.log('[debug] store', storeConf);
 				return A._getOrCreate(
 					greenlock,
 					store.accounts,
 					acme,
 					args
 				).then(function(account) {
-					console.log('[debug] account', account);
 					var challengeConfs =
 						args.challenges || greenlock._defaults.challenges;
 					console.log('[debug] challenge confs', challengeConfs);
 					return Promise.all(
 						Object.keys(challengeConfs).map(function(typ01) {
 							var chConf = challengeConfs[typ01];
+							console.log('[debug] module', chConf);
 							return P._load(chConf.module).then(function(
 								plugin
 							) {
@@ -367,7 +365,7 @@ G._defaults = function(opts) {
 	if (!defaults.store) {
 		defaults.store = {
 			module: 'greenlock-store-fs',
-			basePath: '~/.config/greenlock/'
+			basePath: homedir + '/.config/greenlock/'
 		};
 	}
 	P._loadSync(defaults.store.module);
@@ -405,6 +403,13 @@ G._defaults = function(opts) {
 		};
 	}
 
+	if (!defaults.renewOffset) {
+		defaults.renewOffset = '-45d';
+	}
+	if (!defaults.renewStagger) {
+		defaults.renewStagger = '3d';
+	}
+
 	if (!defaults.accountKeyType) {
 		defaults.accountKeyType = 'EC-P256';
 	}
@@ -412,8 +417,9 @@ G._defaults = function(opts) {
 		if (defaults.domainKeyType) {
 			console.warn('use serverKeyType instead of domainKeyType');
 			defaults.serverKeyType = defaults.domainKeyType;
+		} else {
+			defaults.serverKeyType = 'RSA-2048';
 		}
-		defaults.serverKeyType = 'RSA-2048';
 	}
 	if (defaults.domainKeypair) {
 		console.warn('use serverKeypair instead of domainKeypair');

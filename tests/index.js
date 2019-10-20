@@ -9,7 +9,7 @@ var subject = process.env.BASE_DOMAIN;
 var altnames = [subject, '*.' + subject, 'foo.bar.' + subject];
 var email = process.env.SUBSCRIBER_EMAIL;
 var challenge = JSON.parse(process.env.CHALLENGE_OPTIONS);
-challenge.module = process.env.CHALLENGE_MODULE;
+challenge.module = process.env.CHALLENGE_PLUGIN;
 
 var greenlock = Greenlock.create({
 	agreeTos: true,
@@ -33,7 +33,9 @@ greenlock
 		subscriberEmail: email
 	})
 	.then(function() {
-		return greenlock.renew();
+		return greenlock.renew().then(function (pems) {
+      console.info(pems);
+    });
 	})
 	.catch(function(e) {
 		console.error('yo', e.code);
