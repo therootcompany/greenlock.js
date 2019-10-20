@@ -214,6 +214,7 @@ C._check = function(db, args) {
 		certificate: args.certificate
 	};
 	return db.check(query).then(function(pems) {
+    console.log('[debug] has pems? (yes)', pems);
 		if (!pems) {
 			return null;
 		}
@@ -234,6 +235,7 @@ C._check = function(db, args) {
 
 		return U._getKeypair(db, args.subject, query)
 			.then(function(keypair) {
+        console.log('[debug get keypair]', Object.keys(keypair));
 				pems.privkey = keypair.privateKeyPem;
 				return pems;
 			})

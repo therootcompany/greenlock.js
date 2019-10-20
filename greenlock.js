@@ -310,7 +310,14 @@ G.create = function(gconf) {
 							challenges,
 							account,
 							args
-						);
+						).then(function(pems) {
+							if (!pems.privkey) {
+								throw new Error(
+									'missing private key, which is kinda important'
+								);
+							}
+							return pems;
+						});
 					});
 				});
 			});

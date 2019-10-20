@@ -263,5 +263,7 @@ U._getOrCreateKeypair = function(db, subject, query, keyType, mustExist) {
 };
 
 U._getKeypair = function(db, subject, query) {
-	return U._getOrCreateKeypair(db, subject, query, '', true);
+	return U._getOrCreateKeypair(db, subject, query, '', true).then(function (result) {
+    return result.keypair;
+  });
 };
