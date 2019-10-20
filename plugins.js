@@ -1,11 +1,33 @@
 'use strict';
 
+var P = module.exports;
+
 var spawn = require('child_process').spawn;
 var spawnSync = require('child_process').spawnSync;
-var path = require('path');
-var PKG_DIR = path.join(__dirname, '..');
+var PKG_DIR = __dirname;
 
-module.exports.installSync = function(moduleName) {
+P._load = function(modname) {
+	try {
+		return Promise.resolve(require(modname));
+	} catch (e) {
+		return P._install(modname).then(function() {
+			return require(modname);
+		});
+	}
+};
+
+P._loadSync = function(modname) {
+	var mod;
+	try {
+		mod = require(modname);
+	} catch (e) {
+		P._installSync(modname);
+		mod = require(modname);
+	}
+	return mod;
+};
+
+P._installSync = function(moduleName) {
 	var npm = 'npm';
 	var args = ['install', '--save', moduleName];
 	var out = '';
@@ -34,8 +56,8 @@ module.exports.installSync = function(moduleName) {
 		return;
 	}
 
-  out += cmd.stdout.toString('utf8');
-  out += cmd.stderr.toString('utf8');
+	out += cmd.stdout.toString('utf8');
+	out += cmd.stderr.toString('utf8');
 
 	if (out) {
 		console.error(out);
@@ -60,7 +82,7 @@ module.exports.installSync = function(moduleName) {
 	process.exit(1);
 };
 
-module.exports.install = function(moduleName) {
+P._install = function(moduleName) {
 	return new Promise(function(resolve) {
 		if (!moduleName) {
 			throw new Error('no module name given');
@@ -127,5 +149,5 @@ module.exports.install = function(moduleName) {
 };
 
 if (require.main === module) {
-	module.exports.installSync(process.argv[2]);
+	P._installSync(process.argv[2]);
 }
