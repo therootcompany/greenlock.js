@@ -4,7 +4,9 @@ var P = module.exports;
 
 var spawn = require('child_process').spawn;
 var spawnSync = require('child_process').spawnSync;
-var PKG_DIR = __dirname;
+
+// Exported for CLIs and such to override
+P.PKG_DIR = __dirname;
 
 P._load = function(modname) {
 	try {
@@ -35,7 +37,7 @@ P._installSync = function(moduleName) {
 
 	try {
 		cmd = spawnSync(npm, args, {
-			cwd: PKG_DIR,
+			cwd: P.PKG_DIR,
 			windowsHide: true
 		});
 	} catch (e) {
@@ -45,7 +47,7 @@ P._installSync = function(moduleName) {
 				' ' +
 				args.join(' ') +
 				"' in '" +
-				PKG_DIR +
+				P.PKG_DIR +
 				"'"
 		);
 		console.error(e.message);
@@ -71,12 +73,12 @@ P._installSync = function(moduleName) {
 			' ' +
 			args.join(' ') +
 			"' in '" +
-			PKG_DIR +
+			P.PKG_DIR +
 			"'"
 	);
 
 	console.error(
-		'Try for yourself:\n\tcd ' + PKG_DIR + '\n\tnpm ' + args.join(' ')
+		'Try for yourself:\n\tcd ' + P.PKG_DIR + '\n\tnpm ' + args.join(' ')
 	);
 
 	process.exit(1);
@@ -92,7 +94,7 @@ P._install = function(moduleName) {
 		var args = ['install', '--save', moduleName];
 		var out = '';
 		var cmd = spawn(npm, args, {
-			cwd: PKG_DIR,
+			cwd: P.PKG_DIR,
 			windowsHide: true
 		});
 
@@ -110,7 +112,7 @@ P._install = function(moduleName) {
 					' ' +
 					args.join(' ') +
 					"' in '" +
-					PKG_DIR +
+					P.PKG_DIR +
 					"'"
 			);
 			console.error(e.message);
@@ -134,12 +136,12 @@ P._install = function(moduleName) {
 					' ' +
 					args.join(' ') +
 					"' in '" +
-					PKG_DIR +
+					P.PKG_DIR +
 					"'"
 			);
 			console.error(
 				'Try for yourself:\n\tcd ' +
-					PKG_DIR +
+					P.PKG_DIR +
 					'\n\tnpm ' +
 					args.join(' ')
 			);
