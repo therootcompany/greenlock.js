@@ -128,9 +128,9 @@ G.create = function(gconf) {
 
 	greenlock._notify = function(ev, params) {
 		var mng = greenlock.manager;
-		if (mng.notify) {
+		if (mng.notif || greenlock._defaults.notify) {
 			try {
-				var p = mng.notify(ev, params);
+				var p = (mng.notify || greenlock._defaults.notify)(ev, params);
 				if (p && p.catch) {
 					p.catch(function(e) {
 						console.error("Error on event '" + ev + "':");
