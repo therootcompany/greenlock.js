@@ -14,6 +14,7 @@ Greenlock&trade; is the easiest way to integrate Let's Encrypt into your project
 
 We've built it simple enough for Hobbyists, and robust enough for the Enterprise.
 
+<!--
 # Localhost Development
 
 <details>
@@ -35,6 +36,8 @@ TODO
 <summary>Learn more about the Greenlock CLI</summary>
 TODO
 </details>
+
+-->
 
 # JavaScript Library
 
@@ -127,11 +130,14 @@ TODO
 
 </details>
 
+<!--
+
 <details>
 <summary>Node.js</summary>
+
 ```bash
 npm install --save @root/greenlock
-````
+```
 
 TODO
 
@@ -139,6 +145,7 @@ TODO
 
 <details>
 <summary>Express.js</summary>
+
 ```js
 'use strict';
 
@@ -151,10 +158,9 @@ maintainerEmail: 'jon@example.com'
 // for
 maintainerNewsletter: true
 });
-
 ```
-</details>
 
+</details>
 
 <details>
 <summary>WebPack</summary>
@@ -165,6 +171,8 @@ TODO
 <summary>VanillaJS for Browsers</summary>
 TODO
 </details>
+
+-->
 
 # HTTP-01 &amp; DNS-01 Integrations
 
@@ -189,22 +197,21 @@ http-01 will only be supplied as a defaut if no other challenge is provided.
 
 You can use ACME (Let's Encrypt) with
 
-    -   [x] DNS-01 Challenges
-        -   CloudFlare
-        -   [Digital Ocean](https://git.rootprojects.org/root/acme-dns-01-digitalocean.js)
-        -   [DNSimple](https://git.rootprojects.org/root/acme-dns-01-dnsimple.js)
-        -   [DuckDNS](https://git.rootprojects.org/root/acme-dns-01-duckdns.js)
-        -   [GoDaddy](https://git.rootprojects.org/root/acme-dns-01-godaddy.js)
-        -   [Gandi](https://git.rootprojects.org/root/acme-dns-01-gandi.js)
-        -   [NameCheap](https://git.rootprojects.org/root/acme-dns-01-namecheap.js)
-        -   [Name&#46;com](https://git.rootprojects.org/root/acme-dns-01-namedotcom.js)
-        -   Route53 (AWS)
-        -   [Vultr](https://git.rootprojects.org/root/acme-dns-01-vultr.js)
-        -   Build your own
-    -   [x] HTTP-01 Challenges
-        -   [In-Memory](https://git.rootprojects.org/root/acme-http-01-standalone.js) (Standalone)
-        -   [FileSystem](https://git.rootprojects.org/root/acme-http-01-webroot.js) (WebRoot)
-        -   S3 (AWS, Digital Ocean, etc)
-    -   [x] TLS-ALPN-01 Challenges
-        - Contact us to learn about Greenlock Pro
-```
+-   [x] DNS-01 Challenges
+    -   CloudFlare
+    -   [Digital Ocean](https://git.rootprojects.org/root/acme-dns-01-digitalocean.js)
+    -   [DNSimple](https://git.rootprojects.org/root/acme-dns-01-dnsimple.js)
+    -   [DuckDNS](https://git.rootprojects.org/root/acme-dns-01-duckdns.js)
+    -   [GoDaddy](https://git.rootprojects.org/root/acme-dns-01-godaddy.js)
+    -   [Gandi](https://git.rootprojects.org/root/acme-dns-01-gandi.js)
+    -   [NameCheap](https://git.rootprojects.org/root/acme-dns-01-namecheap.js)
+    -   [Name&#46;com](https://git.rootprojects.org/root/acme-dns-01-namedotcom.js)
+    -   Route53 (AWS)
+    -   [Vultr](https://git.rootprojects.org/root/acme-dns-01-vultr.js)
+    -   Build your own
+-   [x] HTTP-01 Challenges
+    -   [In-Memory](https://git.rootprojects.org/root/acme-http-01-standalone.js) (Standalone)
+    -   [FileSystem](https://git.rootprojects.org/root/acme-http-01-webroot.js) (WebRoot)
+    -   S3 (AWS, Digital Ocean, etc)
+-   [x] TLS-ALPN-01 Challenges
+    -   Contact us to learn about Greenlock Pro
