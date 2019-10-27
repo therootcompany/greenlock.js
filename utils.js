@@ -3,7 +3,7 @@
 var U = module.exports;
 
 var promisify = require('util').promisify;
-var resolveSoa = promisify(require('dns').resolveSoa);
+//var resolveSoa = promisify(require('dns').resolveSoa);
 var resolveMx = promisify(require('dns').resolveMx);
 var punycode = require('punycode');
 var Keypairs = require('@root/keypairs');
@@ -165,18 +165,28 @@ U._genKeypair = function(keyType) {
 
 // TODO use ACME._importKeypair ??
 U._importKeypair = function(keypair) {
+	// this should import all formats equally well:
+	// 'object' (JWK), 'string' (private key pem), kp.privateKeyPem, kp.privateKeyJwk
+	if (keypair.private || keypair.d) {
+		return U._jwkToSet(keypair.private || keypair);
+	}
 	if (keypair.privateKeyJwk) {
 		return U._jwkToSet(keypair.privateKeyJwk);
 	}
 
-	if (!keypair.privateKeyPem) {
+	if ('string' !== typeof keypair && !keypair.privateKeyPem) {
 		// TODO put in errors
 		throw new Error('missing private key');
 	}
 
-	return Keypairs.import({ pem: keypair.privateKeyPem }).then(function(priv) {
-		return U._jwkToSet(priv);
-	});
+	return Keypairs.import({ pem: keypair.privateKeyPem || keypair }).then(
+		function(priv) {
+			if (!priv.d) {
+				throw new Error('missing private key');
+			}
+			return U._jwkToSet(priv);
+		}
+	);
 };
 
 U._jwkToSet = function(jwk) {
@@ -263,7 +273,9 @@ U._getOrCreateKeypair = function(db, subject, query, keyType, mustExist) {
 };
 
 U._getKeypair = function(db, subject, query) {
-	return U._getOrCreateKeypair(db, subject, query, '', true).then(function (result) {
-    return result.keypair;
-  });
+	return U._getOrCreateKeypair(db, subject, query, '', true).then(function(
+		result
+	) {
+		return result.keypair;
+	});
 };

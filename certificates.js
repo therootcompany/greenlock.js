@@ -4,13 +4,27 @@ var C = module.exports;
 var U = require('./utils.js');
 var CSR = require('@root/csr');
 var Enc = require('@root/encoding');
+var Keypairs = require('@root/keypairs');
 
 var pending = {};
 var rawPending = {};
 
+// What the abbreviations mean
+//
+// gnlkc => greenlock
+// mconf => manager config
+// db => greenlock store instance
+// acme => instance of ACME.js
+// chs => instances of challenges
+// acc => account
+// args => site / extra options
+
 // Certificates
-C._getOrOrder = function(greenlock, db, acme, challenges, account, args) {
-	var email = args.subscriberEmail || greenlock._defaults.subscriberEmail;
+C._getOrOrder = function(gnlck, mconf, db, acme, chs, acc, args) {
+	var email =
+		args.subscriberEmail ||
+		mconf.subscriberEmail ||
+		gnlck._defaults.subscriberEmail;
 
 	var id = args.altnames.join(' ');
 	if (pending[id]) {
@@ -18,11 +32,12 @@ C._getOrOrder = function(greenlock, db, acme, challenges, account, args) {
 	}
 
 	pending[id] = C._rawGetOrOrder(
-		greenlock,
+		gnlck,
+		mconf,
 		db,
 		acme,
-		challenges,
-		account,
+		chs,
+		acc,
 		email,
 		args
 	)
@@ -39,33 +54,26 @@ C._getOrOrder = function(greenlock, db, acme, challenges, account, args) {
 };
 
 // Certificates
-C._rawGetOrOrder = function(
-	greenlock,
-	db,
-	acme,
-	challenges,
-	account,
-	email,
-	args
-) {
-	return C._check(db, args).then(function(pems) {
+C._rawGetOrOrder = function(gnlck, mconf, db, acme, chs, acc, email, args) {
+	return C._check(gnlck, mconf, db, args).then(function(pems) {
 		// No pems? get some!
 		if (!pems) {
 			return C._rawOrder(
-				greenlock,
+				gnlck,
+				mconf,
 				db,
 				acme,
-				challenges,
-				account,
+				chs,
+				acc,
 				email,
 				args
 			).then(function(newPems) {
 				// do not wait on notify
-				greenlock._notify('cert_issue', {
+				gnlck._notify('cert_issue', {
 					options: args,
 					subject: args.subject,
 					altnames: args.altnames,
-					account: account,
+					account: acc,
 					email: email,
 					pems: newPems
 				});
@@ -74,7 +82,7 @@ C._rawGetOrOrder = function(
 		}
 
 		// Nice and fresh? We're done!
-		if (!C._isStale(greenlock, args, pems)) {
+		if (!C._isStale(gnlck, mconf, args, pems)) {
 			// return existing unexpired (although potentially stale) certificates when available
 			// there will be an additional .renewing property if the certs are being asynchronously renewed
 			//pems._type = 'current';
@@ -82,26 +90,20 @@ C._rawGetOrOrder = function(
 		}
 
 		// Getting stale? Let's renew to freshen up!
-		var p = C._rawOrder(
-			greenlock,
-			db,
-			acme,
-			challenges,
-			account,
-			email,
-			args
-		).then(function(renewedPems) {
-			// do not wait on notify
-			greenlock._notify('cert_renewal', {
-				options: args,
-				subject: args.subject,
-				altnames: args.altnames,
-				account: account,
-				email: email,
-				pems: renewedPems
-			});
-			return renewedPems;
-		});
+		var p = C._rawOrder(gnlck, mconf, db, acme, chs, acc, email, args).then(
+			function(renewedPems) {
+				// do not wait on notify
+				gnlck._notify('cert_renewal', {
+					options: args,
+					subject: args.subject,
+					altnames: args.altnames,
+					account: acc,
+					email: email,
+					pems: renewedPems
+				});
+				return renewedPems;
+			}
+		);
 
 		// TODO what should this be?
 		if (args.waitForRenewal) {
@@ -114,7 +116,7 @@ C._rawGetOrOrder = function(
 
 // we have another promise here because it the optional renewal
 // may resolve in a different stack than the returned pems
-C._rawOrder = function(greenlock, db, acme, challenges, account, email, args) {
+C._rawOrder = function(gnlck, mconf, db, acme, chs, acc, email, args) {
 	var id = args.altnames
 		.slice(0)
 		.sort()
@@ -123,10 +125,17 @@ C._rawOrder = function(greenlock, db, acme, challenges, account, email, args) {
 		return rawPending[id];
 	}
 
-	var keyType = args.serverKeyType || greenlock._defaults.serverKeyType;
+	var keyType =
+		args.serverKeyType ||
+		mconf.serverKeyType ||
+		gnlck._defaults.serverKeyType;
 	var query = {
 		subject: args.subject,
-		certificate: args.certificate || {}
+		certificate: args.certificate || {},
+		directoryUrl:
+			args.directoryUrl ||
+			mconf.directoryUrl ||
+			gnlck._defaults.directoryUrl
 	};
 	rawPending[id] = U._getOrCreateKeypair(db, args.subject, query, keyType)
 		.then(function(kresult) {
@@ -134,7 +143,7 @@ C._rawOrder = function(greenlock, db, acme, challenges, account, email, args) {
 			var domains = args.altnames.slice(0);
 
 			return CSR.csr({
-				jwk: serverKeypair.privateKeyJwk,
+				jwk: serverKeypair.privateKeyJwk || serverKeypair.private,
 				domains: domains,
 				encoding: 'der'
 			})
@@ -144,21 +153,22 @@ C._rawOrder = function(greenlock, db, acme, challenges, account, email, args) {
 				})
 				.then(function(csr) {
 					function notify() {
-						greenlock._notify('challenge_status', {
+						gnlck._notify('challenge_status', {
 							options: args,
 							subject: args.subject,
 							altnames: args.altnames,
-							account: account,
+							account: acc,
 							email: email
 						});
 					}
 					var certReq = {
-						debug: args.debug || greenlock._defaults.debug,
+						debug: args.debug || gnlck._defaults.debug,
 
-						challenges: challenges,
-						account: account, // only used if accounts.key.kid exists
-						accountKeypair: account.keypair,
-						keypair: account.keypair, // TODO
+						challenges: chs,
+						account: acc, // only used if accounts.key.kid exists
+						accountKey:
+							acc.keypair.privateKeyJwk || acc.keypair.private,
+						keypair: acc.keypair, // TODO
 						csr: csr,
 						domains: domains, // because ACME.js v3 uses `domains` still, actually
 						onChallengeStatus: notify,
@@ -190,7 +200,7 @@ C._rawOrder = function(greenlock, db, acme, challenges, account, email, args) {
 			return db.set(query);
 		})
 		.then(function() {
-			return C._check(db, args);
+			return C._check(gnlck, mconf, db, args);
 		})
 		.then(function(bundle) {
 			// TODO notify Manager
@@ -207,14 +217,17 @@ C._rawOrder = function(greenlock, db, acme, challenges, account, email, args) {
 };
 
 // returns pems, if they exist
-C._check = function(db, args) {
+C._check = function(gnlck, mconf, db, args) {
 	var query = {
 		subject: args.subject,
 		// may contain certificate.id
-		certificate: args.certificate
+		certificate: args.certificate,
+		directoryUrl:
+			args.directoryUrl ||
+			mconf.directoryUrl ||
+			gnlck._defaults.directoryUrl
 	};
 	return db.check(query).then(function(pems) {
-    console.log('[debug] has pems? (yes)', pems);
 		if (!pems) {
 			return null;
 		}
@@ -235,9 +248,13 @@ C._check = function(db, args) {
 
 		return U._getKeypair(db, args.subject, query)
 			.then(function(keypair) {
-        console.log('[debug get keypair]', Object.keys(keypair));
-				pems.privkey = keypair.privateKeyPem;
-				return pems;
+				return Keypairs.export({
+					jwk: keypair.privateKeyJwk || keypair.private,
+					encoding: 'pem'
+				}).then(function(pem) {
+					pems.privkey = pem;
+					return pems;
+				});
 			})
 			.catch(function() {
 				// TODO report error, but continue the process as with no cert
@@ -247,12 +264,12 @@ C._check = function(db, args) {
 };
 
 // Certificates
-C._isStale = function(greenlock, args, pems) {
+C._isStale = function(gnlck, mconf, args, pems) {
 	if (args.duplicate) {
 		return true;
 	}
 
-	var renewAt = C._renewableAt(greenlock, args, pems);
+	var renewAt = C._renewableAt(gnlck, mconf, args, pems);
 
 	if (Date.now() >= renewAt) {
 		return true;
@@ -261,12 +278,16 @@ C._isStale = function(greenlock, args, pems) {
 	return false;
 };
 
-C._renewableAt = function(greenlock, args, pems) {
+C._renewableAt = function(gnlck, mconf, args, pems) {
 	if (args.renewAt) {
 		return args.renewAt;
 	}
 
-	var renewOffset = args.renewOffset || greenlock._defaults.renewOffset || 0;
+	var renewOffset =
+		args.renewOffset ||
+		mconf.renewOffset ||
+		gnlck._defaults.renewOffset ||
+		0;
 	var week = 1000 * 60 * 60 * 24 * 6;
 	if (!args.force && Math.abs(renewOffset) < week) {
 		throw new Error(

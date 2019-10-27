@@ -65,12 +65,23 @@ var gl = Greenlock.create({
 });
 ```
 
-| Parameter         | Description                                                                                                                                                |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| maintainerEmail   | the developer contact for critical bug and security notifications                                                                                          |
-| maintainerUpdates | (default: false) receive occasional non-critical notifications                                                                                             |
-| subscriberEmail   | the contact who agrees to the Let's Encrypt Subscriber Agreement and the Greenlock Terms of Service<br>this contact receives renewal failure notifications |
-| agreeToTerms      | (default: false) either 'true' or a function that presents the Terms of Service and returns it once accepted                                               |
+| Parameter                 | Description                                                                                                                                                |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| servername                | the default servername to use for non-sni requests (many IoT clients)                                                                                      |
+| maintainerEmail           | the developer contact for critical bug and security notifications                                                                                          |
+| maintainerUpdates         | (default: false) receive occasional non-critical notifications                                                                                             |
+| maintainerPackage         | if you publish your package for others to use, `require('./package.json').name` here                                                                       |
+| maintainerPackageVersion  | if you publish your package for others to use, `require('./package.json').version` here                                                                    |
+| subscriberEmail           | the contact who agrees to the Let's Encrypt Subscriber Agreement and the Greenlock Terms of Service<br>this contact receives renewal failure notifications |
+| agreeToTerms              | (default: false) either 'true' or a function that presents the Terms of Service and returns it once accepted                                               |
+| store                     | override the default storage module                                                                                                                        |
+| store.module              | the name of your storage module                                                                                                                            |
+| store.xxxx                | options specific to your storage module                                                                                                                    |
+| challenges['http-01']     | provide an http-01 challenge module                                                                                                                        |
+| challenges['dns-01']      | provide a dns-01 challenge module                                                                                                                          |
+| challenges['tls-alpn-01'] | provide a tls-alpn-01 challenge module                                                                                                                     |
+| challenges[type].module   | the name of your challenge module                                                                                                                          |
+| challenges[type].xxxx     | module-specific options                                                                                                                                    |
 
 ### Add Approved Domains
 
@@ -130,14 +141,17 @@ TODO
 
 </details>
 
-<!--
-
 <details>
 <summary>Node.js</summary>
 
 ```bash
 npm install --save @root/greenlock
+npm install --save greenlock-manager-fs
+npm install --save greenlock-store-fs
+npm install --save acme-http-01-standalone
 ```
+
+<!--
 
 TODO
 

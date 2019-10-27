@@ -65,10 +65,37 @@ G.create = function(gconf) {
 	var defaults = G._defaults(gconf);
 
 	greenlock.manager = Manager.create(defaults);
+	greenlock._init = function() {
+		var p;
+		greenlock._init = function() {
+			return p;
+		};
+		p = greenlock.manager.config().then(function(conf) {
+			var changed = false;
+			if (!conf.challenges) {
+				changed = true;
+				conf.challenges = defaults.challenges;
+			}
+			if (!conf.store) {
+				changed = true;
+				conf.store = defaults.store;
+			}
+			if (changed) {
+				return greenlock.manager.config(conf);
+			}
+		});
+		return p;
+	};
+	greenlock._init();
 
 	// The goal here is to reduce boilerplate, such as error checking
 	// and duration parsing, that a manager must implement
 	greenlock.add = function(args) {
+		return greenlock._init().then(function() {
+			return greenlock._add(args);
+		});
+	};
+	greenlock._add = function(args) {
 		return Promise.resolve().then(function() {
 			// durations
 			if (args.renewOffset) {
@@ -128,23 +155,26 @@ G.create = function(gconf) {
 
 	greenlock._notify = function(ev, params) {
 		var mng = greenlock.manager;
-		if (mng.notif || greenlock._defaults.notify) {
+		if (mng.notify || greenlock._defaults.notify) {
 			try {
 				var p = (mng.notify || greenlock._defaults.notify)(ev, params);
 				if (p && p.catch) {
 					p.catch(function(e) {
-						console.error("Error on event '" + ev + "':");
+						console.error(
+							"Promise Rejection on event '" + ev + "':"
+						);
 						console.error(e);
 					});
 				}
 			} catch (e) {
-				console.error("Error on event '" + ev + "':");
+				console.error("Thrown Exception on event '" + ev + "':");
 				console.error(e);
 			}
 		} else {
 			if (/error/i.test(ev)) {
 				console.error("Error event '" + ev + "':");
 				console.error(params);
+				console.error(params.stack);
 			}
 		}
 		/*
@@ -180,6 +210,11 @@ G.create = function(gconf) {
 
 	// needs to get info about the renewal, such as which store and challenge(s) to use
 	greenlock.renew = function(args) {
+		return greenlock.manager.config().then(function(mconf) {
+			return greenlock._renew(mconf, args);
+		});
+	};
+	greenlock._renew = function(mconf, args) {
 		if (!args) {
 			args = {};
 		}
@@ -207,7 +242,7 @@ G.create = function(gconf) {
 			function next() {
 				var site = sites.shift();
 				if (!site) {
-					return null;
+					return Promise.resolve(null);
 				}
 
 				var order = {
@@ -216,7 +251,7 @@ G.create = function(gconf) {
 				renewedOrFailed.push(order);
 				// TODO merge args + result?
 				return greenlock
-					.order(site)
+					._order(mconf, site)
 					.then(function(pems) {
 						order.pems = pems;
 					})
@@ -237,7 +272,10 @@ G.create = function(gconf) {
 
 	greenlock._acme = function(args) {
 		var acme = ACME.create({
-			debug: args.debug
+			maintainerEmail: greenlock._defaults.maintainerEmail,
+			packageAgent: greenlock._defaults.packageAgent,
+			notify: greenlock._notify,
+			debug: greenlock._defaults.debug || args.debug
 		});
 		var dirUrl = args.directoryUrl || greenlock._defaults.directoryUrl;
 
@@ -266,6 +304,13 @@ G.create = function(gconf) {
 	};
 
 	greenlock.order = function(args) {
+		return greenlock._init().then(function() {
+			return greenlock.manager.config().then(function(mconf) {
+				return greenlock._order(mconf, args);
+			});
+		});
+	};
+	greenlock._order = function(mconf, args) {
 		return greenlock._acme(args).then(function(acme) {
 			var storeConf = args.store || greenlock._defaults.store;
 			return P._load(storeConf.module).then(function(plugin) {
@@ -276,17 +321,18 @@ G.create = function(gconf) {
 
 				return A._getOrCreate(
 					greenlock,
+					mconf,
 					store.accounts,
 					acme,
 					args
 				).then(function(account) {
 					var challengeConfs =
-						args.challenges || greenlock._defaults.challenges;
-					console.log('[debug] challenge confs', challengeConfs);
+						args.challenges ||
+						mconf.challenges ||
+						greenlock._defaults.challenges;
 					return Promise.all(
 						Object.keys(challengeConfs).map(function(typ01) {
 							var chConf = challengeConfs[typ01];
-							console.log('[debug] module', chConf);
 							return P._load(chConf.module).then(function(
 								plugin
 							) {
@@ -305,6 +351,7 @@ G.create = function(gconf) {
 						});
 						return C._getOrOrder(
 							greenlock,
+							mconf,
 							store.certificates,
 							acme,
 							challenges,

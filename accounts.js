@@ -6,8 +6,11 @@ var E = require('./errors.js');
 
 var pending = {};
 
-A._getOrCreate = function(greenlock, db, acme, args) {
-	var email = args.subscriberEmail || greenlock._defaults.subscriberEmail;
+A._getOrCreate = function(gnlck, mconf, db, acme, args) {
+	var email =
+		args.subscriberEmail ||
+		mconf.subscriberEmail ||
+		gnlck._defaults.subscriberEmail;
 
 	if (!email) {
 		throw E.NO_SUBSCRIBER('get account', args.subject);
@@ -23,7 +26,14 @@ A._getOrCreate = function(greenlock, db, acme, args) {
 				return pending[email];
 			}
 
-			pending[email] = A._rawGetOrCreate(greenlock, db, acme, args, email)
+			pending[email] = A._rawGetOrCreate(
+				gnlck,
+				mconf,
+				db,
+				acme,
+				args,
+				email
+			)
 				.catch(function(e) {
 					delete pending[email];
 					throw e;
@@ -38,32 +48,37 @@ A._getOrCreate = function(greenlock, db, acme, args) {
 };
 
 // What we really need out of this is the private key and the ACME "key" id
-A._rawGetOrCreate = function(greenlock, db, acme, args, email) {
+A._rawGetOrCreate = function(gnlck, mconf, db, acme, args, email) {
 	var p;
 	if (db.check) {
-		p = A._checkStore(greenlock, db, acme, args, email);
+		p = A._checkStore(gnlck, mconf, db, acme, args, email);
 	} else {
 		p = Promise.resolve(null);
 	}
 
 	return p.then(function(fullAccount) {
 		if (!fullAccount) {
-			return A._newAccount(greenlock, db, acme, args, email, null);
+			return A._newAccount(gnlck, mconf, db, acme, args, email, null);
 		}
 
 		if (fullAccount.keypair && fullAccount.key && fullAccount.key.kid) {
 			return fullAccount;
 		}
 
-		return A._newAccount(greenlock, db, acme, args, email, fullAccount);
+		return A._newAccount(gnlck, mconf, db, acme, args, email, fullAccount);
 	});
 };
 
-A._newAccount = function(greenlock, db, acme, args, email, fullAccount) {
-	var keyType = args.accountKeyType || greenlock._defaults.accountKeyType;
+A._newAccount = function(gnlck, mconf, db, acme, args, email, fullAccount) {
+	var keyType =
+		args.accountKeyType ||
+		mconf.accountKeyType ||
+		gnlck._defaults.accountKeyType;
 	var query = {
 		subject: args.subject,
 		email: email,
+		subscriberEmail: email,
+		customerEmail: args.customerEmail,
 		account: fullAccount || {}
 	};
 
@@ -73,8 +88,10 @@ A._newAccount = function(greenlock, db, acme, args, email, fullAccount) {
 			var accReg = {
 				subscriberEmail: email,
 				agreeToTerms:
-					args.agreeToTerms || greenlock._defaults.agreeToTerms,
-				accountKeypair: keypair,
+					args.agreeToTerms ||
+					mconf.agreeToTerms ||
+					gnlck._defaults.agreeToTerms,
+				accountKey: keypair.privateKeyJwk || keypair.private,
 				debug: args.debug
 			};
 			return acme.accounts.create(accReg).then(function(receipt) {
@@ -86,7 +103,9 @@ A._newAccount = function(greenlock, db, acme, args, email, fullAccount) {
 						receipt &&
 						receipt.key &&
 						(receipt.key.kid || receipt.kid),
-					email: args.email
+					email: args.email,
+					subscriberEmail: email,
+					customerEmail: args.customerEmail
 				};
 
 				var keyP;
@@ -95,6 +114,13 @@ A._newAccount = function(greenlock, db, acme, args, email, fullAccount) {
 				} else {
 					query.keypair = keypair;
 					query.receipt = receipt;
+					query.directoryUrl = gnlck._defaults.directoryUrl;
+					/*
+					query.server = gnlck._defaults.directoryUrl.replace(
+						/^https?:\/\//i,
+						''
+					);
+          */
 					keyP = db.setKeypair(query, keypair);
 				}
 
@@ -109,7 +135,16 @@ A._newAccount = function(greenlock, db, acme, args, email, fullAccount) {
 							{
 								// id to be set by Store
 								email: email,
-								agreeTos: true
+								subscriberEmail: email,
+								customerEmail: args.customerEmail,
+								agreeTos: true,
+								directoryUrl: gnlck._defaults.directoryUrl
+								/*
+								server: gnlck._defaults.directoryUrl.replace(
+									/^https?:\/\//i,
+									''
+								)
+                */
 							},
 							reg
 						);
@@ -137,7 +172,7 @@ A._newAccount = function(greenlock, db, acme, args, email, fullAccount) {
 	);
 };
 
-A._checkStore = function(greenlock, db, acme, args, email) {
+A._checkStore = function(gnlck, mconf, db, acme, args, email) {
 	if ((args.domain || args.domains) && !args.subject) {
 		console.warn("use 'subject' instead of 'domain'");
 		args.subject = args.domain;
@@ -148,12 +183,12 @@ A._checkStore = function(greenlock, db, acme, args, email) {
 		account = {};
 	}
 
-	if (args.accountKeypair) {
+	if (args.accountKey) {
 		console.warn(
-			'rather than passing accountKeypair, put it directly into your account key store'
+			'rather than passing accountKey, put it directly into your account key store'
 		);
 		// TODO we probably don't need this
-		return U._importKeypair(args.accountKeypair);
+		return U._importKeypair(args.accountKey);
 	}
 
 	if (!db.check) {
@@ -165,6 +200,8 @@ A._checkStore = function(greenlock, db, acme, args, email) {
 			//keypair: undefined,
 			//receipt: undefined,
 			email: email,
+			subscriberEmail: email,
+			customerEmail: args.customerEmail || mconf.customerEmail,
 			account: account
 		})
 		.then(function(fullAccount) {
