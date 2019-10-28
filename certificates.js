@@ -152,14 +152,8 @@ C._rawOrder = function(gnlck, mconf, db, acme, chs, acc, email, args) {
 					return Enc.bufToUrlBase64(csrDer);
 				})
 				.then(function(csr) {
-					function notify() {
-						gnlck._notify('challenge_status', {
-							options: args,
-							subject: args.subject,
-							altnames: args.altnames,
-							account: acc,
-							email: email
-						});
+					function notify(ev, opts) {
+						gnlck._notify(ev, opts);
 					}
 					var certReq = {
 						debug: args.debug || gnlck._defaults.debug,

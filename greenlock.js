@@ -86,7 +86,6 @@ G.create = function(gconf) {
 		});
 		return p;
 	};
-	greenlock._init();
 
 	// The goal here is to reduce boilerplate, such as error checking
 	// and duration parsing, that a manager must implement
@@ -256,8 +255,16 @@ G.create = function(gconf) {
 						order.pems = pems;
 					})
 					.catch(function(err) {
-						order.error = err;
-						greenlock._notify('order_error', order);
+						// For greenlock express serialization
+						err.toJSON = errorToJSON;
+						err.subject = site.subject;
+						if (args.servername) {
+							err.servername = args.servername;
+						}
+						// for debugging, but not to be relied on
+						err._order = order;
+						// TODO err.context = err.context || 'renew_certificate'
+						greenlock._notify('error', err);
 					})
 					.then(function() {
 						return next();
@@ -394,6 +401,10 @@ G._defaults = function(opts) {
 		}
 		defaults[k] = opts[k];
 	});
+
+	if ('function' === typeof opts.notify) {
+		defaults.notify = opts.notify;
+	}
 
 	if (!defaults._maintainerPackage) {
 		defaults._maintainerPackage = pkg.name;
@@ -599,3 +610,11 @@ Greenlock._normalizeChallenge = function(name, ch) {
 
 	return ch;
 };
+
+function errorToJSON(e) {
+	var error = {};
+	Object.getOwnPropertyNames(e).forEach(function(k) {
+		error[k] = e[k];
+	});
+	return error;
+}
