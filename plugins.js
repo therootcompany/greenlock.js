@@ -4,6 +4,7 @@ var P = module.exports;
 
 var spawn = require('child_process').spawn;
 var spawnSync = require('child_process').spawnSync;
+var promisify = require('util').promisify;
 
 // Exported for CLIs and such to override
 P.PKG_DIR = __dirname;
@@ -27,9 +28,17 @@ P._loadHelper = function(modname) {
 	try {
 		return Promise.resolve(require(modname));
 	} catch (e) {
+		console.error("Could not load '%s'", modname);
+		console.error('Did you install it?');
+		console.error('\tnpm install --save %s', modname);
+		throw e;
+
+		// Fun experiment, bad idea
+		/*
 		return P._install(modname).then(function() {
 			return require(modname);
 		});
+    */
 	}
 };
 

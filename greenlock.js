@@ -14,8 +14,6 @@ var A = require('./accounts.js');
 var C = require('./certificates.js');
 var UserEvents = require('./user-events.js');
 
-var promisify = require('util').promisify;
-
 var caches = {};
 
 // { maintainerEmail, directoryUrl, subscriberEmail, store, challenges  }
