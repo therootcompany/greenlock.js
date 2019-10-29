@@ -140,7 +140,7 @@ Options:
 
 | Option        | Description                                                                |
 | ------------- | -------------------------------------------------------------------------- |
-| `servernames` | only check and renew certs matching these servernames                      |
+| `altnames`    | only check and renew certs matching these altnames (including wildcards)   |
 | `renewBefore` | only check and renew certs marked for renewal before the given date, in ms |
 | `duplicate`   | renew certificates regardless of timing                                    |
 | `force`       | allow silly things, like tiny `renewOffset`s                               |
