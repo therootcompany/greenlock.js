@@ -71,11 +71,17 @@ C._rawGetOrOrder = function(gnlck, mconf, db, acme, chs, acc, email, args) {
 		var evname = pems ? 'cert_renewal' : 'cert_issue';
 		p.then(function(newPems) {
 			// notify in the background
-			var renewAt = C._renewableAt(gnlck, mconf, args, newPems);
+			var renewAt = C._renewWithStagger(gnlck, mconf, args, newPems);
 			gnlck._notify(evname, {
 				renewAt: renewAt,
 				subject: args.subject,
 				altnames: args.altnames
+			});
+			gnlck._notify('_cert_issue', {
+				renewAt: renewAt,
+				subject: args.subject,
+				altnames: args.altnames,
+				pems: newPems
 			});
 		}).catch(function(err) {
 			if (!err.context) {
@@ -165,15 +171,6 @@ C._rawOrder = function(gnlck, mconf, db, acme, chs, acc, email, args) {
 						.then(U._attachCertInfo);
 				})
 				.then(function(pems) {
-					var renewAt = C._renewableAt(gnlck, mconf, args, pems);
-
-					gnlck._notify('_cert_issue', {
-						renewAt: renewAt,
-						subject: args.subject,
-						altnames: args.altnames,
-						pems: pems
-					});
-
 					if (kresult.exists) {
 						return pems;
 					}
@@ -269,22 +266,58 @@ C._isStale = function(gnlck, mconf, args, pems) {
 	return false;
 };
 
-C._renewableAt = function(gnlck, mconf, args, pems) {
-	if (args.renewAt) {
-		return args.renewAt;
+C._renewWithStagger = function(gnlck, mconf, args, pems) {
+	var renewOffset = C._renewOffset(gnlck, mconf, args, pems);
+	var renewStagger;
+	try {
+		renewStagger = U._parseDuration(
+			args.renewStagger ||
+				mconf.renewStagger ||
+				gnlck._defaults.renewStagger ||
+				0
+		);
+	} catch (e) {
+		renewStagger = U._parseDuration(gnlck._defaults.renewStagger);
 	}
 
-	var renewOffset =
+	// TODO check this beforehand
+	if (!args.force && renewStagger / renewOffset >= 0.5) {
+		renewStagger = renewOffset * 0.1;
+	}
+
+	if (renewOffset > 0) {
+		// stagger forward, away from issued at
+		return Math.round(
+			pems.issuedAt + renewOffset + Math.random() * renewStagger
+		);
+	}
+
+	// stagger backward, toward issued at
+	return Math.round(
+		pems.expiresAt + renewOffset - Math.random() * renewStagger
+	);
+};
+C._renewOffset = function(gnlck, mconf, args, pems) {
+	var renewOffset = U._parseDuration(
 		args.renewOffset ||
-		mconf.renewOffset ||
-		gnlck._defaults.renewOffset ||
-		0;
+			mconf.renewOffset ||
+			gnlck._defaults.renewOffset ||
+			0
+	);
 	var week = 1000 * 60 * 60 * 24 * 6;
 	if (!args.force && Math.abs(renewOffset) < week) {
 		throw new Error(
 			'developer error: `renewOffset` should always be at least a week, use `force` to not safety-check renewOffset'
 		);
 	}
+	return renewOffset;
+};
+C._renewableAt = function(gnlck, mconf, args, pems) {
+	if (args.renewAt) {
+		return args.renewAt;
+	}
+
+	var renewOffset = C._renewOffset(gnlck, mconf, args, pems);
 
 	if (renewOffset > 0) {
 		return pems.issuedAt + renewOffset;
