@@ -511,6 +511,9 @@ G._defaults = function(opts) {
 	if ('function' === typeof opts.notify) {
 		defaults.notify = opts.notify;
 	}
+	if ('function' === typeof opts.find) {
+		defaults.find = opts.find;
+	}
 
 	if (!defaults._maintainerPackage) {
 		defaults._maintainerPackage = pkg.name;
