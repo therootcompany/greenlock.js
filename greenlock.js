@@ -231,9 +231,16 @@ G.create = function(gconf) {
 	};
 
 	greenlock._single = function(args) {
-		if (!args.servername) {
+		if ('string' !== typeof args.servername) {
 			return Promise.reject(new Error('no servername given'));
 		}
+		// www.example.com => *.example.com
+		args.wildname =
+			'*.' +
+			args.servername
+				.split('.')
+				.slice(1)
+				.join('.');
 		if (
 			args.servernames ||
 			args.subject ||
