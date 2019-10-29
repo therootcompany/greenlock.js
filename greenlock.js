@@ -33,7 +33,7 @@ G.create = function(gconf) {
 	U._validMx(gconf.maintainerEmail).catch(function() {
 		console.error(
 			'invalid maintainer contact info:',
-			gconf.maintainer.Email
+			gconf.maintainerEmail
 		);
 		// maybe a little harsh?
 		process.exit(1);
@@ -215,17 +215,17 @@ G.create = function(gconf) {
 			// TODO look at the other one
 			UserEvents.notify({
 				/*
-				// maintainer should be only on pre-publish, or maybe install, I think
-				maintainerEmail: greenlock._defaults._maintainerEmail,
-				name: greenlock._defaults._maintainerPackage,
-				version: greenlock._defaults._maintainerPackageVersion,
-				//action: params.pems._type,
-				domains: params.altnames,
-				subscriberEmail: greenlock._defaults._subscriberEmail,
-				// TODO enable for Greenlock Pro
-				//customerEmail: args.customerEmail
-				telemetry: greenlock._defaults.telemetry
-        */
+                // maintainer should be only on pre-publish, or maybe install, I think
+                maintainerEmail: greenlock._defaults._maintainerEmail,
+                name: greenlock._defaults._packageAgent,
+                version: greenlock._defaults._maintainerPackageVersion,
+                //action: params.pems._type,
+                domains: params.altnames,
+                subscriberEmail: greenlock._defaults._subscriberEmail,
+                // TODO enable for Greenlock Pro
+                //customerEmail: args.customerEmail
+                telemetry: greenlock._defaults.telemetry
+                */
 			});
 		}
 	};
@@ -311,13 +311,19 @@ G.create = function(gconf) {
 				}
 				var site = sites[0];
 				site = JSON.parse(JSON.stringify(site));
-				if (!site.store) {
-					site.store = greenlock._defaults.store;
+				if (site.store && site.challenges) {
+					return site;
 				}
-				if (!site.challenges) {
-					site.challenges = greenlock._defaults.challenges;
-				}
-				return site;
+				return greenlock.manager.defaults().then(function(mconf) {
+					if (!site.store) {
+						site.store = mconf.store || greenlock._defaults.store;
+					}
+					if (!site.challenges) {
+						site.challenges =
+							mconf.challenges || greenlock._defaults.challenges;
+					}
+					return site;
+				});
 			});
 	};
 
@@ -396,9 +402,14 @@ G.create = function(gconf) {
 	};
 
 	greenlock._acme = function(args) {
+		var packageAgent = greenlock._defaults.packageAgent || '';
+		// because Greenlock_Express/v3.x Greenlock/v3 is redundant
+		if (!/greenlock/i.test(packageAgent)) {
+			packageAgent = (packageAgent + ' Greenlock/' + pkg.version).trim();
+		}
 		var acme = ACME.create({
 			maintainerEmail: greenlock._defaults.maintainerEmail,
-			packageAgent: greenlock._defaults.packageAgent,
+			packageAgent: packageAgent,
 			notify: greenlock._notify,
 			debug: greenlock._defaults.debug || args.debug
 		});
@@ -513,11 +524,6 @@ G._defaults = function(opts) {
 	}
 	if ('function' === typeof opts.find) {
 		defaults.find = opts.find;
-	}
-
-	if (!defaults._maintainerPackage) {
-		defaults._maintainerPackage = pkg.name;
-		defaults._maintainerPackageVersion = pkg.version;
 	}
 
 	if (!defaults.directoryUrl) {
