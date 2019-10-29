@@ -56,60 +56,48 @@ C._getOrOrder = function(gnlck, mconf, db, acme, chs, acc, args) {
 // Certificates
 C._rawGetOrOrder = function(gnlck, mconf, db, acme, chs, acc, email, args) {
 	return C._check(gnlck, mconf, db, args).then(function(pems) {
-		// No pems? get some!
-		if (!pems) {
-			return C._rawOrder(
-				gnlck,
-				mconf,
-				db,
-				acme,
-				chs,
-				acc,
-				email,
-				args
-			).then(function(newPems) {
-				// do not wait on notify
-				gnlck._notify('cert_issue', {
-					options: args,
-					subject: args.subject,
-					altnames: args.altnames,
-					account: acc,
-					email: email,
-					pems: newPems
-				});
-				return newPems;
-			});
-		}
-
 		// Nice and fresh? We're done!
-		if (!C._isStale(gnlck, mconf, args, pems)) {
-			// return existing unexpired (although potentially stale) certificates when available
-			// there will be an additional .renewing property if the certs are being asynchronously renewed
-			//pems._type = 'current';
-			return pems;
+		if (pems) {
+			if (!C._isStale(gnlck, mconf, args, pems)) {
+				// return existing unexpired (although potentially stale) certificates when available
+				// there will be an additional .renewing property if the certs are being asynchronously renewed
+				//pems._type = 'current';
+				return pems;
+			}
 		}
 
-		// Getting stale? Let's renew to freshen up!
-		var p = C._rawOrder(gnlck, mconf, db, acme, chs, acc, email, args).then(
-			function(renewedPems) {
-				// do not wait on notify
-				gnlck._notify('cert_renewal', {
-					options: args,
-					subject: args.subject,
-					altnames: args.altnames,
-					account: acc,
-					email: email,
-					pems: renewedPems
-				});
-				return renewedPems;
+		// We're either starting fresh or freshening up...
+		var p = C._rawOrder(gnlck, mconf, db, acme, chs, acc, email, args);
+		var evname = pems ? 'cert_renewal' : 'cert_issue';
+		p.then(function(newPems) {
+			// notify in the background
+			var renewAt = C._renewableAt(gnlck, mconf, args, newPems);
+			gnlck._notify(evname, {
+				renewAt: renewAt,
+				subject: args.subject,
+				altnames: args.altnames
+			});
+		}).catch(function(err) {
+			if (!err.context) {
+				err.context = evname;
 			}
-		);
+			err.subject = args.subject;
+			err.altnames = args.altnames;
+			gnlck._notify('error', err);
+		});
 
-		// TODO what should this be?
+		// No choice but to hang tight and wait for it
+		if (!pems) {
+			return p;
+		}
+
+		// Wait it out
+		// TODO should we call this waitForRenewal?
 		if (args.waitForRenewal) {
 			return p;
 		}
 
+		// Let the certs renew in the background
 		return pems;
 	});
 };
@@ -177,6 +165,15 @@ C._rawOrder = function(gnlck, mconf, db, acme, chs, acc, email, args) {
 						.then(U._attachCertInfo);
 				})
 				.then(function(pems) {
+					var renewAt = C._renewableAt(gnlck, mconf, args, pems);
+
+					gnlck._notify('_cert_issue', {
+						renewAt: renewAt,
+						subject: args.subject,
+						altnames: args.altnames,
+						pems: pems
+					});
+
 					if (kresult.exists) {
 						return pems;
 					}

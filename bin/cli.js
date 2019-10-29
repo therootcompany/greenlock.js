@@ -178,7 +178,7 @@ function toCamel(str) {
 
 function toBagName(bag) {
 	// trim leading and trailing '-'
-  bag = bag.replace(/^-+/g, '').replace(/-+$/g, '')
+	bag = bag.replace(/^-+/g, '').replace(/-+$/g, '');
 	return toCamel(bag) + 'Opts'; // '--bag-option-' => bagOptionOpts
 }
 

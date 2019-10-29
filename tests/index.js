@@ -33,9 +33,9 @@ greenlock
 		subscriberEmail: email
 	})
 	.then(function() {
-		return greenlock.renew().then(function (pems) {
-      console.info(pems);
-    });
+		return greenlock.renew().then(function(pems) {
+			console.info(pems);
+		});
 	})
 	.catch(function(e) {
 		console.error('yo', e.code);

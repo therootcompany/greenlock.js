@@ -55,35 +55,50 @@ var gl = Greenlock.create({
 
 	// This should be the contact who receives critical bug and security notifications
 	// Optionally, you may receive other (very few) updates, such as important new features
-	maintainerEmail: 'jon@example.com',
-	maintainerUpdates: true, // default: false
+	maintainerEmail: 'jon@example.com'
+});
+```
 
+| Parameter       | Description                                                                          |
+| --------------- | ------------------------------------------------------------------------------------ |
+| maintainerEmail | the developer contact for critical bug and security notifications                    |
+| packageAgent    | if you publish your package for others to use, `require('./package.json').name` here |
+
+<!--
+| maintainerUpdates         | (default: false) receive occasional non-critical notifications                                                                                             |
+    maintainerUpdates: true // default: false
+-->
+
+### Add Approved Domains
+
+```js
+greenlock.manager.defaults({
 	// The "Let's Encrypt Subscriber" (often the same as the maintainer)
 	// NOT the end customer (except where that is also the maintainer)
 	subscriberEmail: 'jon@example.com',
-	agreeToTerms: true // default: false
+	agreeToTerms: true
 });
 ```
 
 | Parameter                 | Description                                                                                                                                                |
 | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| servername                | the default servername to use for non-sni requests (many IoT clients)                                                                                      |
-| maintainerEmail           | the developer contact for critical bug and security notifications                                                                                          |
-| maintainerUpdates         | (default: false) receive occasional non-critical notifications                                                                                             |
-| maintainerPackage         | if you publish your package for others to use, `require('./package.json').name` here                                                                       |
-| maintainerPackageVersion  | if you publish your package for others to use, `require('./package.json').version` here                                                                    |
-| subscriberEmail           | the contact who agrees to the Let's Encrypt Subscriber Agreement and the Greenlock Terms of Service<br>this contact receives renewal failure notifications |
 | agreeToTerms              | (default: false) either 'true' or a function that presents the Terms of Service and returns it once accepted                                               |
-| store                     | override the default storage module                                                                                                                        |
-| store.module              | the name of your storage module                                                                                                                            |
-| store.xxxx                | options specific to your storage module                                                                                                                    |
 | challenges['http-01']     | provide an http-01 challenge module                                                                                                                        |
 | challenges['dns-01']      | provide a dns-01 challenge module                                                                                                                          |
 | challenges['tls-alpn-01'] | provide a tls-alpn-01 challenge module                                                                                                                     |
 | challenges[type].module   | the name of your challenge module                                                                                                                          |
 | challenges[type].xxxx     | module-specific options                                                                                                                                    |
+| servername                | the default servername to use for non-sni requests (many IoT clients)                                                                                      |
+| subscriberEmail           | the contact who agrees to the Let's Encrypt Subscriber Agreement and the Greenlock Terms of Service<br>this contact receives renewal failure notifications |
+| store                     | override the default storage module                                                                                                                        |
+| store.module              | the name of your storage module                                                                                                                            |
+| store.xxxx                | options specific to your storage module                                                                                                                    |
 
-### Add Approved Domains
+<!--
+
+| serverId        | an arbitrary name to distinguish this server within a cluster of servers |
+
+-->
 
 ```js
 gl.add({
@@ -104,26 +119,24 @@ gl.add({
 This will renew only domains that have reached their `renewAt` or are within the befault `renewOffset`.
 
 ```js
-return greenlock
-	.renew()
-	.then(function(pems) {
-		console.info(pems);
-	})
-	.then(function(results) {
-		results.forEach(function(site) {
-			if (site.error) {
-				console.error(site.subject, site.error);
-				return;
-			}
-		});
+return greenlock.renew().then(function(results) {
+	results.forEach(function(site) {
+		if (site.error) {
+			console.error(site.subject, site.error);
+			return;
+		}
 	});
+});
 ```
 
-| Parameter  | Type | Description                                                |
-| ---------- | ---- | ---------------------------------------------------------- |
-| (optional) | -    | ALL parameters are optional, but some should be paired     |
-| force      | bool | force silly options, such as tiny durations                |
-| duplicate  | bool | force the domain to renew, regardless of age or expiration |
+| Parameter     | Type | Description                                                                     |
+| ------------- | ---- | ------------------------------------------------------------------------------- |
+| (optional)    |      | ALL parameters are optional, but some should be paired                          |
+| force         | bool | force silly options, such as tiny durations                                     |
+| duplicate     | bool | force the domain to renew, regardless of age or expiration                      |
+| issuedBefore  | ms   | Check domains issued before the given date in milliseconds                      |
+| expiresBefore | ms   | Check domains that expire before the given date in milliseconds                 |
+| renewBefore   | ms   | Check domains that are scheduled to renew before the given date in milliseconds |
 
 <!--
 | servername  | string<br>hostname   | renew the certificate that has this domain in its altnames (for ServerName Indication / SNI lookup) |

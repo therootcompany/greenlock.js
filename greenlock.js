@@ -65,12 +65,13 @@ G.create = function(gconf) {
 	var defaults = G._defaults(gconf);
 
 	greenlock.manager = Manager.create(defaults);
+	//console.log('debug greenlock.manager', Object.keys(greenlock.manager));
 	greenlock._init = function() {
 		var p;
 		greenlock._init = function() {
 			return p;
 		};
-		p = greenlock.manager.config().then(function(conf) {
+		p = greenlock.manager.defaults().then(function(conf) {
 			var changed = false;
 			if (!conf.challenges) {
 				changed = true;
@@ -81,7 +82,7 @@ G.create = function(gconf) {
 				conf.store = defaults.store;
 			}
 			if (changed) {
-				return greenlock.manager.config(conf);
+				return greenlock.manager.defaults(conf);
 			}
 		});
 		return p;
@@ -154,6 +155,26 @@ G.create = function(gconf) {
 
 	greenlock._notify = function(ev, params) {
 		var mng = greenlock.manager;
+
+		if ('_' === String(ev)[0]) {
+			if ('_cert_issue' === ev) {
+				try {
+					mng.update({
+						subject: params.subject,
+						renewAt: params.renewAt
+					}).catch(function(e) {
+						e.context = '_cert_issue';
+						greenlock._notify('error', e);
+					});
+				} catch (e) {
+					e.context = '_cert_issue';
+					greenlock._notify('error', e);
+				}
+			}
+			// trap internal events internally
+			return;
+		}
+
 		if (mng.notify || greenlock._defaults.notify) {
 			try {
 				var p = (mng.notify || greenlock._defaults.notify)(ev, params);
@@ -193,23 +214,109 @@ G.create = function(gconf) {
 			// { name, version, email, domains, action, communityMember, telemetry }
 			// TODO look at the other one
 			UserEvents.notify({
+				/*
 				// maintainer should be only on pre-publish, or maybe install, I think
 				maintainerEmail: greenlock._defaults._maintainerEmail,
 				name: greenlock._defaults._maintainerPackage,
 				version: greenlock._defaults._maintainerPackageVersion,
-				action: params.pems._type,
+				//action: params.pems._type,
 				domains: params.altnames,
 				subscriberEmail: greenlock._defaults._subscriberEmail,
 				// TODO enable for Greenlock Pro
 				//customerEmail: args.customerEmail
 				telemetry: greenlock._defaults.telemetry
+        */
 			});
 		}
 	};
 
+	greenlock._single = function(args) {
+		if (!args.servername) {
+			return Promise.reject(new Error('no servername given'));
+		}
+		if (
+			args.servernames ||
+			args.subject ||
+			args.renewBefore ||
+			args.issueBefore ||
+			args.expiresBefore
+		) {
+			return Promise.reject(
+				new Error(
+					'bad arguments, did you mean to call greenlock.renew()?'
+				)
+			);
+		}
+		// duplicate, force, and others still allowed
+		return Promise.resolve(args);
+	};
+
+	greenlock.get = function(args) {
+		return greenlock
+			._single(args)
+			.then(function() {
+				args._includePems = true;
+				return greenlock.renew(args);
+			})
+			.then(function(results) {
+				if (!results || !results.length) {
+					return null;
+				}
+
+				// just get the first one
+				var result = results[0];
+
+				// (there should be only one, ideally)
+				if (results.length > 1) {
+					var err = new Error(
+						"a search for '" +
+							args.servername +
+							"' returned multiple certificates"
+					);
+					err.context = 'duplicate_certs';
+					err.servername = args.servername;
+					err.subjects = results.map(function(r) {
+						return (r.site || {}).subject || 'N/A';
+					});
+
+					greenlock._notify('warning', err);
+				}
+
+				if (result.error) {
+					return Promise.reject(result.error);
+				}
+
+				// site for plugin options, such as http-01 challenge
+				// pems for the obvious reasons
+				return result;
+			});
+	};
+
+	greenlock._config = function(args) {
+		return greenlock
+			._single(args)
+			.then(function() {
+				return greenlock.manager.find(args);
+			})
+			.then(function(sites) {
+				if (!sites || !sites.length) {
+					return null;
+				}
+				var site = sites[0];
+				site = JSON.parse(JSON.stringify(site));
+				if (!site.store) {
+					site.store = greenlock._defaults.store;
+				}
+				if (!site.challenges) {
+					site.challenges = greenlock._defaults.challenges;
+				}
+				return site;
+			});
+	};
+
 	// needs to get info about the renewal, such as which store and challenge(s) to use
 	greenlock.renew = function(args) {
-		return greenlock.manager.config().then(function(mconf) {
+		return greenlock.manager.defaults().then(function(mconf) {
 			return greenlock._renew(mconf, args);
 		});
 	};
@@ -226,15 +333,16 @@ G.create = function(gconf) {
 			args.renewStagger = U._parseDuration(args.renewStagger);
 		}
 
-		if (args.domain) {
+		if (args.servername) {
 			// this doesn't have to be the subject, it can be anything
 			// however, not sure how useful this really is...
-			args.domain = args.toLowerCase();
+			args.servername = args.servername.toLowerCase();
 		}
 
-		args.defaults = greenlock.defaults;
+		//console.log('greenlock._renew find', args);
 		return greenlock.manager.find(args).then(function(sites) {
 			// Note: the manager must guaranteed that these are mutable copies
+			//console.log('greenlock._renew found', sites);
 
 			var renewedOrFailed = [];
 
@@ -244,25 +352,28 @@ G.create = function(gconf) {
 					return Promise.resolve(null);
 				}
 
-				var order = {
-					site: site
-				};
+				var order = { site: site };
 				renewedOrFailed.push(order);
 				// TODO merge args + result?
 				return greenlock
 					._order(mconf, site)
 					.then(function(pems) {
-						order.pems = pems;
+						if (args._includePems) {
+							order.pems = pems;
+						}
 					})
 					.catch(function(err) {
+						order.error = err;
+
 						// For greenlock express serialization
 						err.toJSON = errorToJSON;
+						err.context = err.context || 'cert_order';
 						err.subject = site.subject;
 						if (args.servername) {
 							err.servername = args.servername;
 						}
 						// for debugging, but not to be relied on
-						err._order = order;
+						err._site = site;
 						// TODO err.context = err.context || 'renew_certificate'
 						greenlock._notify('error', err);
 					})
@@ -312,20 +423,16 @@ G.create = function(gconf) {
 
 	greenlock.order = function(args) {
 		return greenlock._init().then(function() {
-			return greenlock.manager.config().then(function(mconf) {
+			return greenlock.manager.defaults().then(function(mconf) {
 				return greenlock._order(mconf, args);
 			});
 		});
 	};
 	greenlock._order = function(mconf, args) {
+		// packageAgent, maintainerEmail
 		return greenlock._acme(args).then(function(acme) {
 			var storeConf = args.store || greenlock._defaults.store;
-			return P._load(storeConf.module).then(function(plugin) {
-				var store = Greenlock._normalizeStore(
-					storeConf.module,
-					plugin.create(storeConf)
-				);
-
+			return P._loadStore(storeConf).then(function(store) {
 				return A._getOrCreate(
 					greenlock,
 					mconf,
@@ -339,17 +446,7 @@ G.create = function(gconf) {
 						greenlock._defaults.challenges;
 					return Promise.all(
 						Object.keys(challengeConfs).map(function(typ01) {
-							var chConf = challengeConfs[typ01];
-							return P._load(chConf.module).then(function(
-								plugin
-							) {
-								var ch = Greenlock._normalizeChallenge(
-									chConf.module,
-									plugin.create(chConf)
-								);
-								ch._type = typ01;
-								return ch;
-							});
+							return P._loadChallenge(challengeConfs, typ01);
 						})
 					).then(function(arr) {
 						var challenges = {};
@@ -389,6 +486,8 @@ G.create = function(gconf) {
 
 	return greenlock;
 };
+
+G._loadChallenge = P._loadChallenge;
 
 G._defaults = function(opts) {
 	var defaults = {};
@@ -501,114 +600,6 @@ G._defaults = function(opts) {
 	});
 
 	return defaults;
-};
-
-Greenlock._normalizeStore = function(name, store) {
-	var acc = store.accounts;
-	var crt = store.certificates;
-
-	var warned = false;
-	function warn() {
-		if (warned) {
-			return;
-		}
-		warned = true;
-		console.warn(
-			"'" +
-				name +
-				"' may have incorrect function signatures, or contains deprecated use of callbacks"
-		);
-	}
-
-	// accs
-	if (acc.check && 2 === acc.check.length) {
-		warn();
-		acc._thunk_check = acc.check;
-		acc.check = promisify(acc._thunk_check);
-	}
-	if (acc.set && 3 === acc.set.length) {
-		warn();
-		acc._thunk_set = acc.set;
-		acc.set = promisify(acc._thunk_set);
-	}
-	if (2 === acc.checkKeypair.length) {
-		warn();
-		acc._thunk_checkKeypair = acc.checkKeypair;
-		acc.checkKeypair = promisify(acc._thunk_checkKeypair);
-	}
-	if (3 === acc.setKeypair.length) {
-		warn();
-		acc._thunk_setKeypair = acc.setKeypair;
-		acc.setKeypair = promisify(acc._thunk_setKeypair);
-	}
-
-	// certs
-	if (2 === crt.check.length) {
-		warn();
-		crt._thunk_check = crt.check;
-		crt.check = promisify(crt._thunk_check);
-	}
-	if (3 === crt.set.length) {
-		warn();
-		crt._thunk_set = crt.set;
-		crt.set = promisify(crt._thunk_set);
-	}
-	if (2 === crt.checkKeypair.length) {
-		warn();
-		crt._thunk_checkKeypair = crt.checkKeypair;
-		crt.checkKeypair = promisify(crt._thunk_checkKeypair);
-	}
-	if (2 === crt.setKeypair.length) {
-		warn();
-		crt._thunk_setKeypair = crt.setKeypair;
-		crt.setKeypair = promisify(crt._thunk_setKeypair);
-	}
-
-	return store;
-};
-
-Greenlock._normalizeChallenge = function(name, ch) {
-	var warned = false;
-	function warn() {
-		if (warned) {
-			return;
-		}
-		warned = true;
-		console.warn(
-			"'" +
-				name +
-				"' may have incorrect function signatures, or contains deprecated use of callbacks"
-		);
-	}
-
-	// init, zones, set, get, remove
-	if (ch.init && 2 === ch.init.length) {
-		warn();
-		ch._thunk_init = ch.init;
-		ch.init = promisify(ch._thunk_init);
-	}
-	if (ch.zones && 2 === ch.zones.length) {
-		warn();
-		ch._thunk_zones = ch.zones;
-		ch.zones = promisify(ch._thunk_zones);
-	}
-	if (2 === ch.set.length) {
-		warn();
-		ch._thunk_set = ch.set;
-		ch.set = promisify(ch._thunk_set);
-	}
-	if (2 === ch.remove.length) {
-		warn();
-		ch._thunk_remove = ch.remove;
-		ch.remove = promisify(ch._thunk_remove);
-	}
-	if (ch.get && 2 === ch.get.length) {
-		warn();
-		ch._thunk_get = ch.get;
-		ch.get = promisify(ch._thunk_get);
-	}
-
-	return ch;
 };
 
 function errorToJSON(e) {
