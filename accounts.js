@@ -79,7 +79,11 @@ A._newAccount = function(gnlck, mconf, db, acme, args, email, fullAccount) {
 		email: email,
 		subscriberEmail: email,
 		customerEmail: args.customerEmail,
-		account: fullAccount || {}
+		account: fullAccount || {},
+		directoryUrl:
+			args.directoryUrl ||
+			mconf.directoryUrl ||
+			gnlck._defaults.directoryUrl
 	};
 
 	return U._getOrCreateKeypair(db, args.subject, query, keyType).then(
@@ -114,7 +118,6 @@ A._newAccount = function(gnlck, mconf, db, acme, args, email, fullAccount) {
 				} else {
 					query.keypair = keypair;
 					query.receipt = receipt;
-					query.directoryUrl = gnlck._defaults.directoryUrl;
 					/*
 					query.server = gnlck._defaults.directoryUrl.replace(
 						/^https?:\/\//i,
@@ -138,7 +141,11 @@ A._newAccount = function(gnlck, mconf, db, acme, args, email, fullAccount) {
 								subscriberEmail: email,
 								customerEmail: args.customerEmail,
 								agreeTos: true,
-								directoryUrl: gnlck._defaults.directoryUrl
+								agreeToTerms: true,
+								directoryUrl:
+									args.directoryUrl ||
+									mconf.directoryUrl ||
+									gnlck._defaults.directoryUrl
 								/*
 								server: gnlck._defaults.directoryUrl.replace(
 									/^https?:\/\//i,
@@ -202,7 +209,11 @@ A._checkStore = function(gnlck, mconf, db, acme, args, email) {
 			email: email,
 			subscriberEmail: email,
 			customerEmail: args.customerEmail || mconf.customerEmail,
-			account: account
+			account: account,
+			directoryUrl:
+				args.directoryUrl ||
+				mconf.directoryUrl ||
+				gnlck._defaults.directoryUrl
 		})
 		.then(function(fullAccount) {
 			if (!fullAccount) {
