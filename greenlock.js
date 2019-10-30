@@ -230,7 +230,7 @@ G.create = function(gconf) {
 
 	greenlock._single = function(args) {
 		if ('string' !== typeof args.servername) {
-			return Promise.reject(new Error('no servername given'));
+			return Promise.reject(new Error('no `servername` given'));
 		}
 		// www.example.com => *.example.com
 		args.wildname =
@@ -297,11 +297,28 @@ G.create = function(gconf) {
 			});
 	};
 
+	greenlock._find = function(args) {
+		var altnames = args.altnames || [];
+
+		// servername, wildname, and altnames are all the same
+		['wildname', 'servername'].forEach(function(k) {
+			var altname = args[k];
+			if (altname && !altnames.includes(altname)) {
+				altnames.push(altname);
+			}
+		});
+		if (altnames.length) {
+			args.altnames = altnames;
+		}
+
+		return greenlock.manager.find(args);
+	};
+
 	greenlock._config = function(args) {
 		return greenlock
 			._single(args)
 			.then(function() {
-				return greenlock.manager.find(args);
+				return greenlock._find(args);
 			})
 			.then(function(sites) {
 				if (!sites || !sites.length) {
@@ -351,7 +368,7 @@ G.create = function(gconf) {
 		}
 
 		//console.log('greenlock._renew find', args);
-		return greenlock.manager.find(args).then(function(sites) {
+		return greenlock._find(args).then(function(sites) {
 			// Note: the manager must guaranteed that these are mutable copies
 			//console.log('greenlock._renew found', sites);
 
