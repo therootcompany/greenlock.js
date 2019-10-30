@@ -93,7 +93,11 @@ C._rawGetOrOrder = function(gnlck, mconf, db, acme, chs, acc, email, args) {
 		});
 
 		// No choice but to hang tight and wait for it
-		if (!pems) {
+		if (
+			!pems ||
+			pems.renewAt < Date.now() - 24 * 60 * 60 * 1000 ||
+			pems.expiresAt <= Date.now() + 24 * 60 * 60 * 1000
+		) {
 			return p;
 		}
 

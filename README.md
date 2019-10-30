@@ -107,24 +107,46 @@ gl.add({
 });
 ```
 
-| Parameter       | Description                                                                        |
-| --------------- | ---------------------------------------------------------------------------------- |
-| subject         | the first domain on, and identifier of the certificate                             |
-| altnames        | first domain, plus additional domains<br>note: the order should always be the same |
-| subscriberEmail | if different from the default (i.e. multi-tenant, whitelabel)                      |
-| agreeToTerms    | if subscriber is different from the default                                        |
+| Parameter       | Description                                                                                  |
+| --------------- | -------------------------------------------------------------------------------------------- |
+| subject         | the first domain on, and identifier of the certificate                                       |
+| altnames        | first domain, plus additional domains<br>note: the order should always be the same           |
+| subscriberEmail | if different from the default (i.e. multi-tenant, whitelabel)                                |
+| agreeToTerms    | if subscriber is different from the default                                                  |
+| challenges      | (same as main config) use if this site needs to use non-default http-01 or dns-01 validation |
 
-### Issue and Renew Certificates
+### Issue Certificates
+
+```js
+return greenlock.get({ servername }).then(function(site) {
+	if (!site) {
+		console.log(servername + ' was not found in any site config');
+		return;
+	}
+
+	var privkey = site.pems.privkey;
+	var fullchain = site.pems.cert + '\n' + site.pems.chain + '\n';
+	console.log(privkey);
+	console.log(fullchain);
+});
+```
+
+| Parameter  | Description                                            |
+| ---------- | ------------------------------------------------------ |
+| servername | the first domain on, and identifier of the certificate |
+
+### Renew Certificates
 
 This will renew only domains that have reached their `renewAt` or are within the befault `renewOffset`.
 
 ```js
-return greenlock.renew().then(function(results) {
+return greenlock.renew({}).then(function(results) {
 	results.forEach(function(site) {
 		if (site.error) {
 			console.error(site.subject, site.error);
 			return;
 		}
+		console.log('Renewed certificate for', site.subject, site.altnames);
 	});
 });
 ```
@@ -133,10 +155,17 @@ return greenlock.renew().then(function(results) {
 | ------------- | ---- | ------------------------------------------------------------------------------- |
 | (optional)    |      | ALL parameters are optional, but some should be paired                          |
 | force         | bool | force silly options, such as tiny durations                                     |
-| duplicate     | bool | force the domain to renew, regardless of age or expiration                      |
 | issuedBefore  | ms   | Check domains issued before the given date in milliseconds                      |
 | expiresBefore | ms   | Check domains that expire before the given date in milliseconds                 |
 | renewBefore   | ms   | Check domains that are scheduled to renew before the given date in milliseconds |
+
+## Force a certificate to renew
+
+```js
+greenlock.update({ subject, renewAt: 0 }).then(function() {
+	return greenlock.renew({});
+});
+```
 
 <!--
 | servername  | string<br>hostname   | renew the certificate that has this domain in its altnames (for ServerName Indication / SNI lookup) |

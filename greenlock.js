@@ -90,7 +90,15 @@ G.create = function(gconf) {
 	// and duration parsing, that a manager must implement
 	greenlock.add = function(args) {
 		return greenlock._init().then(function() {
-			return greenlock._add(args);
+			return greenlock._add(args).then(function(result) {
+				greenlock.renew({}).catch(function(err) {
+					if (!err.context) {
+						err.contxt = 'renew';
+					}
+					greenlock.notify('error', err);
+				});
+				return result;
+			});
 		});
 	};
 	greenlock._add = function(args) {
@@ -265,6 +273,7 @@ G.create = function(gconf) {
 			})
 			.then(function(results) {
 				if (!results || !results.length) {
+					// TODO throw an error here?
 					return null;
 				}
 
