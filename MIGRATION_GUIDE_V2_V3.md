@@ -329,11 +329,10 @@ Greenlock.create({
 The manager itself is, again relatively simple:
 
 -   find(options)
--   add(siteConfig)
--   update(updates)
+-   set(siteConfig)
 -   remove(options)
 -   defaults(globalOptions) (as setter)
--   defaults() => globalOptions (as getter)
+    -   defaults() => globalOptions (as getter)
 
 `/path/to/manager.js`:
 
@@ -360,13 +359,11 @@ module.exports.create = function() {
         return [];
     };
 
-    manage.add = function({ subject, altnames }) {
-        return setSiteConfig(subject, { subject, altnames });
-    };
+    manage.set = function(opts) {
+        // this is called by greenlock.add({ subject, altnames })
+        // it's also called by greenlock._update({ subject, renewAt })
 
-    manage.update = function({ subject, renewAt }) {
-        // update the `renewAt` date of the site by `subject`
-        return mergSiteConfig(subject, { renewAt });
+        return mergSiteConfig(subject, opts);
     };
 
     manage.remove = function({ subject, altname }) {
