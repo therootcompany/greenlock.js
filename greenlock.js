@@ -4,7 +4,7 @@ var pkg = require('./package.json');
 
 var ACME = require('@root/acme');
 var Greenlock = module.exports;
-var homedir = require('os').homedir();
+var request = require('@root/request');
 
 var G = Greenlock;
 var U = require('./utils.js');
@@ -19,6 +19,7 @@ var caches = {};
 // { maintainerEmail, directoryUrl, subscriberEmail, store, challenges  }
 G.create = function(gconf) {
 	var greenlock = {};
+	var gdefaults = {};
 	if (!gconf) {
 		gconf = {};
 	}
@@ -33,133 +34,36 @@ G.create = function(gconf) {
 			'invalid maintainer contact info:',
 			gconf.maintainerEmail
 		);
-		// maybe a little harsh?
+
+		// maybe move this to init and don't exit the process, just in case
 		process.exit(1);
 	});
 
-	// TODO default servername is GLE only
-
-	if (!gconf.manager) {
-		gconf.manager = 'greenlock-manager-fs';
+	if ('function' === typeof gconf.notify) {
+		gdefaults.notify = gconf.notify;
+	} else {
+		gdefaults.notify = _notify;
 	}
 
-	var Manager;
-	if ('string' === typeof gconf.manager) {
-		try {
-			Manager = require(gconf.manager);
-		} catch (e) {
-			if ('MODULE_NOT_FOUND' !== e.code) {
-				throw e;
-			}
-			console.error(e.code);
-			console.error(e.message);
-			console.error(gconf.manager);
-			P._installSync(gconf.manager);
-			Manager = require(gconf.manager);
+	if (gconf.directoryUrl) {
+		gdefaults = gconf.directoryUrl;
+		if (gconf.staging) {
+			throw new Error('supply `directoryUrl` or `staging`, but not both');
 		}
+	} else if (gconf.staging) {
+		gdefaults.directoryUrl =
+			'https://acme-staging-v02.api.letsencrypt.org/directory';
+	} else {
+		gdefaults.directoryUrl =
+			'https://acme-v02.api.letsencrypt.org/directory';
 	}
+	console.info('ACME Directory URL:', gdefaults.directoryUrl);
 
-	// minimal modification to the original object
-	var defaults = G._defaults(gconf);
-
-	greenlock.manager = Manager.create(defaults);
+	var manager = normalizeManager(gconf);
+	require('./manager-underlay.js').wrap(greenlock, manager, gconf);
 	//console.log('debug greenlock.manager', Object.keys(greenlock.manager));
-	greenlock._init = function() {
-		var p;
-		greenlock._init = function() {
-			return p;
-		};
-		p = greenlock.manager.defaults().then(function(conf) {
-			var changed = false;
-			if (!conf.challenges) {
-				changed = true;
-				conf.challenges = defaults.challenges;
-			}
-			if (!conf.store) {
-				changed = true;
-				conf.store = defaults.store;
-			}
-			if (changed) {
-				return greenlock.manager.defaults(conf);
-			}
-		});
-		return p;
-	};
 
-	// The goal here is to reduce boilerplate, such as error checking
-	// and duration parsing, that a manager must implement
-	greenlock.add = function(args) {
-		return greenlock._init().then(function() {
-			return greenlock._add(args).then(function(result) {
-				greenlock.renew({}).catch(function(err) {
-					if (!err.context) {
-						err.contxt = 'renew';
-					}
-					greenlock.notify('error', err);
-				});
-				return result;
-			});
-		});
-	};
-	greenlock._add = function(args) {
-		return Promise.resolve().then(function() {
-			// durations
-			if (args.renewOffset) {
-				args.renewOffset = U._parseDuration(args.renewOffset);
-			}
-			if (args.renewStagger) {
-				args.renewStagger = U._parseDuration(args.renewStagger);
-			}
-
-			if (!args.subject) {
-				throw E.NO_SUBJECT('add');
-			}
-
-			if (!args.altnames) {
-				args.altnames = [args.subject];
-			}
-			if ('string' === typeof args.altnames) {
-				args.altnames = args.altnames.split(/[,\s]+/);
-			}
-			if (args.subject !== args.altnames[0]) {
-				throw E.BAD_ORDER(
-					'add',
-					'(' + args.subject + ") '" + args.altnames.join("' '") + "'"
-				);
-			}
-			args.altnames = args.altnames.map(U._encodeName);
-
-			if (
-				!args.altnames.every(function(d) {
-					return U._validName(d);
-				})
-			) {
-				throw E.INVALID_HOSTNAME(
-					'add',
-					"'" + args.altnames.join("' '") + "'"
-				);
-			}
-
-			// at this point we know that subject is the first of altnames
-			return Promise.all(
-				args.altnames.map(function(d) {
-					d = d.replace('*.', '');
-					return U._validDomain(d);
-				})
-			).then(function() {
-				if (!U._uniqueNames(args.altnames)) {
-					throw E.NOT_UNIQUE(
-						'add',
-						"'" + args.altnames.join("' '") + "'"
-					);
-				}
-
-				return greenlock.manager.add(args);
-			});
-		});
-	};
-
-	greenlock._notify = function(ev, params) {
+	greenlock.notify = greenlock._notify = function(ev, params) {
 		var mng = greenlock.manager;
 
 		if ('_' === String(ev)[0]) {
@@ -181,38 +85,19 @@ G.create = function(gconf) {
 			return;
 		}
 
-		if (mng.notify || greenlock._defaults.notify) {
-			try {
-				var p = (mng.notify || greenlock._defaults.notify)(ev, params);
-				if (p && p.catch) {
-					p.catch(function(e) {
-						console.error(
-							"Promise Rejection on event '" + ev + "':"
-						);
-						console.error(e);
-					});
-				}
-			} catch (e) {
-				console.error("Thrown Exception on event '" + ev + "':");
-				console.error(e);
+		try {
+			var p = greenlock._defaults.notify(ev, params);
+			if (p && p.catch) {
+				p.catch(function(e) {
+					console.error("Promise Rejection on event '" + ev + "':");
+					console.error(e);
+				});
 			}
-		} else {
-			if (/error/i.test(ev)) {
-				console.error("Error event '" + ev + "':");
-				console.error(params);
-				console.error(params.stack);
-			}
+		} catch (e) {
+			console.error("Thrown Exception on event '" + ev + "':");
+			console.error(e);
+			console.error(params);
 		}
-		/*
-     *'cert_issue', {
-						options: args,
-						subject: args.subject,
-						altnames: args.altnames,
-						account: account,
-						email: email,
-						pems: newPems
-					}
-     */
 
 		if (-1 !== ['cert_issue', 'cert_renewal'].indexOf(ev)) {
 			// We will notify all greenlock users of mandatory and security updates
@@ -221,49 +106,62 @@ G.create = function(gconf) {
 			// TODO look at the other one
 			UserEvents.notify({
 				/*
-                // maintainer should be only on pre-publish, or maybe install, I think
-                maintainerEmail: greenlock._defaults._maintainerEmail,
-                name: greenlock._defaults._packageAgent,
-                version: greenlock._defaults._maintainerPackageVersion,
-                //action: params.pems._type,
-                domains: params.altnames,
-                subscriberEmail: greenlock._defaults._subscriberEmail,
-                // TODO enable for Greenlock Pro
-                //customerEmail: args.customerEmail
-                telemetry: greenlock._defaults.telemetry
-                */
+        // maintainer should be only on pre-publish, or maybe install, I think
+        maintainerEmail: greenlock._defaults._maintainerEmail,
+        name: greenlock._defaults._packageAgent,
+        version: greenlock._defaults._maintainerPackageVersion,
+        //action: params.pems._type,
+        domains: params.altnames,
+        subscriberEmail: greenlock._defaults._subscriberEmail,
+        // TODO enable for Greenlock Pro
+        //customerEmail: args.customerEmail
+        telemetry: greenlock._defaults.telemetry
+        */
 			});
 		}
 	};
 
-	greenlock._single = function(args) {
-		if ('string' !== typeof args.servername) {
-			return Promise.reject(new Error('no `servername` given'));
+	// The purpose of init is to make MCONF the source of truth
+	greenlock._init = function() {
+		var p;
+		greenlock._init = function() {
+			return p;
+		};
+
+		if (manager.init) {
+			// TODO punycode?
+			p = manager.init({
+				request: request
+				//punycode: require('punycode')
+			});
+		} else {
+			p = Promise.resolve();
 		}
-		// www.example.com => *.example.com
-		args.wildname =
-			'*.' +
-			args.servername
-				.split('.')
-				.slice(1)
-				.join('.');
-		if (
-			args.servernames ||
-			args.subject ||
-			args.renewBefore ||
-			args.issueBefore ||
-			args.expiresBefore
-		) {
-			return Promise.reject(
-				new Error(
-					'bad arguments, did you mean to call greenlock.renew()?'
-				)
-			);
-		}
-		// duplicate, force, and others still allowed
-		return Promise.resolve(args);
+		p = p
+			.then(function() {
+				return manager.defaults().then(function(MCONF) {
+					mergeDefaults(MCONF, gconf);
+					if (true === MCONF.agreeToTerms) {
+						gdefaults.agreeToTerms = function(tos) {
+							return Promise.resolve(tos);
+						};
+					}
+					return manager.defaults(MCONF);
+				});
+			})
+			.catch(function(err) {
+				console.error('Fatal error during greenlock init:');
+				console.error(err);
+				process.exit(1);
+			});
+		return p;
 	};
 
+	// The goal here is to reduce boilerplate, such as error checking
+	// and duration parsing, that a manager must implement
+	greenlock.sites.add = greenlock.add = greenlock.manager.add;
+
+	// certs.get
 	greenlock.get = function(args) {
 		return greenlock
 			._single(args)
@@ -306,21 +204,32 @@ G.create = function(gconf) {
 			});
 	};
 
-	greenlock._find = function(args) {
-		var altnames = args.altnames || [];
-
-		// servername, wildname, and altnames are all the same
-		['wildname', 'servername'].forEach(function(k) {
-			var altname = args[k];
-			if (altname && !altnames.includes(altname)) {
-				altnames.push(altname);
-			}
-		});
-		if (altnames.length) {
-			args.altnames = altnames;
+	greenlock._single = function(args) {
+		if ('string' !== typeof args.servername) {
+			return Promise.reject(new Error('no `servername` given'));
 		}
-
-		return greenlock.manager.find(args);
+		// www.example.com => *.example.com
+		args.wildname =
+			'*.' +
+			args.servername
+				.split('.')
+				.slice(1)
+				.join('.');
+		if (
+			args.servernames ||
+			args.subject ||
+			args.renewBefore ||
+			args.issueBefore ||
+			args.expiresBefore
+		) {
+			return Promise.reject(
+				new Error(
+					'bad arguments, did you mean to call greenlock.renew()?'
+				)
+			);
+		}
+		// duplicate, force, and others still allowed
+		return Promise.resolve(args);
 	};
 
 	greenlock._config = function(args) {
@@ -338,13 +247,12 @@ G.create = function(gconf) {
 				if (site.store && site.challenges) {
 					return site;
 				}
-				return greenlock.manager.defaults().then(function(mconf) {
+				return manager.defaults().then(function(mconf) {
 					if (!site.store) {
-						site.store = mconf.store || greenlock._defaults.store;
+						site.store = mconf.store;
 					}
 					if (!site.challenges) {
-						site.challenges =
-							mconf.challenges || greenlock._defaults.challenges;
+						site.challenges = mconf.challenges;
 					}
 					return site;
 				});
@@ -353,7 +261,7 @@ G.create = function(gconf) {
 
 	// needs to get info about the renewal, such as which store and challenge(s) to use
 	greenlock.renew = function(args) {
-		return greenlock.manager.defaults().then(function(mconf) {
+		return manager.defaults().then(function(mconf) {
 			return greenlock._renew(mconf, args);
 		});
 	};
@@ -362,26 +270,11 @@ G.create = function(gconf) {
 			args = {};
 		}
 
-		// durations
-		if (args.renewOffset) {
-			args.renewOffset = U._parseDuration(args.renewOffset);
-		}
-		if (args.renewStagger) {
-			args.renewStagger = U._parseDuration(args.renewStagger);
-		}
-
-		if (args.servername) {
-			// this doesn't have to be the subject, it can be anything
-			// however, not sure how useful this really is...
-			args.servername = args.servername.toLowerCase();
-		}
-
+		var renewedOrFailed = [];
 		//console.log('greenlock._renew find', args);
 		return greenlock._find(args).then(function(sites) {
 			// Note: the manager must guaranteed that these are mutable copies
-			//console.log('greenlock._renew found', sites);
-
-			var renewedOrFailed = [];
+			//console.log('greenlock._renew found', sites);;
 
 			function next() {
 				var site = sites.shift();
@@ -426,13 +319,13 @@ G.create = function(gconf) {
 	};
 
 	greenlock._acme = function(args) {
-		var packageAgent = greenlock._defaults.packageAgent || '';
+		var packageAgent = gconf.packageAgent || '';
 		// because Greenlock_Express/v3.x Greenlock/v3 is redundant
 		if (!/greenlock/i.test(packageAgent)) {
 			packageAgent = (packageAgent + ' Greenlock/' + pkg.version).trim();
 		}
 		var acme = ACME.create({
-			maintainerEmail: greenlock._defaults.maintainerEmail,
+			maintainerEmail: gconf.maintainerEmail,
 			packageAgent: packageAgent,
 			notify: greenlock._notify,
 			debug: greenlock._defaults.debug || args.debug
@@ -465,7 +358,7 @@ G.create = function(gconf) {
 
 	greenlock.order = function(args) {
 		return greenlock._init().then(function() {
-			return greenlock.manager.defaults().then(function(mconf) {
+			return manager.defaults().then(function(mconf) {
 				return greenlock._order(mconf, args);
 			});
 		});
@@ -473,7 +366,7 @@ G.create = function(gconf) {
 	greenlock._order = function(mconf, args) {
 		// packageAgent, maintainerEmail
 		return greenlock._acme(args).then(function(acme) {
-			var storeConf = args.store || greenlock._defaults.store;
+			var storeConf = args.store || mconf.store;
 			return P._loadStore(storeConf).then(function(store) {
 				return A._getOrCreate(
 					greenlock,
@@ -482,10 +375,7 @@ G.create = function(gconf) {
 					acme,
 					args
 				).then(function(account) {
-					var challengeConfs =
-						args.challenges ||
-						mconf.challenges ||
-						greenlock._defaults.challenges;
+					var challengeConfs = args.challenges || mconf.challenges;
 					return Promise.all(
 						Object.keys(challengeConfs).map(function(typ01) {
 							return P._loadChallenge(challengeConfs, typ01);
@@ -504,6 +394,9 @@ G.create = function(gconf) {
 							account,
 							args
 						).then(function(pems) {
+							if (!pems) {
+								throw new Error('no order result');
+							}
 							if (!pems.privkey) {
 								throw new Error(
 									'missing private key, which is kinda important'
@@ -517,130 +410,23 @@ G.create = function(gconf) {
 		});
 	};
 
-	greenlock._options = gconf;
-	greenlock._defaults = defaults;
+	greenlock._defaults = gdefaults;
+	greenlock._defaults.debug = gconf.debug;
 
-	if (!gconf.onOrderFailure) {
-		gconf.onOrderFailure = function(err) {
-			G._onOrderFailure(gconf, err);
-		};
-	}
+	// renew every 90-ish minutes (random for staggering)
+	// the weak setTimeout (unref) means that when run as a CLI process this
+	// will still finish as expected, and not wait on the timeout
+	(function renew() {
+		setTimeout(function() {
+			greenlock.renew({});
+			renew();
+		}, Math.PI * 30 * 60 * 1000).unref();
+	})();
 
 	return greenlock;
 };
 
 G._loadChallenge = P._loadChallenge;
-
-G._defaults = function(opts) {
-	var defaults = {};
-
-	// [ 'store', 'challenges' ]
-	Object.keys(opts).forEach(function(k) {
-		// manage is the only thing that is, potentially, not plain-old JSON
-		if ('manage' === k && 'string' !== typeof opts[k]) {
-			return;
-		}
-		defaults[k] = opts[k];
-	});
-
-	if ('function' === typeof opts.notify) {
-		defaults.notify = opts.notify;
-	}
-	if ('function' === typeof opts.find) {
-		defaults.find = opts.find;
-	}
-
-	if (!defaults.directoryUrl) {
-		if (defaults.staging) {
-			defaults.directoryUrl =
-				'https://acme-staging-v02.api.letsencrypt.org/directory';
-		} else {
-			defaults.directoryUrl =
-				'https://acme-v02.api.letsencrypt.org/directory';
-		}
-	} else {
-		if (defaults.staging) {
-			throw new Error('supply `directoryUrl` or `staging`, but not both');
-		}
-	}
-	console.info('ACME Directory URL:', defaults.directoryUrl);
-
-	// Load the default store module
-	if (!defaults.store) {
-		defaults.store = {
-			module: 'greenlock-store-fs',
-			basePath: homedir + '/.config/greenlock/'
-		};
-	}
-	P._loadSync(defaults.store.module);
-	//defaults.store = store;
-
-	// Load the default challenge modules
-	var challenges;
-	if (!defaults.challenges) {
-		defaults.challenges = {};
-	}
-	challenges = defaults.challenges;
-
-	// TODO provide http-01 when http-01 and/or(?) dns-01 don't exist
-	if (!challenges['http-01'] && !challenges['dns-01']) {
-		challenges['http-01'] = {
-			module: 'acme-http-01-standalone'
-		};
-	}
-
-	if (challenges['http-01']) {
-		if ('string' === typeof challenges['http-01'].module) {
-			P._loadSync(challenges['http-01'].module);
-		}
-	}
-
-	if (challenges['dns-01']) {
-		if ('string' === typeof challenges['dns-01'].module) {
-			P._loadSync(challenges['dns-01'].module);
-		}
-	}
-
-	if (defaults.agreeToTerms === true || defaults.agreeTos === true) {
-		defaults.agreeToTerms = function(tos) {
-			return Promise.resolve(tos);
-		};
-	}
-
-	if (!defaults.renewOffset) {
-		defaults.renewOffset = '-45d';
-	}
-	if (!defaults.renewStagger) {
-		defaults.renewStagger = '3d';
-	}
-
-	if (!defaults.accountKeyType) {
-		defaults.accountKeyType = 'EC-P256';
-	}
-	if (!defaults.serverKeyType) {
-		if (defaults.domainKeyType) {
-			console.warn('use serverKeyType instead of domainKeyType');
-			defaults.serverKeyType = defaults.domainKeyType;
-		} else {
-			defaults.serverKeyType = 'RSA-2048';
-		}
-	}
-	if (defaults.domainKeypair) {
-		console.warn('use serverKeypair instead of domainKeypair');
-		defaults.serverKeypair =
-			defaults.serverKeypair || defaults.domainKeypair;
-	}
-
-	Object.defineProperty(defaults, 'domainKeypair', {
-		write: false,
-		get: function() {
-			console.warn('use serverKeypair instead of domainKeypair');
-			return defaults.serverKeypair;
-		}
-	});
-
-	return defaults;
-};
 
 function errorToJSON(e) {
 	var error = {};
@@ -648,4 +434,230 @@ function errorToJSON(e) {
 		error[k] = e[k];
 	});
 	return error;
+}
+
+function normalizeManager(gconf) {
+	var m;
+	// 1. Get the manager
+	// 2. Figure out if we need to wrap it
+
+	if (!gconf.manager) {
+		gconf.manager = 'greenlock-manager-fs';
+		if (gconf.find) {
+			// { manager: 'greenlock-manager-fs', find: function () { } }
+			warpFind(gconf);
+		}
+	}
+
+	if ('string' === typeof gconf.manager) {
+		try {
+			// wrap this to be safe for greenlock-manager-fs
+			m = require(gconf.manager).create(gconf);
+		} catch (e) {
+			console.error(e.code);
+			console.error(e.message);
+		}
+	} else {
+		m = gconf.manager;
+	}
+
+	if (!m) {
+		console.error();
+		console.error(
+			'Failed to load manager plugin ',
+			JSON.stringify(gconf.manager)
+		);
+		console.error();
+		process.exit(1);
+	}
+
+	if (
+		['set', 'remove', 'find', 'defaults'].every(function(k) {
+			return 'function' === typeof m[k];
+		})
+	) {
+		return m;
+	}
+
+	// { manager: { find: function () {  } } }
+	if (m.find) {
+		warpFind(m);
+	}
+	// m.configFile could also be set
+	m = require('greenlock-manager-fs').create(m);
+
+	if ('function' !== typeof m.find) {
+		console.error();
+		console.error(
+			JSON.stringify(gconf.manager),
+			'must implement `find()` and should implement `set()`, `remove()`, `defaults()`, and `init()`'
+		);
+		console.error();
+		process.exit(1);
+	}
+
+	return m;
+}
+
+function warpFind(gconf) {
+	gconf.__gl_find = gconf.find;
+	gconf.find = function(args) {
+		// the incoming args will be normalized by greenlock
+		return gconf.__gl_find(args).then(function(sites) {
+			// we also need to error check the incoming sites,
+			// as if they were being passed through `add()` or `set()`
+			// (effectively they are) because the manager assumes that
+			// they're not bad
+			sites.forEach(function(s) {
+				if (!s || 'string' !== typeof s.subject) {
+					throw new Error('missing subject');
+				}
+				if (
+					!Array.isArray(s.altnames) ||
+					!s.altnames.length ||
+					!s.altnames[0] ||
+					s.altnames[0] !== s.subject
+				) {
+					throw new Error('missing or malformed altnames');
+				}
+				['renewAt', 'issuedAt', 'expiresAt'].forEach(function(k) {
+					if (s[k]) {
+						throw new Error(
+							'`' +
+								k +
+								'` should be updated by `set()`, not by `find()`'
+						);
+					}
+				});
+			});
+		});
+	};
+}
+
+function mergeDefaults(MCONF, gconf) {
+	if (
+		gconf.agreeToTerms === true ||
+		MCONF.agreeToTerms === true ||
+		// TODO deprecate
+		gconf.agreeTos === true ||
+		MCONF.agreeTos === true
+	) {
+		MCONF.agreeToTerms = true;
+	}
+
+	if (!MCONF.subscriberEmail && gconf.subscriberEmail) {
+		MCONF.subscriberEmail = gconf.subscriberEmail;
+	}
+
+	var homedir;
+	// Load the default store module
+	if (!MCONF.store) {
+		if (gconf.store) {
+			MCONF.store = gconf.store;
+		} else {
+			homedir = require('os').homedir();
+			MCONF.store = {
+				module: 'greenlock-store-fs',
+				basePath: homedir + '/.config/greenlock/'
+			};
+		}
+	}
+	// just to test that it loads
+	P._loadSync(MCONF.store.module);
+
+	// Load the default challenge modules
+	var challenges = MCONF.challenges || gconf.challenges;
+	if (!challenges) {
+		challenges = {};
+	}
+	if (!challenges['http-01'] && !challenges['dns-01']) {
+		challenges['http-01'] = { module: 'acme-http-01-standalone' };
+	}
+	if (challenges['http-01']) {
+		if ('string' !== typeof challenges['http-01'].module) {
+			throw new Error(
+				'bad challenge http-01 module config:' +
+					JSON.stringify(challenges['http-01'])
+			);
+		}
+		P._loadSync(challenges['http-01'].module);
+	}
+	if (challenges['dns-01']) {
+		if ('string' !== typeof challenges['dns-01'].module) {
+			throw new Error(
+				'bad challenge dns-01 module config' +
+					JSON.stringify(challenges['dns-01'])
+			);
+		}
+		P._loadSync(challenges['dns-01'].module);
+	}
+	MCONF.challenges = challenges;
+
+	if (!MCONF.renewOffset) {
+		MCONF.renewOffset = gconf.renewOffset || '-45d';
+	}
+	if (!MCONF.renewStagger) {
+		MCONF.renewStagger = gconf.renewStagger || '3d';
+	}
+
+	if (!MCONF.accountKeyType) {
+		MCONF.accountKeyType = gconf.accountKeyType || 'EC-P256';
+	}
+	if (!MCONF.serverKeyType) {
+		MCONF.serverKeyType = gconf.serverKeyType || 'RSA-2048';
+	}
+}
+
+function _notify(ev, args) {
+	if (!args) {
+		args = ev;
+		ev = args.event;
+		delete args.event;
+	}
+
+	// TODO define message types
+	if (!_notify._notice) {
+		console.info(
+			'set greenlockOptions.notify to override the default logger'
+		);
+		_notify._notice = true;
+	}
+	var prefix = 'Warning';
+	switch (ev) {
+		case 'error':
+			prefix = 'Error';
+		/* falls through */
+		case 'warning':
+			console.error(
+				prefix + '%s:',
+				(' ' + (args.context || '')).trimRight()
+			);
+			console.error(args.message);
+			if (args.description) {
+				console.error(args.description);
+			}
+			if (args.code) {
+				console.error('code:', args.code);
+			}
+			if (args.stack) {
+				console.error(args.stack);
+			}
+			break;
+		default:
+			if (/status/.test(ev)) {
+				console.info(
+					ev,
+					args.altname || args.subject || '',
+					args.status || ''
+				);
+				if (!args.status) {
+					console.info(args);
+				}
+				break;
+			}
+			console.info(
+				ev,
+				'(more info available: ' + Object.keys(args).join(' ') + ')'
+			);
+	}
 }

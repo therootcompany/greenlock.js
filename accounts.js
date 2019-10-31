@@ -7,10 +7,7 @@ var E = require('./errors.js');
 var pending = {};
 
 A._getOrCreate = function(gnlck, mconf, db, acme, args) {
-	var email =
-		args.subscriberEmail ||
-		mconf.subscriberEmail ||
-		gnlck._defaults.subscriberEmail;
+	var email = args.subscriberEmail || mconf.subscriberEmail;
 
 	if (!email) {
 		throw E.NO_SUBSCRIBER('get account', args.subject);
@@ -70,10 +67,7 @@ A._rawGetOrCreate = function(gnlck, mconf, db, acme, args, email) {
 };
 
 A._newAccount = function(gnlck, mconf, db, acme, args, email, fullAccount) {
-	var keyType =
-		args.accountKeyType ||
-		mconf.accountKeyType ||
-		gnlck._defaults.accountKeyType;
+	var keyType = args.accountKeyType || mconf.accountKeyType;
 	var query = {
 		subject: args.subject,
 		email: email,

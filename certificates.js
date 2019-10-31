@@ -21,12 +21,12 @@ var rawPending = {};
 
 // Certificates
 C._getOrOrder = function(gnlck, mconf, db, acme, chs, acc, args) {
-	var email =
-		args.subscriberEmail ||
-		mconf.subscriberEmail ||
-		gnlck._defaults.subscriberEmail;
+	var email = args.subscriberEmail || mconf.subscriberEmail;
 
-	var id = args.altnames.join(' ');
+	var id = args.altnames
+		.slice(0)
+		.sort()
+		.join(' ');
 	if (pending[id]) {
 		return pending[id];
 	}
@@ -123,17 +123,11 @@ C._rawOrder = function(gnlck, mconf, db, acme, chs, acc, email, args) {
 		return rawPending[id];
 	}
 
-	var keyType =
-		args.serverKeyType ||
-		mconf.serverKeyType ||
-		gnlck._defaults.serverKeyType;
+	var keyType = args.serverKeyType || mconf.serverKeyType;
 	var query = {
 		subject: args.subject,
 		certificate: args.certificate || {},
-		directoryUrl:
-			args.directoryUrl ||
-			mconf.directoryUrl ||
-			gnlck._defaults.directoryUrl
+		directoryUrl: args.directoryUrl || gnlck._defaults.directoryUrl
 	};
 	rawPending[id] = U._getOrCreateKeypair(db, args.subject, query, keyType)
 		.then(function(kresult) {
@@ -214,10 +208,7 @@ C._check = function(gnlck, mconf, db, args) {
 		subject: args.subject,
 		// may contain certificate.id
 		certificate: args.certificate,
-		directoryUrl:
-			args.directoryUrl ||
-			mconf.directoryUrl ||
-			gnlck._defaults.directoryUrl
+		directoryUrl: args.directoryUrl || gnlck._defaults.directoryUrl
 	};
 	return db.check(query).then(function(pems) {
 		if (!pems) {
@@ -275,13 +266,12 @@ C._renewWithStagger = function(gnlck, mconf, args, pems) {
 	var renewStagger;
 	try {
 		renewStagger = U._parseDuration(
-			args.renewStagger ||
-				mconf.renewStagger ||
-				gnlck._defaults.renewStagger ||
-				0
+			args.renewStagger || mconf.renewStagger || 0
 		);
 	} catch (e) {
-		renewStagger = U._parseDuration(gnlck._defaults.renewStagger);
+		renewStagger = U._parseDuration(
+			args.renewStagger || mconf.renewStagger
+		);
 	}
 
 	// TODO check this beforehand
@@ -301,12 +291,9 @@ C._renewWithStagger = function(gnlck, mconf, args, pems) {
 		pems.expiresAt + renewOffset - Math.random() * renewStagger
 	);
 };
-C._renewOffset = function(gnlck, mconf, args, pems) {
+C._renewOffset = function(gnlck, mconf, args /*, pems*/) {
 	var renewOffset = U._parseDuration(
-		args.renewOffset ||
-			mconf.renewOffset ||
-			gnlck._defaults.renewOffset ||
-			0
+		args.renewOffset || mconf.renewOffset || 0
 	);
 	var week = 1000 * 60 * 60 * 24 * 6;
 	if (!args.force && Math.abs(renewOffset) < week) {
