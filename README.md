@@ -50,12 +50,12 @@ TODO
 // Creates an instance of greenlock with certain default values
 
 var gl = Greenlock.create({
-	// Staging for testing environments
-	staging: true,
+    // Staging for testing environments
+    staging: true,
 
-	// This should be the contact who receives critical bug and security notifications
-	// Optionally, you may receive other (very few) updates, such as important new features
-	maintainerEmail: 'jon@example.com'
+    // This should be the contact who receives critical bug and security notifications
+    // Optionally, you may receive other (very few) updates, such as important new features
+    maintainerEmail: 'jon@example.com'
 });
 ```
 
@@ -73,10 +73,10 @@ var gl = Greenlock.create({
 
 ```js
 greenlock.manager.defaults({
-	// The "Let's Encrypt Subscriber" (often the same as the maintainer)
-	// NOT the end customer (except where that is also the maintainer)
-	subscriberEmail: 'jon@example.com',
-	agreeToTerms: true
+    // The "Let's Encrypt Subscriber" (often the same as the maintainer)
+    // NOT the end customer (except where that is also the maintainer)
+    subscriberEmail: 'jon@example.com',
+    agreeToTerms: true
 });
 ```
 
@@ -102,8 +102,8 @@ greenlock.manager.defaults({
 
 ```js
 gl.add({
-	subject: 'example.com',
-	altnames: ['example.com', 'www.example.com', 'exampleapi.com']
+    subject: 'example.com',
+    altnames: ['example.com', 'www.example.com', 'exampleapi.com']
 });
 ```
 
@@ -119,15 +119,15 @@ gl.add({
 
 ```js
 return greenlock.get({ servername }).then(function(site) {
-	if (!site) {
-		console.log(servername + ' was not found in any site config');
-		return;
-	}
+    if (!site) {
+        console.log(servername + ' was not found in any site config');
+        return;
+    }
 
-	var privkey = site.pems.privkey;
-	var fullchain = site.pems.cert + '\n' + site.pems.chain + '\n';
-	console.log(privkey);
-	console.log(fullchain);
+    var privkey = site.pems.privkey;
+    var fullchain = site.pems.cert + '\n' + site.pems.chain + '\n';
+    console.log(privkey);
+    console.log(fullchain);
 });
 ```
 
@@ -141,13 +141,13 @@ This will renew only domains that have reached their `renewAt` or are within the
 
 ```js
 return greenlock.renew({}).then(function(results) {
-	results.forEach(function(site) {
-		if (site.error) {
-			console.error(site.subject, site.error);
-			return;
-		}
-		console.log('Renewed certificate for', site.subject, site.altnames);
-	});
+    results.forEach(function(site) {
+        if (site.error) {
+            console.error(site.subject, site.error);
+            return;
+        }
+        console.log('Renewed certificate for', site.subject, site.altnames);
+    });
 });
 ```
 
@@ -163,7 +163,7 @@ return greenlock.renew({}).then(function(results) {
 
 ```js
 greenlock.update({ subject, renewAt: 0 }).then(function() {
-	return greenlock.renew({});
+    return greenlock.renew({});
 });
 ```
 
