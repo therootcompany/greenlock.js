@@ -261,8 +261,10 @@ G.create = function(gconf) {
 
 	// needs to get info about the renewal, such as which store and challenge(s) to use
 	greenlock.renew = function(args) {
-		return manager.defaults().then(function(mconf) {
-			return greenlock._renew(mconf, args);
+		return greenlock._init().then(function() {
+			return manager.defaults().then(function(mconf) {
+				return greenlock._renew(mconf, args);
+			});
 		});
 	};
 	greenlock._renew = function(mconf, args) {

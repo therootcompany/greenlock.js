@@ -187,14 +187,22 @@ P._normalizeChallenge = function(name, ch) {
 };
 
 P._loadSync = function(modname) {
-	var mod;
+	try {
+		return require(modname);
+	} catch (e) {
+		console.error("Could not load '%s'", modname);
+		console.error('Did you install it?');
+		console.error('\tnpm install --save %s', modname);
+		throw e;
+	}
+	/*
 	try {
 		mod = require(modname);
 	} catch (e) {
 		P._installSync(modname);
 		mod = require(modname);
 	}
-	return mod;
+  */
 };
 
 P._installSync = function(moduleName) {
