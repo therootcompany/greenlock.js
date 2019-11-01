@@ -37,7 +37,7 @@
     "dependencies": {
         "@root/acme": "^3.0.8",
         "@root/csr": "^0.8.1",
-        "@root/greenlock": "^3.0.25",
+        "@root/greenlock": "^3.0.26",
         "@root/keypairs": "^0.9.0",
         "@root/mkdirp": "^1.0.0",
         "@root/request": "^1.3.10",
