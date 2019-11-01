@@ -281,7 +281,10 @@ gl.remove({
 <summary>Node.js</summary>
 -->
 
-# Node
+# Install
+
+Greenlock comes with reasonable defaults but when you install it,
+you should also install any plugins that you need.
 
 ```bash
 npm install --save @root/greenlock
@@ -336,7 +339,7 @@ TODO
 -->
 
 <details>
-<summary>Custom SSL Cert & Domain Management</summary>
+<summary>SSL Cert & Domain Management</summary>
 
 ## SSL Certificate & Domain Management
 
@@ -385,7 +388,7 @@ In many cases it will interact with the same database as the Key & Cert Store, a
 </details>
 
 <details>
-<summary>Custom Key & Cert Storage</summary>
+<summary>Key & Cert Storage</summary>
 
 ## Key and Certificate Store
 
@@ -416,7 +419,7 @@ This set of callbacks update your service with new certificates and keypairs.
 </details>
 
 <details>
-<summary>Custom ACME HTTP-01 Challenges</summary>
+<summary>ACME HTTP-01 Challenges</summary>
 
 ## ACME Challenge HTTP-01 Strategies
 
@@ -441,7 +444,7 @@ TODO: getAcmeHttp01Challenge
 </details>
 
 <details>
-<summary>Custom ACME DNS-01 Challenges</summary>
+<summary>ACME DNS-01 Challenges</summary>
 
 ## ACME Challenge DNS-01 Strategies
 
