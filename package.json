@@ -1,6 +1,6 @@
 {
-    "name": "greenlock",
-    "version": "3.0.21",
+    "name": "@root/greenlock",
+    "version": "3.0.24",
     "description": "The easiest Let's Encrypt client for Node.js and Browsers",
     "homepage": "https://rootprojects.org/greenlock/",
     "main": "greenlock.js",
@@ -37,7 +37,6 @@
     "dependencies": {
         "@root/acme": "^3.0.8",
         "@root/csr": "^0.8.1",
-        "@root/greenlock": "^3.0.21",
         "@root/keypairs": "^0.9.0",
         "@root/mkdirp": "^1.0.0",
         "@root/request": "^1.3.10",
