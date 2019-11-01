@@ -18,6 +18,8 @@ To start, check out the
 
 Greenlock&trade; is an Automated Certificate Management Environement 🔐.
 
+| **Greenlock** | [Greenlock Express](https://git.rootprojects.org/root/greenlock-express.js) | [ACME.js](https://git.rootprojects.org/root/acme.js) |
+
 It uses **Let's Encrypt** to generate Free SSL Certificates, including **Wildcard** SSL.
 It supports **Automated Renewal** of certs for Fully Automated HTTPS.
 
@@ -59,6 +61,107 @@ TODO
 </details>
 
 -->
+
+# Quick Start
+
+Greenlock is fully-automated, **SSL Certificate Manager** for IoT, Web Hosting, and Enterprise On-Prem, Edge, and Hybrid Cloud.
+
+(though we started building it for [Home Servers](https://rootprojects.org/hub/))
+
+You can use it for one-off certificates, like `certbot`,
+but it is _much_ more powerful than that.
+
+By setting just a few callbacks to let it know where it should store private keys and certificates,
+it will automatically renew any certificate that you add to it, as long as the process is running.
+
+Certificates are renewed every 45 days by default, and renewal checks will happen several times a day.
+
+<details>
+<summary>1. Configure</summary>
+
+```js
+'use strict';
+
+var pkg = require('./package.json');
+var Greenlock = require('greenlock');
+var greenlock = Greenlock.create({
+    packageAgent: pkg.name + '/' + pkg.version,
+    maintainerEmail: pkg.author,
+    staging: true,
+    manager: require('greenlock-manager-fs').create({
+        configFile: '~/.config/greenlock/manager.json'
+    }),
+    notify: function(event, details) {
+        if ('error' === event) {
+            // `details` is an error object in this case
+            console.error(details);
+        }
+    }
+});
+
+greenlock.manager
+    .defaults({
+        agreeToTerms: true,
+        subscriberEmail: 'webhosting@example.com'
+    })
+    .then(function(fullConfig) {
+        // ...
+    });
+```
+
+</details>
+
+<details>
+<summary>2. Add Domains</summary>
+
+The `subject` (primary domain on certificate) will be the id,
+so it's very important that the order of the given domains
+be deterministic.
+
+```js
+var altnames = ['example.com', 'www.example.com'];
+
+greenlock
+    .add({
+        subject: altnames[0],
+        altnames: altnames
+    })
+    .then(function() {
+        // saved config to db (or file system)
+    });
+```
+
+Issuance and renewal will start immediately, and run continually.
+
+</details>
+
+<details>
+<summary>3. Test for Success</summary>
+
+The `store` callbacks will be called every any of your certificates
+are renewed.
+
+However, you can do a quick one-off check with `get`.
+
+It will return a certificate immediately (if available),
+or wait for the renewal to complete (or for it to fail again).
+
+```js
+greenlock
+    .get({ servername: subject })
+    .then(function(pems) {
+        if (pems && pems.privkey && pems.cert && pems.chain) {
+            console.info('Success');
+        }
+        //console.log(pems);
+    })
+    .catch(function(e) {
+        console.error('Big bad error:', e.code);
+        console.error(e);
+    });
+```
+
+</details>
 
 # JavaScript API
 
@@ -127,19 +230,20 @@ greenlock.manager.defaults({
 });
 ```
 
-| Parameter                 | Description                                                                                                                                                |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| agreeToTerms              | (default: false) either 'true' or a function that presents the Terms of Service and returns it once accepted                                               |
-| challenges['http-01']     | provide an http-01 challenge module                                                                                                                        |
-| challenges['dns-01']      | provide a dns-01 challenge module                                                                                                                          |
-| challenges['tls-alpn-01'] | provide a tls-alpn-01 challenge module                                                                                                                     |
-| challenges[type].module   | the name of your challenge module                                                                                                                          |
-| challenges[type].xxxx     | module-specific options                                                                                                                                    |
-| servername                | the default servername to use for non-sni requests (many IoT clients)                                                                                      |
-| subscriberEmail           | the contact who agrees to the Let's Encrypt Subscriber Agreement and the Greenlock Terms of Service<br>this contact receives renewal failure notifications |
-| store                     | override the default storage module                                                                                                                        |
-| store.module              | the name of your storage module                                                                                                                            |
-| store.xxxx                | options specific to your storage module                                                                                                                    |
+| Parameter                 | Description                                                                                                                                                                        |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| agreeToTerms              | (default: false) either 'true' or a function that presents the Terms of Service and returns it once accepted                                                                       |
+| challenges['http-01']     | provide an http-01 challenge module                                                                                                                                                |
+| challenges['dns-01']      | provide a dns-01 challenge module                                                                                                                                                  |
+| challenges['tls-alpn-01'] | provide a tls-alpn-01 challenge module                                                                                                                                             |
+| challenges[type].module   | the name of your challenge module                                                                                                                                                  |
+| challenges[type].xxxx     | module-specific options                                                                                                                                                            |
+| renewOffset               | **leave the default** Other than for testing, leave this at the default of 45 days before expiration date (`'-45d'`) . Can also be set like `5w`, meaning 5 weeks after issue date |
+| servername                | the default servername to use for non-sni requests (many IoT clients)                                                                                                              |
+| subscriberEmail           | the contact who agrees to the Let's Encrypt Subscriber Agreement and the Greenlock Terms of Service<br>this contact receives renewal failure notifications                         |
+| store                     | override the default storage module                                                                                                                                                |
+| store.module              | the name of your storage module                                                                                                                                                    |
+| store.xxxx                | options specific to your storage module                                                                                                                                            |
 
 <!--
 
@@ -154,7 +258,7 @@ greenlock.manager.defaults({
 
 ## Greenlock#add()
 
-Greenlock is a **Management Environment**.
+Greenlock is a **Automated Certificate Management Environment**.
 
 Once you add a "site", it will begin to automatically renew, immediately.
 
@@ -272,6 +376,17 @@ gl.remove({
 | Parameter | Description                                            |
 | --------- | ------------------------------------------------------ |
 | subject   | the first domain on, and identifier of the certificate |
+
+</details>
+
+<details>
+<summary>Events</summary>
+
+Most of the events bubble from ACME.js.
+
+See https://git.rootprojects.org/root/acme.js#api-overview
+
+_TODO_: document the greenlock-specific events.
 
 </details>
 

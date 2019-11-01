@@ -1,6 +1,6 @@
 {
     "name": "@root/greenlock",
-    "version": "3.0.19",
+    "version": "3.0.20",
     "description": "The easiest Let's Encrypt client for Node.js and Browsers",
     "homepage": "https://rootprojects.org/greenlock/",
     "main": "greenlock.js",
