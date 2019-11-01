@@ -195,25 +195,32 @@ each domain before authorizing a certificate.
 
 </details>
 
-# JavaScript Library
+# JavaScript API
 
 <!--
 <details>
 <summary>Greenlock API (shared among JS implementations)</summary>
 -->
 
-### Instantiate
+<details>
+<summary>Greenlock.create({ packageAgent, maintainerEmail, staging })</summary>
+
+### Greenlock.create()
+
+Creates an instance of greenlock with _environment_-level values.
 
 ```js
-// Creates an instance of greenlock with certain default values
 
+var pkg = require('./package.json');
 var gl = Greenlock.create({
     // Staging for testing environments
     staging: true,
 
     // This should be the contact who receives critical bug and security notifications
     // Optionally, you may receive other (very few) updates, such as important new features
-    maintainerEmail: 'jon@example.com'
+    maintainerEmail: 'jon@example.com',
+    // for an RFC 8555 / RFC 7231 ACME client user agent
+    packageAgent: pkg.name + '/' pkg.version
 });
 ```
 
@@ -221,13 +228,24 @@ var gl = Greenlock.create({
 | --------------- | ------------------------------------------------------------------------------------ |
 | maintainerEmail | the developer contact for critical bug and security notifications                    |
 | packageAgent    | if you publish your package for others to use, `require('./package.json').name` here |
+| staging         | use the Let's Encrypt staging URL instead of the production URL                      |
+| directoryUrl    | for use with other (not Let's Encrypt) ACME services, and the Pebble test server     |
 
 <!--
 | maintainerUpdates         | (default: false) receive occasional non-critical notifications                                                                                             |
     maintainerUpdates: true // default: false
 -->
 
-### Add Approved Domains
+</details>
+
+<details>
+<summary>Greenlock#manager.defaults()</summary>
+
+# Greenlock#manager.defaults()
+
+Acts as a getter when given no arguments.
+
+Otherwise sets default, site-wide values as described below.
 
 ```js
 greenlock.manager.defaults({
@@ -264,6 +282,20 @@ greenlock.manager.defaults({
 
 -->
 
+<details>
+<summary>Greenlock#add({ subject, altnames })</summary>
+
+# Greenlock#add()
+
+Greenlock is a **Management Environment**.
+
+Once you add a "site", it will begin to automatically renew, immediately.
+
+The certificates will provided to the `store` callbacks as soon as they are ready, and whenever they renew.
+Failure to renew will be reported to the `notify` callback.
+
+You can also retrieve them one-off with `get`.
+
 ```js
 gl.add({
     subject: 'example.com',
@@ -278,7 +310,12 @@ gl.add({
 | subscriberEmail | if different from the default (i.e. multi-tenant, whitelabel)                                |
 | challenges      | (same as main config) use if this site needs to use non-default http-01 or dns-01 validation |
 
-### Retrieve Certificates (One-Off)
+</details>
+
+<details>
+<summary>Greenlock#get({ servername })</summary>
+
+# Greenlock#get()
 
 **Disclaimer**: This is only intended for testing, demos, and SNICallback
 (in [Greenlock Express](https://git.rootprojects.org/root/greenlock-express.js)).
@@ -305,11 +342,16 @@ return greenlock.get({ servername }).then(function(site) {
 });
 ```
 
-| Parameter  | Description                                            |
-| ---------- | ------------------------------------------------------ |
-| servername | the first domain on, and identifier of the certificate |
+| Parameter  | Description                                                   |
+| ---------- | ------------------------------------------------------------- |
+| servername | any altname listed on the certificate (including the subject) |
 
-### Renew Certificates
+</details>
+
+<details>
+<summary>Greenlock#renew()</summary>
+
+# Greenlock#renew()
 
 This will renew only domains that have reached their `renewAt` or are within the befault `renewOffset`.
 
