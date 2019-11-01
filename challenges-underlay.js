@@ -3,6 +3,7 @@
 var Greenlock = require('./');
 
 module.exports.wrap = function(greenlock) {
+    greenlock.challenges = {};
     greenlock.challenges.get = function(chall) {
         // TODO pick one and warn on the others
         // (just here due to some backwards compat issues with early v3 plugins)
