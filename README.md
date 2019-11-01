@@ -402,7 +402,7 @@ Greenlock comes with reasonable defaults but when you install it,
 you should also install any plugins that you need.
 
 ```bash
-npm install --save @root/greenlock
+npm install --save greenlock
 npm install --save greenlock-manager-fs
 npm install --save greenlock-store-fs
 npm install --save acme-http-01-standalone
@@ -420,7 +420,7 @@ TODO
 ```js
 'use strict';
 
-var Greenlock = require(@root/greenlock-express);
+var Greenlock = require(greenlock-express);
 
 var greenlock = Greenlock.create({
 // for security and critical bug notices
