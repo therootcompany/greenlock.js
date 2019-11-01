@@ -23,45 +23,114 @@ G.create = function(gconf) {
     if (!gconf) {
         gconf = {};
     }
+    var manager;
 
-    if (!gconf.maintainerEmail) {
-        throw E.NO_MAINTAINER('create');
-    }
-
-    // TODO send welcome message with benefit info
-    U._validMx(gconf.maintainerEmail).catch(function() {
-        console.error(
-            'invalid maintainer contact info:',
-            gconf.maintainerEmail
-        );
-
-        // maybe move this to init and don't exit the process, just in case
-        process.exit(1);
-    });
-
-    if ('function' === typeof gconf.notify) {
-        gdefaults.notify = gconf.notify;
-    } else {
-        gdefaults.notify = _notify;
-    }
-
-    if (gconf.directoryUrl) {
-        gdefaults = gconf.directoryUrl;
-        if (gconf.staging) {
-            throw new Error('supply `directoryUrl` or `staging`, but not both');
+    greenlock._create = function() {
+        if (!gconf.maintainerEmail) {
+            throw E.NO_MAINTAINER('create');
         }
-    } else if (gconf.staging) {
-        gdefaults.directoryUrl =
-            'https://acme-staging-v02.api.letsencrypt.org/directory';
-    } else {
-        gdefaults.directoryUrl =
-            'https://acme-v02.api.letsencrypt.org/directory';
-    }
-    console.info('ACME Directory URL:', gdefaults.directoryUrl);
 
-    var manager = normalizeManager(gconf);
-    require('./manager-underlay.js').wrap(greenlock, manager, gconf);
-    //console.log('debug greenlock.manager', Object.keys(greenlock.manager));
+        // TODO send welcome message with benefit info
+        U._validMx(gconf.maintainerEmail).catch(function() {
+            console.error(
+                'invalid maintainer contact info:',
+                gconf.maintainerEmail
+            );
+
+            // maybe move this to init and don't exit the process, just in case
+            process.exit(1);
+        });
+
+        if ('function' === typeof gconf.notify) {
+            gdefaults.notify = gconf.notify;
+        } else {
+            gdefaults.notify = _notify;
+        }
+
+        if (gconf.directoryUrl) {
+            gdefaults = gconf.directoryUrl;
+            if (gconf.staging) {
+                throw new Error(
+                    'supply `directoryUrl` or `staging`, but not both'
+                );
+            }
+        } else if (gconf.staging) {
+            gdefaults.directoryUrl =
+                'https://acme-staging-v02.api.letsencrypt.org/directory';
+        } else {
+            gdefaults.directoryUrl =
+                'https://acme-v02.api.letsencrypt.org/directory';
+        }
+        console.info('ACME Directory URL:', gdefaults.directoryUrl);
+
+        manager = normalizeManager(gconf);
+
+        // Wraps each of the following with appropriate error checking
+        // greenlock.manager.defaults
+        // greenlock.manager.add
+        // greenlock.manager.update
+        // greenlock.manager.remove
+        // greenlock.manager.find
+        require('./manager-underlay.js').wrap(greenlock, manager, gconf);
+
+        // Exports challenges.get for Greenlock Express HTTP-01,
+        // and whatever odd use case pops up, I suppose
+        // greenlock.challenges.get
+        require('./challenges-underlay.js').wrap(greenlock, manager, gconf);
+
+        greenlock._defaults = gdefaults;
+        greenlock._defaults.debug = gconf.debug;
+
+        // renew every 90-ish minutes (random for staggering)
+        // the weak setTimeout (unref) means that when run as a CLI process this
+        // will still finish as expected, and not wait on the timeout
+        (function renew() {
+            setTimeout(function() {
+                greenlock.renew({});
+                renew();
+            }, Math.PI * 30 * 60 * 1000).unref();
+        })();
+    };
+
+    // The purpose of init is to make MCONF the source of truth
+    greenlock._init = function() {
+        var p;
+        greenlock._init = function() {
+            return p;
+        };
+
+        if (manager.init) {
+            // TODO punycode?
+            p = manager.init({
+                request: request
+                //punycode: require('punycode')
+            });
+        } else {
+            p = Promise.resolve();
+        }
+        p = p
+            .then(function() {
+                return manager.defaults().then(function(MCONF) {
+                    mergeDefaults(MCONF, gconf);
+                    if (true === MCONF.agreeToTerms) {
+                        gdefaults.agreeToTerms = function(tos) {
+                            return Promise.resolve(tos);
+                        };
+                    }
+                    return manager.defaults(MCONF);
+                });
+            })
+            .catch(function(err) {
+                console.error('Fatal error during greenlock init:');
+                console.error(err);
+                process.exit(1);
+            });
+        return p;
+    };
+
+    // The goal here is to reduce boilerplate, such as error checking
+    // and duration parsing, that a manager must implement
+    greenlock.sites.add = greenlock.add = greenlock.manager.add;
 
     greenlock.notify = greenlock._notify = function(ev, params) {
         var mng = greenlock.manager;
@@ -120,46 +189,6 @@ G.create = function(gconf) {
             });
         }
     };
-
-    // The purpose of init is to make MCONF the source of truth
-    greenlock._init = function() {
-        var p;
-        greenlock._init = function() {
-            return p;
-        };
-
-        if (manager.init) {
-            // TODO punycode?
-            p = manager.init({
-                request: request
-                //punycode: require('punycode')
-            });
-        } else {
-            p = Promise.resolve();
-        }
-        p = p
-            .then(function() {
-                return manager.defaults().then(function(MCONF) {
-                    mergeDefaults(MCONF, gconf);
-                    if (true === MCONF.agreeToTerms) {
-                        gdefaults.agreeToTerms = function(tos) {
-                            return Promise.resolve(tos);
-                        };
-                    }
-                    return manager.defaults(MCONF);
-                });
-            })
-            .catch(function(err) {
-                console.error('Fatal error during greenlock init:');
-                console.error(err);
-                process.exit(1);
-            });
-        return p;
-    };
-
-    // The goal here is to reduce boilerplate, such as error checking
-    // and duration parsing, that a manager must implement
-    greenlock.sites.add = greenlock.add = greenlock.manager.add;
 
     // certs.get
     greenlock.get = function(args) {
@@ -412,18 +441,7 @@ G.create = function(gconf) {
         });
     };
 
-    greenlock._defaults = gdefaults;
-    greenlock._defaults.debug = gconf.debug;
-
-    // renew every 90-ish minutes (random for staggering)
-    // the weak setTimeout (unref) means that when run as a CLI process this
-    // will still finish as expected, and not wait on the timeout
-    (function renew() {
-        setTimeout(function() {
-            greenlock.renew({});
-            renew();
-        }, Math.PI * 30 * 60 * 1000).unref();
-    })();
+    greenlock._create();
 
     return greenlock;
 };
