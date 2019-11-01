@@ -72,6 +72,9 @@ G.create = function(gconf) {
         // greenlock.manager.remove
         // greenlock.manager.find
         require('./manager-underlay.js').wrap(greenlock, manager, gconf);
+        // The goal here is to reduce boilerplate, such as error checking
+        // and duration parsing, that a manager must implement
+        greenlock.sites.add = greenlock.add = greenlock.manager.add;
 
         // Exports challenges.get for Greenlock Express HTTP-01,
         // and whatever odd use case pops up, I suppose
@@ -127,10 +130,6 @@ G.create = function(gconf) {
             });
         return p;
     };
-
-    // The goal here is to reduce boilerplate, such as error checking
-    // and duration parsing, that a manager must implement
-    greenlock.sites.add = greenlock.add = greenlock.manager.add;
 
     greenlock.notify = greenlock._notify = function(ev, params) {
         var mng = greenlock.manager;
