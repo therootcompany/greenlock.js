@@ -10,9 +10,9 @@ git pull origin master
 git checkout npm
 git checkout master -- package.json
 git checkout master -- README.md
-git add package* README.md || true
-git commit -m "bump" || true
 sed -i '' -e 's|"name": ".root.greenlock"|"name": "greenlock"|' package.json
 npm install --save @root/greenlock@latest
+git add package* README.md || true
+git commit -m "bump" || true
 npm publish ./
 git reset --hard
