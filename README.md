@@ -1,8 +1,29 @@
-# @root/greenlock
+# New Documentation &amp; [v2/v3 Migration Guide](https://git.rootprojects.org/root/greenlock.js/src/branch/v3/MIGRATION_GUIDE_V2_V3.md)
 
-🔐 Free SSL, Free Wildcard SSL, and Fully Automated HTTPS for Node.js and Browsers, issued by Let's Encrypt v2 via ACME
+Greenlock v3 was just released from private beta **today** (Nov 1st, 2019).
 
-Greenlock&trade; is the easiest way to integrate Let's Encrypt into your projects, products, and infrastructure.
+We're still working on the full documentation for this new version,
+so please be patient.
+
+To start, check out the
+[Migration Guide](https://git.rootprojects.org/root/greenlock.js/src/branch/v3/MIGRATION_GUIDE_V2_V3.md).
+
+!["Greenlock Logo"](https://git.rootprojects.org/root/greenlock.js/raw/branch/master/logo/greenlock-1063x250.png 'Greenlock lock logo and work mark')
+
+!["Greenlock Function"](https://git.rootprojects.org/root/greenlock.js/raw/branch/master/logo/from-not-secure-to-secure-url-bar.png 'from url bar showing not secure to url bar showing secure')
+
+# [Greenlock](https://git.rootprojects.org/root/greenlock.js) is Let's Encrypt for JavaScript
+
+| Built by [Root](https://rootprojects.org) for [Hub](https://rootprojects.org/hub/)
+
+Greenlock&trade; is an Automated Certificate Management Environement 🔐.
+
+It uses **Let's Encrypt** to generate Free SSL Certificates, including **Wildcard** SSL.
+It supports **Automated Renewal** of certs for Fully Automated HTTPS.
+
+It's written in plain JavaScript and works in Node, Browsers, and WebPack.
+
+the easiest way to integrate Let's Encrypt into your projects, products, and infrastructure.
 
 -   [x] **Wildcard** Certificates
 -   [x] **IoT** Environments
@@ -39,10 +60,147 @@ TODO
 
 -->
 
-# JavaScript Library
+# Easy to Customize
+
+<!-- greenlock-manager-test => greenlock-manager-custom -->
+
+<!--
+- [greenlock.js/examples/](https://git.rootprojects.org/root/greenlock.js/src/branch/master/examples)
+-->
 
 <details>
+<summary>[Custom SSL Cert & Domain Management](https://git.rootprojects.org/root/greenlock-manager-test.js)</summary>
+
+# SSL Certificate & Domain Management
+
+Full Docs: https://git.rootprojects.org/root/greenlock-manager-test.js
+
+This is what keeps the mapping of domains <-> certificates.
+In many cases it will interact with the same database as the Key & Cert Store, and probably the code as well.
+
+-   set({ subject, altnames, renewAt })
+-   find({ altnames, renewBefore })
+    ```js
+    // should return a list of site configs:
+    [
+        {
+            subject: 'example.com',
+            altnames: ['example.com', 'exampleapi.com'],
+            renewAt: 1575197231760
+        },
+        {
+            subject: '*.example.com',
+            altnames: ['*.example.com'],
+            renewAt: 1575197231760,
+            challenges: {
+                'dns-01': {
+                    module: 'acme-dns-01-dnsimple',
+                    apikey: 'xxxx'
+                }
+            }
+        }
+    ];
+    ```
+-   remove({ subject })
+-   defaults() (both getter and setter)
+    ```json
+    {
+        "subscriberEmail": "jane@example.com",
+        "agreeToTerms": true,
+        "challenges": {
+            "http-01": {
+                "module": "acme-http-01-standalone"
+            }
+        }
+    }
+    ```
+
+</details>
+
+<details>
+<summary>[Custom Key & Cert Storage](https://git.rootprojects.org/root/greenlock-store-test.js)</summary>
+
+# Key and Certificate Store
+
+Full Docs: https://git.rootprojects.org/root/greenlock-store-test.js
+
+This set of callbacks update your service with new certificates and keypairs.
+
+Account Keys (JWK)
+
+(though typically you only have one account key - because you only have one subscriber email)
+
+-   accounts.setKeypair({ email, keypair })
+-   accounts.checkKeypair({ email })
+
+Certificate Keys (JWK + PEM)
+
+(typically you have one for each set of domains, and each load balancer)
+
+-   certificates.setKeypair({ subject, keypair })
+-   certificates.checkKeypair({ subject })
+    (these are fine to implement the same as above, swapping subject/email)
+
+Certificate PEMs
+
+-   certificates.set({ subject, pems })
+-   certificates.check({ subject })
+
+</details>
+
+<details>
+<summary>[Custom ACME HTTP-01 Challenges](https://git.rootprojects.org/root/acme-http-01-test.js)</summary>
+
+# ACME Challenge HTTP-01 Strategies
+
+Full Docs: https://git.rootprojects.org/root/acme-http-01-test.js
+
+This validation and authorization strategy is done over plain HTTP on Port 80.
+
+These are used to set files containing tokens that Let's Encrypt will fetch from each domain
+before authorizing a certificate.
+
+**NOT for Wildcards**.
+
+-   init({ request })
+-   set({ challenge: { type, token, keyAuthorization, challengeUrl } })
+-   get({ challenge: { type, token } })
+-   remove({ challenge: { type, token } })
+
+<!--
+TODO: getAcmeHttp01Challenge
+-->
+
+</details>
+
+<details>
+<summary>[Custom ACME DNS-01 Challenges](https://git.rootprojects.org/root/acme-dns-01-test.js)</summary>
+
+# ACME Challenge DNS-01 Strategies
+
+Full Docs https://git.rootprojects.org/root/acme-dns-01-test.js
+
+This validation and authorization strategy is done over DNS on UDP and TCP ports 53.
+
+**For Wildcards**
+
+These are used to set TXT records containing tokens that Let's Encrypt will fetch for
+each domain before authorizing a certificate.
+
+-   init({ request })
+-   zones()
+-   set({ challenge: { type, dnsZone, dnsPrefix, dnsHost, keyAuthorizationDigest } })
+-   get({ challenge: { type, dnsZone, dnsPrefix, dnsHost } })
+-   remove({ challenge: { type, dnsZone, dnsPrefix, dnsHost } })
+
+</details>
+
+# JavaScript Library
+
+<!--
+<details>
 <summary>Greenlock API (shared among JS implementations)</summary>
+-->
 
 ### Instantiate
 
@@ -77,6 +235,12 @@ greenlock.manager.defaults({
     // NOT the end customer (except where that is also the maintainer)
     subscriberEmail: 'jon@example.com',
     agreeToTerms: true
+    challenges: {
+      "http-01": {
+        module: "acme-http-01-webroot",
+        webroot: "/path/to/webroot"
+      }
+    }
 });
 ```
 
@@ -112,10 +276,20 @@ gl.add({
 | subject         | the first domain on, and identifier of the certificate                                       |
 | altnames        | first domain, plus additional domains<br>note: the order should always be the same           |
 | subscriberEmail | if different from the default (i.e. multi-tenant, whitelabel)                                |
-| agreeToTerms    | if subscriber is different from the default                                                  |
 | challenges      | (same as main config) use if this site needs to use non-default http-01 or dns-01 validation |
 
-### Issue Certificates
+### Retrieve Certificates (One-Off)
+
+**Disclaimer**: This is only intended for testing, demos, and SNICallback
+(in [Greenlock Express](https://git.rootprojects.org/root/greenlock-express.js)).
+
+Greenlock is intended to be left running to allow it to fetech and renew certifictates automatically.
+
+It is intended that you use the `store` callbacks to new certificates instantly as soon as they renew.
+This also protects you from accidentally stampeding the Let's Encrypt API with hundreds (or thousands)
+of certificate requests.
+
+-   [Store Callback Documentation](https://git.rootprojects.org/root/greenlock-store-test.js)
 
 ```js
 return greenlock.get({ servername }).then(function(site) {
@@ -139,6 +313,10 @@ return greenlock.get({ servername }).then(function(site) {
 
 This will renew only domains that have reached their `renewAt` or are within the befault `renewOffset`.
 
+**Note**: This runs at regular intervals, multiple times a day, in the background.
+You are not required to call it. If you implement the `store` callbacks, the certificates
+will automatically be saved (and if you don't implement them, they all get saved to disk).
+
 ```js
 return greenlock.renew({}).then(function(results) {
     results.forEach(function(site) {
@@ -151,40 +329,25 @@ return greenlock.renew({}).then(function(results) {
 });
 ```
 
-| Parameter     | Type | Description                                                                     |
-| ------------- | ---- | ------------------------------------------------------------------------------- |
-| (optional)    |      | ALL parameters are optional, but some should be paired                          |
-| force         | bool | force silly options, such as tiny durations                                     |
-| issuedBefore  | ms   | Check domains issued before the given date in milliseconds                      |
-| expiresBefore | ms   | Check domains that expire before the given date in milliseconds                 |
-| renewBefore   | ms   | Check domains that are scheduled to renew before the given date in milliseconds |
-
-## Force a certificate to renew
-
-```js
-greenlock.update({ subject, renewAt: 0 }).then(function() {
-    return greenlock.renew({});
-});
-```
+| Parameter   | Type | Description                                                                     |
+| ----------- | ---- | ------------------------------------------------------------------------------- |
+| (optional)  |      | ALL parameters are optional, but some should be paired                          |
+| force       | bool | force silly options, such as tiny durations                                     |
+| renewBefore | ms   | Check domains that are scheduled to renew before the given date in milliseconds |
 
 <!--
-| servername  | string<br>hostname   | renew the certificate that has this domain in its altnames (for ServerName Indication / SNI lookup) |
-| renewOffset | string<br>+ duration | renew domains that have been **issued** after the given duration. ex: '45d' (45 days _after_)       |
-| renewOffset | string<br>- duration | renew domains, by this duration, before they **expire**. ex: '-3w' (3 weeks _before_)               |
+| issuedBefore  | ms   | Check domains issued before the given date in milliseconds                      |
+| expiresBefore | ms   | Check domains that expire before the given date in milliseconds                 |
 -->
 
-Note: only previous approved domains (via `gl.add()`) may be renewed
-
-Note: this will NOT throw an **error**. It will return an array of certifates or errors.
-
-### More
-
-TODO
-
+<!--
 </details>
 
 <details>
 <summary>Node.js</summary>
+-->
+
+# Node
 
 ```bash
 npm install --save @root/greenlock
@@ -251,23 +414,62 @@ Therefore, http-01 will be preferred to dns-01 except when wildcards or **privat
 
 http-01 will only be supplied as a defaut if no other challenge is provided.
 
-You can use ACME (Let's Encrypt) with
+You can use ACME (Let's Encrypt) with several ready-made integrations
 
--   [x] DNS-01 Challenges
-    -   CloudFlare
-    -   [Digital Ocean](https://git.rootprojects.org/root/acme-dns-01-digitalocean.js)
-    -   [DNSimple](https://git.rootprojects.org/root/acme-dns-01-dnsimple.js)
-    -   [DuckDNS](https://git.rootprojects.org/root/acme-dns-01-duckdns.js)
-    -   [GoDaddy](https://git.rootprojects.org/root/acme-dns-01-godaddy.js)
-    -   [Gandi](https://git.rootprojects.org/root/acme-dns-01-gandi.js)
-    -   [NameCheap](https://git.rootprojects.org/root/acme-dns-01-namecheap.js)
-    -   [Name&#46;com](https://git.rootprojects.org/root/acme-dns-01-namedotcom.js)
-    -   Route53 (AWS)
-    -   [Vultr](https://git.rootprojects.org/root/acme-dns-01-vultr.js)
-    -   Build your own
--   [x] HTTP-01 Challenges
-    -   [In-Memory](https://git.rootprojects.org/root/acme-http-01-standalone.js) (Standalone)
-    -   [FileSystem](https://git.rootprojects.org/root/acme-http-01-webroot.js) (WebRoot)
-    -   S3 (AWS, Digital Ocean, etc)
--   [x] TLS-ALPN-01 Challenges
-    -   Contact us to learn about Greenlock Pro
+# Ready-made Integrations
+
+Greenlock Express integrates between Let's Encrypt's ACME Challenges and many popular services.
+
+| Type        | Service                                                                             | Plugin                   |
+| ----------- | ----------------------------------------------------------------------------------- | ------------------------ |
+| dns-01      | CloudFlare                                                                          | acme-dns-01-cloudflare   |
+| dns-01      | [Digital Ocean](https://git.rootprojects.org/root/acme-dns-01-digitalocean.js)      | acme-dns-01-digitalocean |
+| dns-01      | [DNSimple](https://git.rootprojects.org/root/acme-dns-01-dnsimple.js)               | acme-dns-01-dnsimple     |
+| dns-01      | [DuckDNS](https://git.rootprojects.org/root/acme-dns-01-duckdns.js)                 | acme-dns-01-duckdns      |
+| http-01     | File System / [Web Root](https://git.rootprojects.org/root/acme-http-01-webroot.js) | acme-http-01-webroot     |
+| dns-01      | [GoDaddy](https://git.rootprojects.org/root/acme-dns-01-godaddy.js)                 | acme-dns-01-godaddy      |
+| dns-01      | [Gandi](https://git.rootprojects.org/root/acme-dns-01-gandi.js)                     | acme-dns-01-gandi        |
+| dns-01      | [NameCheap](https://git.rootprojects.org/root/acme-dns-01-namecheap.js)             | acme-dns-01-namecheap    |
+| dns-01      | [Name&#46;com](https://git.rootprojects.org/root/acme-dns-01-namedotcom.js)         | acme-dns-01-namedotcom   |
+| dns-01      | Route53 (AWS)                                                                       | acme-dns-01-route53      |
+| http-01     | S3 (AWS, Digital Ocean, Scaleway)                                                   | acme-http-01-s3          |
+| dns-01      | [Vultr](https://git.rootprojects.org/root/acme-dns-01-vultr.js)                     | acme-dns-01-vultr        |
+| dns-01      | [Build your own](https://git.rootprojects.org/root/acme-dns-01-test.js)             | acme-dns-01-test         |
+| http-01     | [Build your own](https://git.rootprojects.org/root/acme-http-01-test.js)            | acme-http-01-test        |
+| tls-alpn-01 | [Contact us](mailto:support@therootcompany.com)                                     | -                        |
+
+Search `acme-http-01-` or `acme-dns-01-` on npm to find more.
+
+# Commercial Support
+
+Do you need...
+
+-   training?
+-   specific features?
+-   different integrations?
+-   bugfixes, on _your_ timeline?
+-   custom code, built by experts?
+-   commercial support and licensing?
+
+You're welcome to [contact us](mailto:aj@therootcompany.com) in regards to IoT, On-Prem,
+Enterprise, and Internal installations, integrations, and deployments.
+
+We have both commercial support and commercial licensing available.
+
+We also offer consulting for all-things-ACME and Let's Encrypt.
+
+# Legal &amp; Rules of the Road
+
+Greenlock&trade; is a [trademark](https://rootprojects.org/legal/#trademark) of AJ ONeal
+
+The rule of thumb is "attribute, but don't confuse". For example:
+
+> Built with [Greenlock Express](https://git.rootprojects.org/root/greenlock.js) (a [Root](https://rootprojects.org) project).
+
+Please [contact us](mailto:aj@therootcompany.com) if you have any questions in regards to our trademark,
+attribution, and/or visible source policies. We want to build great software and a great community.
+
+[Greenlock&trade;](https://git.rootprojects.org/root/greenlock.js) |
+MPL-2.0 |
+[Terms of Use](https://therootcompany.com/legal/#terms) |
+[Privacy Policy](https://therootcompany.com/legal/#privacy)
