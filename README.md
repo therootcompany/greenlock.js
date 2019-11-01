@@ -1,4 +1,4 @@
-# New Documentation &amp; [v2/v3 Migration Guide](https://git.rootprojects.org/root/greenlock.js/src/branch/v3/MIGRATION_GUIDE_V2_V3.md)
+# New Documentation &amp; [v2/v3 Migration Guide](https://git.rootprojects.orggreenlock.js/src/branch/v3/MIGRATION_GUIDE_V2_V3.md)
 
 Greenlock v3 was just released from private beta **today** (Nov 1st, 2019).
 
@@ -6,19 +6,19 @@ We're still working on the full documentation for this new version,
 so please be patient.
 
 To start, check out the
-[Migration Guide](https://git.rootprojects.org/root/greenlock.js/src/branch/v3/MIGRATION_GUIDE_V2_V3.md).
+[Migration Guide](https://git.rootprojects.orggreenlock.js/src/branch/v3/MIGRATION_GUIDE_V2_V3.md).
 
-!["Greenlock Logo"](https://git.rootprojects.org/root/greenlock.js/raw/branch/master/logo/greenlock-1063x250.png 'Greenlock lock logo and work mark')
+!["Greenlock Logo"](https://git.rootprojects.orggreenlock.js/raw/branch/master/logo/greenlock-1063x250.png 'Greenlock lock logo and work mark')
 
-!["Greenlock Function"](https://git.rootprojects.org/root/greenlock.js/raw/branch/master/logo/from-not-secure-to-secure-url-bar.png 'from url bar showing not secure to url bar showing secure')
+!["Greenlock Function"](https://git.rootprojects.orggreenlock.js/raw/branch/master/logo/from-not-secure-to-secure-url-bar.png 'from url bar showing not secure to url bar showing secure')
 
-# [Greenlock](https://git.rootprojects.org/root/greenlock.js) is Let's Encrypt for JavaScript
+# [Greenlock](https://git.rootprojects.orggreenlock.js) is Let's Encrypt for JavaScript
 
 | Built by [Root](https://rootprojects.org) for [Hub](https://rootprojects.org/hub/)
 
 Greenlock&trade; is an Automated Certificate Management Environement 🔐.
 
-| **Greenlock** | [Greenlock Express](https://git.rootprojects.org/root/greenlock-express.js) | [ACME.js](https://git.rootprojects.org/root/acme.js) |
+| **Greenlock** | [Greenlock Express](https://git.rootprojects.orggreenlock-express.js) | [ACME.js](https://git.rootprojects.org/root/acme.js) |
 
 It uses **Let's Encrypt** to generate Free SSL Certificates, including **Wildcard** SSL.
 It supports **Automated Renewal** of certs for Fully Automated HTTPS.
@@ -289,7 +289,7 @@ gl.add({
 ## Greenlock#get()
 
 **Disclaimer**: This is only intended for testing, demos, and SNICallback
-(in [Greenlock Express](https://git.rootprojects.org/root/greenlock-express.js)).
+(in [Greenlock Express](https://git.rootprojects.orggreenlock-express.js)).
 
 Greenlock is intended to be left running to allow it to fetech and renew certifictates automatically.
 
@@ -297,7 +297,7 @@ It is intended that you use the `store` callbacks to new certificates instantly 
 This also protects you from accidentally stampeding the Let's Encrypt API with hundreds (or thousands)
 of certificate requests.
 
--   [Store Callback Documentation](https://git.rootprojects.org/root/greenlock-store-test.js)
+-   [Store Callback Documentation](https://git.rootprojects.orggreenlock-store-test.js)
 
 ```js
 return greenlock.get({ servername }).then(function(site) {
@@ -402,7 +402,7 @@ Greenlock comes with reasonable defaults but when you install it,
 you should also install any plugins that you need.
 
 ```bash
-npm install --save @root/greenlock
+npm install --save greenlock
 npm install --save greenlock-manager-fs
 npm install --save greenlock-store-fs
 npm install --save acme-http-01-standalone
@@ -420,7 +420,7 @@ TODO
 ```js
 'use strict';
 
-var Greenlock = require(@root/greenlock-express);
+var Greenlock = require(greenlock-express);
 
 var greenlock = Greenlock.create({
 // for security and critical bug notices
@@ -450,7 +450,7 @@ TODO
 <!-- greenlock-manager-test => greenlock-manager-custom -->
 
 <!--
-- [greenlock.js/examples/](https://git.rootprojects.org/root/greenlock.js/src/branch/master/examples)
+- [greenlock.js/examples/](https://git.rootprojects.orggreenlock.js/src/branch/master/examples)
 -->
 
 <details>
@@ -458,7 +458,7 @@ TODO
 
 ## SSL Certificate & Domain Management
 
-Full Docs: https://git.rootprojects.org/root/greenlock-manager-test.js
+Full Docs: https://git.rootprojects.orggreenlock-manager-test.js
 
 This is what keeps the mapping of domains <-> certificates.
 In many cases it will interact with the same database as the Key & Cert Store, and probably the code as well.
@@ -507,7 +507,7 @@ In many cases it will interact with the same database as the Key & Cert Store, a
 
 ## Key and Certificate Store
 
-Full Docs: https://git.rootprojects.org/root/greenlock-store-test.js
+Full Docs: https://git.rootprojects.orggreenlock-store-test.js
 
 This set of callbacks update your service with new certificates and keypairs.
 
@@ -655,12 +655,12 @@ Greenlock&trade; is a [trademark](https://rootprojects.org/legal/#trademark) of 
 
 The rule of thumb is "attribute, but don't confuse". For example:
 
-> Built with [Greenlock Express](https://git.rootprojects.org/root/greenlock.js) (a [Root](https://rootprojects.org) project).
+> Built with [Greenlock Express](https://git.rootprojects.orggreenlock.js) (a [Root](https://rootprojects.org) project).
 
 Please [contact us](mailto:aj@therootcompany.com) if you have any questions in regards to our trademark,
 attribution, and/or visible source policies. We want to build great software and a great community.
 
-[Greenlock&trade;](https://git.rootprojects.org/root/greenlock.js) |
+[Greenlock&trade;](https://git.rootprojects.orggreenlock.js) |
 MPL-2.0 |
 [Terms of Use](https://therootcompany.com/legal/#terms) |
 [Privacy Policy](https://therootcompany.com/legal/#privacy)
