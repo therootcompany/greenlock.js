@@ -251,6 +251,30 @@ return greenlock.renew({}).then(function(results) {
 
 </details>
 
+<details>
+<summary>Greenlock#remove({ subject })</summary>
+
+## Greenlock#manager.remove()
+
+To stop certificates from being renewed, you must remove them.
+
+If you are implementing your own `manager` callbacks, I recommend that you mark them as deleted
+(i.e. `deleted_at` in your database) rather than actually removing them. Just in case.
+
+```js
+gl.remove({
+    subject: 'example.com'
+}).then(function(siteConfig) {
+    // save the old site config elsewhere, just in case you need it again
+});
+```
+
+| Parameter | Description                                            |
+| --------- | ------------------------------------------------------ |
+| subject   | the first domain on, and identifier of the certificate |
+
+</details>
+
 <!--
 
 <details>
@@ -312,9 +336,9 @@ TODO
 -->
 
 <details>
-<summary>[Custom SSL Cert & Domain Management](https://git.rootprojects.org/root/greenlock-manager-test.js)</summary>
+<summary>Custom SSL Cert & Domain Management</summary>
 
-# SSL Certificate & Domain Management
+## SSL Certificate & Domain Management
 
 Full Docs: https://git.rootprojects.org/root/greenlock-manager-test.js
 
@@ -361,22 +385,22 @@ In many cases it will interact with the same database as the Key & Cert Store, a
 </details>
 
 <details>
-<summary>[Custom Key & Cert Storage](https://git.rootprojects.org/root/greenlock-store-test.js)</summary>
+<summary>Custom Key & Cert Storage</summary>
 
-# Key and Certificate Store
+## Key and Certificate Store
 
 Full Docs: https://git.rootprojects.org/root/greenlock-store-test.js
 
 This set of callbacks update your service with new certificates and keypairs.
 
-Account Keys (JWK)
+### Account Keys (JWK)
 
 (though typically you only have one account key - because you only have one subscriber email)
 
 -   accounts.setKeypair({ email, keypair })
 -   accounts.checkKeypair({ email })
 
-Certificate Keys (JWK + PEM)
+### Certificate Keys (JWK + PEM)
 
 (typically you have one for each set of domains, and each load balancer)
 
@@ -384,7 +408,7 @@ Certificate Keys (JWK + PEM)
 -   certificates.checkKeypair({ subject })
     (these are fine to implement the same as above, swapping subject/email)
 
-Certificate PEMs
+### Certificate PEMs
 
 -   certificates.set({ subject, pems })
 -   certificates.check({ subject })
@@ -392,9 +416,9 @@ Certificate PEMs
 </details>
 
 <details>
-<summary>[Custom ACME HTTP-01 Challenges](https://git.rootprojects.org/root/acme-http-01-test.js)</summary>
+<summary>Custom ACME HTTP-01 Challenges</summary>
 
-# ACME Challenge HTTP-01 Strategies
+## ACME Challenge HTTP-01 Strategies
 
 Full Docs: https://git.rootprojects.org/root/acme-http-01-test.js
 
@@ -417,9 +441,9 @@ TODO: getAcmeHttp01Challenge
 </details>
 
 <details>
-<summary>[Custom ACME DNS-01 Challenges](https://git.rootprojects.org/root/acme-dns-01-test.js)</summary>
+<summary>Custom ACME DNS-01 Challenges</summary>
 
-# ACME Challenge DNS-01 Strategies
+## ACME Challenge DNS-01 Strategies
 
 Full Docs https://git.rootprojects.org/root/acme-dns-01-test.js
 
@@ -440,12 +464,13 @@ each domain before authorizing a certificate.
 
 <details>
 <summary>Notes on HTTP-01 &amp; DNS-01 Integrations</summary>
-# Notes on HTTP-01 &amp; DNS-01 Integrations
+
+## Notes on HTTP-01 &amp; DNS-01 Integrations
 
 For Public Web Servers running on a VPS, the **default HTTP-01 challenge plugin**
-will work just fine for most people.
+will work just fine, for most people.
 
-However, for
+However, for environments that cannot be verified via public HTTP, such as
 
 -   **Wildcard Certificates**
 -   **IoT Environments**
@@ -453,9 +478,10 @@ However, for
 -   **Private Networks**
 
 Greenlock provides an easy way to integrate Let's Encrypt with your existing services
-through a variety of **DNS-01** infrastructure
+through a variety of **DNS-01** challenges.
 
-Why
+### Why not use dns01 for everything?
+
 Typically file propagation is faster and more reliably than DNS propagation.
 Therefore, http-01 will be preferred to dns-01 except when wildcards or **private domains** are in use.
 
