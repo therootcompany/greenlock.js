@@ -282,6 +282,8 @@ greenlock.manager.defaults({
 
 -->
 
+</details>
+
 <details>
 <summary>Greenlock#add({ subject, altnames })</summary>
 
