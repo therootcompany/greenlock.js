@@ -4,8 +4,8 @@ set -e
 set -u
 
 git fetch --all
-git checkout origin master
-git pull
+git checkout master
+git pull origin master
 
 git checkout npm
 git checkout master -- package.json
