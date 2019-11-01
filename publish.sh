@@ -4,7 +4,7 @@ set -e
 set -u
 
 git fetch --all
-git checkout master
+git checkout origin master
 git pull
 
 git checkout npm
