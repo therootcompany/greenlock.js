@@ -303,53 +303,6 @@ TODO
 
 -->
 
-# HTTP-01 &amp; DNS-01 Integrations
-
-For Public Web Servers running on a VPS, the **default HTTP-01 challenge plugin**
-will work just fine for most people.
-
-However, for
-
--   **Wildcard Certificates**
--   **IoT Environments**
--   **Enterprise On-Prem**
--   **Private Networks**
-
-Greenlock provides an easy way to integrate Let's Encrypt with your existing services
-through a variety of **DNS-01** infrastructure
-
-Why
-Typically file propagation is faster and more reliably than DNS propagation.
-Therefore, http-01 will be preferred to dns-01 except when wildcards or **private domains** are in use.
-
-http-01 will only be supplied as a defaut if no other challenge is provided.
-
-You can use ACME (Let's Encrypt) with several ready-made integrations
-
-# Ready-made Integrations
-
-Greenlock Express integrates between Let's Encrypt's ACME Challenges and many popular services.
-
-| Type        | Service                                                                             | Plugin                   |
-| ----------- | ----------------------------------------------------------------------------------- | ------------------------ |
-| dns-01      | CloudFlare                                                                          | acme-dns-01-cloudflare   |
-| dns-01      | [Digital Ocean](https://git.rootprojects.org/root/acme-dns-01-digitalocean.js)      | acme-dns-01-digitalocean |
-| dns-01      | [DNSimple](https://git.rootprojects.org/root/acme-dns-01-dnsimple.js)               | acme-dns-01-dnsimple     |
-| dns-01      | [DuckDNS](https://git.rootprojects.org/root/acme-dns-01-duckdns.js)                 | acme-dns-01-duckdns      |
-| http-01     | File System / [Web Root](https://git.rootprojects.org/root/acme-http-01-webroot.js) | acme-http-01-webroot     |
-| dns-01      | [GoDaddy](https://git.rootprojects.org/root/acme-dns-01-godaddy.js)                 | acme-dns-01-godaddy      |
-| dns-01      | [Gandi](https://git.rootprojects.org/root/acme-dns-01-gandi.js)                     | acme-dns-01-gandi        |
-| dns-01      | [NameCheap](https://git.rootprojects.org/root/acme-dns-01-namecheap.js)             | acme-dns-01-namecheap    |
-| dns-01      | [Name&#46;com](https://git.rootprojects.org/root/acme-dns-01-namedotcom.js)         | acme-dns-01-namedotcom   |
-| dns-01      | Route53 (AWS)                                                                       | acme-dns-01-route53      |
-| http-01     | S3 (AWS, Digital Ocean, Scaleway)                                                   | acme-http-01-s3          |
-| dns-01      | [Vultr](https://git.rootprojects.org/root/acme-dns-01-vultr.js)                     | acme-dns-01-vultr        |
-| dns-01      | [Build your own](https://git.rootprojects.org/root/acme-dns-01-test.js)             | acme-dns-01-test         |
-| http-01     | [Build your own](https://git.rootprojects.org/root/acme-http-01-test.js)            | acme-http-01-test        |
-| tls-alpn-01 | [Contact us](mailto:support@therootcompany.com)                                     | -                        |
-
-Search `acme-http-01-` or `acme-dns-01-` on npm to find more.
-
 # Easy to Customize
 
 <!-- greenlock-manager-test => greenlock-manager-custom -->
@@ -485,7 +438,54 @@ each domain before authorizing a certificate.
 
 </details>
 
+<details>
+<summary>Notes on HTTP-01 &amp; DNS-01 Integrations</summary>
+# Notes on HTTP-01 &amp; DNS-01 Integrations
 
+For Public Web Servers running on a VPS, the **default HTTP-01 challenge plugin**
+will work just fine for most people.
+
+However, for
+
+-   **Wildcard Certificates**
+-   **IoT Environments**
+-   **Enterprise On-Prem**
+-   **Private Networks**
+
+Greenlock provides an easy way to integrate Let's Encrypt with your existing services
+through a variety of **DNS-01** infrastructure
+
+Why
+Typically file propagation is faster and more reliably than DNS propagation.
+Therefore, http-01 will be preferred to dns-01 except when wildcards or **private domains** are in use.
+
+http-01 will only be supplied as a defaut if no other challenge is provided.
+
+</details>
+
+# Ready-made Integrations
+
+Greenlock Express integrates between Let's Encrypt's ACME Challenges and many popular services.
+
+| Type        | Service                                                                             | Plugin                   |
+| ----------- | ----------------------------------------------------------------------------------- | ------------------------ |
+| dns-01      | CloudFlare                                                                          | acme-dns-01-cloudflare   |
+| dns-01      | [Digital Ocean](https://git.rootprojects.org/root/acme-dns-01-digitalocean.js)      | acme-dns-01-digitalocean |
+| dns-01      | [DNSimple](https://git.rootprojects.org/root/acme-dns-01-dnsimple.js)               | acme-dns-01-dnsimple     |
+| dns-01      | [DuckDNS](https://git.rootprojects.org/root/acme-dns-01-duckdns.js)                 | acme-dns-01-duckdns      |
+| http-01     | File System / [Web Root](https://git.rootprojects.org/root/acme-http-01-webroot.js) | acme-http-01-webroot     |
+| dns-01      | [GoDaddy](https://git.rootprojects.org/root/acme-dns-01-godaddy.js)                 | acme-dns-01-godaddy      |
+| dns-01      | [Gandi](https://git.rootprojects.org/root/acme-dns-01-gandi.js)                     | acme-dns-01-gandi        |
+| dns-01      | [NameCheap](https://git.rootprojects.org/root/acme-dns-01-namecheap.js)             | acme-dns-01-namecheap    |
+| dns-01      | [Name&#46;com](https://git.rootprojects.org/root/acme-dns-01-namedotcom.js)         | acme-dns-01-namedotcom   |
+| dns-01      | Route53 (AWS)                                                                       | acme-dns-01-route53      |
+| http-01     | S3 (AWS, Digital Ocean, Scaleway)                                                   | acme-http-01-s3          |
+| dns-01      | [Vultr](https://git.rootprojects.org/root/acme-dns-01-vultr.js)                     | acme-dns-01-vultr        |
+| dns-01      | [Build your own](https://git.rootprojects.org/root/acme-dns-01-test.js)             | acme-dns-01-test         |
+| http-01     | [Build your own](https://git.rootprojects.org/root/acme-http-01-test.js)            | acme-http-01-test        |
+| tls-alpn-01 | [Contact us](mailto:support@therootcompany.com)                                     | -                        |
+
+Search `acme-http-01-` or `acme-dns-01-` on npm to find more.
 
 # Commercial Support
 
