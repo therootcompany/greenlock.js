@@ -306,6 +306,12 @@ G.create = function(gconf) {
             // Note: the manager must guaranteed that these are mutable copies
             //console.log('greenlock._renew found', sites);;
 
+            if (!Array.isArray(sites)) {
+                throw new Error(
+                    'Developer Error: not an array of sites returned from find: ' +
+                        JSON.stringify(sites)
+                );
+            }
             function next() {
                 var site = sites.shift();
                 if (!site) {
@@ -549,6 +555,7 @@ function warpFind(gconf) {
                     }
                 });
             });
+            return sites;
         });
     };
 }
