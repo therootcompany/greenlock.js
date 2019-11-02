@@ -59,7 +59,7 @@ U._validName = function(str) {
     // Note: _ (underscore) is only allowed for "domain names", not "hostnames"
     // Note: - (hyphen) is not allowed as a first character (but a number is)
     return (
-        /^(\*\.)?[a-z0-9_\.\-]+$/.test(str) &&
+        /^(\*\.)?[a-z0-9_\.\-]+\.[a-z0-9_\.\-]+$/.test(str) &&
         str.length < 254 &&
         str.split('.').every(function(label) {
             return label.length > 0 && label.length < 64;

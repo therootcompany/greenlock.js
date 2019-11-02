@@ -5,7 +5,7 @@ var E = require('./errors.js');
 
 var warned = {};
 
-module.exports.wrap = function(greenlock, manager) {
+module.exports.wrap = function(greenlock, manager, gconf) {
     greenlock.manager = {};
     greenlock.sites = {};
     //greenlock.accounts = {};
@@ -143,12 +143,14 @@ module.exports.wrap = function(greenlock, manager) {
                 }
 
                 return manager.set(args).then(function(result) {
-                    greenlock.renew({}).catch(function(err) {
-                        if (!err.context) {
-                            err.contxt = 'renew';
-                        }
-                        greenlock._notify('error', err);
-                    });
+                    if (!gconf._bin_mode) {
+                        greenlock.renew({}).catch(function(err) {
+                            if (!err.context) {
+                                err.contxt = 'renew';
+                            }
+                            greenlock._notify('error', err);
+                        });
+                    }
                     return result;
                 });
             });
@@ -222,25 +224,15 @@ function checkAltnames(subject, args) {
         return String(name || '').toLowerCase();
     });
 
-    if (subject && subject !== altnames[0]) {
-        throw new Error(
-            '`subject` must be the first domain in `altnames`',
-            args.subject,
-            altnames.join(' ')
+    // punycode BEFORE validation
+    // (set, find, remove)
+    if (altnames.join() !== args.altnames.join()) {
+        console.warn(
+            'all domains in `altnames` must be lowercase:',
+            args.altnames
         );
     }
 
-    /*
-		if (args.subject !== args.altnames[0]) {
-			throw E.BAD_ORDER(
-				'add',
-				'(' + args.subject + ") '" + args.altnames.join("' '") + "'"
-			);
-		}
-  */
-
-    // punycode BEFORE validation
-    // (set, find, remove)
     args.altnames = args.altnames.map(U._encodeName);
     if (
         !args.altnames.every(function(d) {
@@ -250,9 +242,21 @@ function checkAltnames(subject, args) {
         throw E.INVALID_HOSTNAME('add', "'" + args.altnames.join("' '") + "'");
     }
 
-    if (altnames.join() !== args.altnames.join()) {
-        console.warn('all domains in `altnames` must be lowercase', altnames);
+    if (subject && subject !== args.altnames[0]) {
+        throw E.BAD_ORDER(
+            'add',
+            '(' + args.subject + ") '" + args.altnames.join("' '") + "'"
+        );
     }
+    /*
+    if (subject && subject !== altnames[0]) {
+        throw new Error(
+            '`subject` must be the first domain in `altnames`',
+            args.subject,
+            altnames.join(' ')
+        );
+    }
+    */
 
     return altnames;
 }

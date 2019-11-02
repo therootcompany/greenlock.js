@@ -26,20 +26,22 @@ G.create = function(gconf) {
     var manager;
 
     greenlock._create = function() {
-        if (!gconf.maintainerEmail) {
-            throw E.NO_MAINTAINER('create');
+        if (!gconf._bin_mode) {
+            if (!gconf.maintainerEmail) {
+                throw E.NO_MAINTAINER('create');
+            }
+
+            // TODO send welcome message with benefit info
+            U._validMx(gconf.maintainerEmail).catch(function() {
+                console.error(
+                    'invalid maintainer contact info:',
+                    gconf.maintainerEmail
+                );
+
+                // maybe move this to init and don't exit the process, just in case
+                process.exit(1);
+            });
         }
-
-        // TODO send welcome message with benefit info
-        U._validMx(gconf.maintainerEmail).catch(function() {
-            console.error(
-                'invalid maintainer contact info:',
-                gconf.maintainerEmail
-            );
-
-            // maybe move this to init and don't exit the process, just in case
-            process.exit(1);
-        });
 
         if ('function' === typeof gconf.notify) {
             gdefaults.notify = gconf.notify;
@@ -84,15 +86,17 @@ G.create = function(gconf) {
         greenlock._defaults = gdefaults;
         greenlock._defaults.debug = gconf.debug;
 
-        // renew every 90-ish minutes (random for staggering)
-        // the weak setTimeout (unref) means that when run as a CLI process this
-        // will still finish as expected, and not wait on the timeout
-        (function renew() {
-            setTimeout(function() {
-                greenlock.renew({});
-                renew();
-            }, Math.PI * 30 * 60 * 1000).unref();
-        })();
+        if (!gconf._bin_mode) {
+            // renew every 90-ish minutes (random for staggering)
+            // the weak setTimeout (unref) means that when run as a CLI process this
+            // will still finish as expected, and not wait on the timeout
+            (function renew() {
+                setTimeout(function() {
+                    greenlock.renew({});
+                    renew();
+                }, Math.PI * 30 * 60 * 1000).unref();
+            })();
+        }
     };
 
     // The purpose of init is to make MCONF the source of truth
