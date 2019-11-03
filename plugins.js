@@ -208,6 +208,11 @@ P._loadSync = function(modname) {
 };
 
 P._installSync = function(moduleName) {
+    try {
+        return require(moduleName);
+    } catch (e) {
+        // continue
+    }
     var npm = 'npm';
     var args = ['install', '--save', moduleName];
     var out = '';

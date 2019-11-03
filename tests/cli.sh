@@ -14,13 +14,13 @@ node bin/greenlock.js defaults
 node bin/greenlock.js defaults --challenge-dns-01 foo-http-01-bar --challenge-dns-01-token BIG_TOKEN
 # using --challenge is exclusive (will delete things not mentioned)
 node bin/greenlock.js defaults --challenge acme-http-01-standalone
-node bin/greenlock.js remove --subject example.com
 # should delete all and add just this one anew
 node bin/greenlock.js update --subject example.com --challenge bar-http-01-baz
 # should add, leaving the existing
 node bin/greenlock.js update --subject example.com --challenge-dns-01 baz-dns-01-qux --challenge-dns-01-token BIG_TOKEN
 # should delete all and add just this one anew
 node bin/greenlock.js update --subject example.com --challenge bar-http-01-baz
+node bin/greenlock.js remove --subject example.com
 
 # TODO test for failure
 # node bin/greenlock.js add --subject example.com

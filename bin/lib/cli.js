@@ -14,7 +14,7 @@ CLI.parse = function(conf) {
         var v = conf[k];
         if (!v) {
             console.error(
-                'Developer Error: missing config value for',
+                'Developer Error: missing cli flag definition for',
                 JSON.stringify(k)
             );
             process.exit(1);

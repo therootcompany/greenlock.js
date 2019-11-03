@@ -7,142 +7,170 @@ var path = require('path');
 var pkgpath = path.join(process.cwd(), 'package.json');
 var GreenlockRc = require('./greenlockrc.js');
 
-Flags.init = function(myOpts) {
+// These are ALL options
+// The individual CLI files each select a subset of them
+Flags.flags = function(mconf, myOpts) {
+    // Current Manager Config
+    if (!mconf) {
+        mconf = {};
+    }
+
+    // Extra Override Options
     if (!myOpts) {
         myOpts = {};
     }
-    return GreenlockRc(pkgpath).then(async function(rc) {
-        var Greenlock = require('../../');
-        // this is a copy, so it's safe to modify
-        rc._bin_mode = true;
-        var greenlock = Greenlock.create(rc);
-        var mconf = await greenlock.manager.defaults();
 
-        var flagOptions = {
-            subject: [
-                false,
-                'the "subject" (primary domain) of the certificate',
-                'string'
-            ],
-            altnames: [
-                false,
-                'the "subject alternative names" (additional domains) on the certificate, the first of which MUST be the subject',
-                'string'
-            ],
-            servername: [
-                false,
-                'a name that matches a subject or altname',
-                'string'
-            ],
-            servernames: [
-                false,
-                'a list of names that matches a subject or altname',
-                'string'
-            ],
-            'renew-offset': [
-                false,
-                "time to wait until renewing the cert such as '45d' (45 days after being issued) or '-3w' (3 weeks before expiration date)",
-                'string',
-                mconf.renewOffset
-            ],
-            'customer-email': [
-                false,
-                "the email address of the owner of the domain or site (not necessarily the Let's Encrypt or ACME subscriber)",
-                'string'
-            ],
-            'subscriber-email': [
-                false,
-                "the email address of the Let's Encrypt or ACME Account subscriber (not necessarily the domain owner)",
-                'string'
-            ],
-            'account-key-type': [
-                false,
-                "either 'P-256' (ECDSA) or 'RSA-2048'  - although other values are technically supported, they don't make sense and won't work with many services (More bits != More security)",
-                'string',
-                mconf.accountKeyType
-            ],
-            'server-key-type': [
-                false,
-                "either 'RSA-2048' or 'P-256' (ECDSA) - although other values are technically supported, they don't make sense and won't work with many services (More bits != More security)",
-                'string',
-                mconf.serverKeyType
-            ],
-            store: [
-                false,
-                'the module name or file path of the store module to use',
-                'string'
-                //mconf.store.module
-            ],
-            'store-xxxx': [
-                false,
-                'an option for the chosen store module, such as --store-apikey or --store-bucket',
-                'bag'
-            ],
-            challenge: [
-                false,
-                'the module name or file path of the HTTP-01, DNS-01, or TLS-ALPN-01 challenge module to use',
-                'string',
-                ''
-                /*
+    return {
+        subject: [
+            false,
+            'the "subject" (primary domain) of the certificate',
+            'string'
+        ],
+        altnames: [
+            false,
+            'the "subject alternative names" (additional domains) on the certificate, the first of which MUST be the subject',
+            'string'
+        ],
+        servername: [
+            false,
+            'a name that matches a subject or altname',
+            'string'
+        ],
+        servernames: [
+            false,
+            'a list of names that matches a subject or altname',
+            'string'
+        ],
+        cluster: [false, 'initialize with cluster mode on', 'boolean', false],
+        'renew-offset': [
+            false,
+            "time to wait until renewing the cert such as '45d' (45 days after being issued) or '-3w' (3 weeks before expiration date)",
+            'string',
+            mconf.renewOffset
+        ],
+        'customer-email': [
+            false,
+            "the email address of the owner of the domain or site (not necessarily the Let's Encrypt or ACME subscriber)",
+            'string'
+        ],
+        'subscriber-email': [
+            false,
+            "the email address of the Let's Encrypt or ACME Account subscriber (not necessarily the domain owner)",
+            'string'
+        ],
+        'maintainer-email': [
+            false,
+            'the maintainance contact for security and critical bug notices',
+            'string'
+        ],
+        'account-key-type': [
+            false,
+            "either 'P-256' (ECDSA) or 'RSA-2048'  - although other values are technically supported, they don't make sense and won't work with many services (More bits != More security)",
+            'string',
+            mconf.accountKeyType
+        ],
+        'server-key-type': [
+            false,
+            "either 'RSA-2048' or 'P-256' (ECDSA) - although other values are technically supported, they don't make sense and won't work with many services (More bits != More security)",
+            'string',
+            mconf.serverKeyType
+        ],
+        store: [
+            false,
+            'the module name or file path of the store module to use',
+            'string'
+            //mconf.store.module
+        ],
+        'store-xxxx': [
+            false,
+            'an option for the chosen store module, such as --store-apikey or --store-bucket',
+            'bag'
+        ],
+        manager: [
+            false,
+            'the module name or file path of the manager module to use',
+            'string',
+            'greenlock-manager-fs'
+        ],
+        'manager-xxxx': [
+            false,
+            'an option for the chosen manager module, such as --manager-apikey or --manager-dburl',
+            'bag'
+        ],
+        challenge: [
+            false,
+            'the module name or file path of the HTTP-01, DNS-01, or TLS-ALPN-01 challenge module to use',
+            'string',
+            ''
+            /*
                 Object.keys(mconf.challenges)
                     .map(function(typ) {
                         return mconf.challenges[typ].module;
                     })
                     .join(',')
                 */
-            ],
-            'challenge-xxxx': [
-                false,
-                'an option for the chosen challenge module, such as --challenge-apikey or --challenge-bucket',
-                'bag'
-            ],
-            'challenge-json': [
-                false,
-                'a JSON string containing all option for the chosen challenge module (instead of --challenge-xxxx)',
-                'json',
-                '{}'
-            ],
-            'challenge-http-01': [
-                false,
-                'the module name or file path of the HTTP-01 to add',
-                'string'
-                //(mconf.challenges['http-01'] || {}).module
-            ],
-            'challenge-http-01-xxxx': [
-                false,
-                'an option for the chosen challenge module, such as --challenge-http-01-apikey or --challenge-http-01-bucket',
-                'bag'
-            ],
-            'challenge-dns-01': [
-                false,
-                'the module name or file path of the DNS-01 to add',
-                'string'
-                //(mconf.challenges['dns-01'] || {}).module
-            ],
-            'challenge-dns-01-xxxx': [
-                false,
-                'an option for the chosen challenge module, such as --challenge-dns-01-apikey or --challenge-dns-01-bucket',
-                'bag'
-            ],
-            'challenge-tls-alpn-01': [
-                false,
-                'the module name or file path of the DNS-01 to add',
-                'string'
-                //(mconf.challenges['tls-alpn-01'] || {}).module
-            ],
-            'challenge-tls-alpn-01-xxxx': [
-                false,
-                'an option for the chosen challenge module, such as --challenge-tls-alpn-01-apikey or --challenge-tls-alpn-01-bucket',
-                'bag'
-            ],
-            'force-save': [
-                false,
-                "save all options for this site, even if it's the same as the defaults",
-                'boolean',
-                myOpts.forceSave || false
-            ]
-        };
+        ],
+        'challenge-xxxx': [
+            false,
+            'an option for the chosen challenge module, such as --challenge-apikey or --challenge-bucket',
+            'bag'
+        ],
+        'challenge-json': [
+            false,
+            'a JSON string containing all option for the chosen challenge module (instead of --challenge-xxxx)',
+            'json',
+            '{}'
+        ],
+        'challenge-http-01': [
+            false,
+            'the module name or file path of the HTTP-01 to add',
+            'string'
+            //(mconf.challenges['http-01'] || {}).module
+        ],
+        'challenge-http-01-xxxx': [
+            false,
+            'an option for the chosen challenge module, such as --challenge-http-01-apikey or --challenge-http-01-bucket',
+            'bag'
+        ],
+        'challenge-dns-01': [
+            false,
+            'the module name or file path of the DNS-01 to add',
+            'string'
+            //(mconf.challenges['dns-01'] || {}).module
+        ],
+        'challenge-dns-01-xxxx': [
+            false,
+            'an option for the chosen challenge module, such as --challenge-dns-01-apikey or --challenge-dns-01-bucket',
+            'bag'
+        ],
+        'challenge-tls-alpn-01': [
+            false,
+            'the module name or file path of the DNS-01 to add',
+            'string'
+            //(mconf.challenges['tls-alpn-01'] || {}).module
+        ],
+        'challenge-tls-alpn-01-xxxx': [
+            false,
+            'an option for the chosen challenge module, such as --challenge-tls-alpn-01-apikey or --challenge-tls-alpn-01-bucket',
+            'bag'
+        ],
+        'force-save': [
+            false,
+            "save all options for this site, even if it's the same as the defaults",
+            'boolean',
+            myOpts.forceSave || false
+        ]
+    };
+};
 
+Flags.init = function(myOpts) {
+    return GreenlockRc(pkgpath).then(async function(rc) {
+        rc._bin_mode = true;
+        var Greenlock = require('../../');
+        // this is a copy, so it's safe to modify
+        var greenlock = Greenlock.create(rc);
+        var mconf = await greenlock.manager.defaults();
+        var flagOptions = Flags.flags(mconf, myOpts);
         return {
             flagOptions,
             rc,

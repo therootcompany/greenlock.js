@@ -89,7 +89,7 @@ module.exports = async function(pkgpath, manager, rc) {
     if (rc) {
         changed = true;
         Object.keys(rc).forEach(function(k) {
-            _rc[k] = rc;
+            _rc[k] = rc[k];
         });
     }
 
