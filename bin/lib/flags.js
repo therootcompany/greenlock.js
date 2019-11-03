@@ -21,6 +21,11 @@ Flags.flags = function(mconf, myOpts) {
     }
 
     return {
+        all: [
+            false,
+            'search all site configs rather than by --subject or --servernames',
+            'boolean'
+        ],
         subject: [
             false,
             'the "subject" (primary domain) of the certificate',

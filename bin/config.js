@@ -32,16 +32,23 @@ async function main(_, flags, rc, greenlock) {
     delete flags.subject;
     delete flags.altnames;
     flags.servernames = servernames;
-    if (flags.servernames.length > 1) {
-        console.error('Error: should only have one servername');
+    if (!flags.all && flags.servernames.length > 1) {
+        console.error('Error: should specify either --subject OR --servername');
         process.exit(1);
         return;
-    } else if (flags.servernames.length !== 1) {
-        console.error('Error: need a servername to check');
+    } else if (!flags.all && flags.servernames.length !== 1) {
+        console.error('error: missing --servername <example.com>');
         process.exit(1);
         return;
     }
-    flags.servername = flags.servernames[0];
+    if (!flags.all) {
+        flags.servername = flags.servernames[0];
+    } else if (flags.servername) {
+        console.error(
+            'error: missing cannot have --all and --servername / --subject'
+        );
+        process.exit(1);
+    }
     delete flags.servernames;
 
     greenlock

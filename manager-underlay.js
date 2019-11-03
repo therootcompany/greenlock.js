@@ -192,22 +192,34 @@ module.exports.wrap = function(greenlock, manager, gconf) {
   */
 
     greenlock._find = function(args) {
-        var altnames = args.altnames || [];
+        var servernames = (args.servernames || [])
+            .concat(args.altnames || [])
+            .filter(Boolean)
+            .slice(0);
+        var modified = servernames.slice(0);
 
         // servername, wildname, and altnames are all the same
         ['wildname', 'servername'].forEach(function(k) {
             var altname = args[k] || '';
-            if (altname && !altnames.includes(altname)) {
-                altnames.push(altname);
+            if (altname && !modified.includes(altname)) {
+                modified.push(altname);
             }
         });
 
-        if (altnames.length) {
-            args.altnames = altnames;
-            args.altnames = args.altnames.map(U._encodeName);
-            args.altnames = checkAltnames(false, args);
+        if (modified.length) {
+            servernames = modified;
+            servernames = servernames.altnames.map(U._encodeName);
+            args.altnames = servernames;
+            args.servernames = args.altnames = checkAltnames(false, args);
         }
 
+        // documented as args.servernames
+        // preserved as args.altnames for v3 beta backwards compat
+        // my only hesitancy in this choice is that a "servername"
+        // may NOT contain '*.', in which case `altnames` is a better choice.
+        // However, `altnames` is ambiguous - as if it means to find a
+        // certificate by that specific collection of altnames.
+        // ... perhaps `domains` could work?
         return manager.find(args);
     };
 };

@@ -277,34 +277,35 @@ G.create = function(gconf) {
     };
 
     greenlock._config = function(args) {
-        return greenlock
-            ._single(args)
-            .then(function() {
-                return greenlock._find(args);
-            })
-            .then(function(sites) {
-                if (!sites || !sites.length) {
-                    return null;
+        return greenlock._single(args).then(function() {
+            return greenlock._configAll(args);
+        });
+    };
+    greenlock._configAll = function(args) {
+        return greenlock._find(args).then(function(sites) {
+            if (!sites || !sites.length) {
+                return null;
+            }
+            var site = sites[0];
+            site = JSON.parse(JSON.stringify(site));
+            if (site.store && site.challenges) {
+                return site;
+            }
+            var dconf = site;
+            // TODO make cli and api mode the same
+            if (gconf._bin_mode) {
+                dconf = site.defaults = {};
+            }
+            return manager.defaults().then(function(mconf) {
+                if (!site.store) {
+                    dconf.store = mconf.store;
                 }
-                var site = sites[0];
-                site = JSON.parse(JSON.stringify(site));
-                if (site.store && site.challenges) {
-                    return site;
+                if (!site.challenges) {
+                    dconf.challenges = mconf.challenges;
                 }
-                var dconf = site;
-                if (gconf._bin_mode) {
-                    dconf = site.defaults = {};
-                }
-                return manager.defaults().then(function(mconf) {
-                    if (!site.store) {
-                        dconf.store = mconf.store;
-                    }
-                    if (!site.challenges) {
-                        dconf.challenges = mconf.challenges;
-                    }
-                    return site;
-                });
+                return site;
             });
+        });
     };
 
     // needs to get info about the renewal, such as which store and challenge(s) to use
