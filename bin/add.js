@@ -1,12 +1,12 @@
 'use strict';
 
 var args = process.argv.slice(3);
-var cli = require('./cli.js');
+var cli = require('./lib/cli.js');
 //var path = require('path');
 //var pkgpath = path.join(__dirname, '..', 'package.json');
 //var pkgpath = path.join(process.cwd(), 'package.json');
 
-var Flags = require('./flags.js');
+var Flags = require('./lib/flags.js');
 
 Flags.init().then(function({ flagOptions, rc, greenlock, mconf }) {
     var myFlags = {};
@@ -14,7 +14,15 @@ Flags.init().then(function({ flagOptions, rc, greenlock, mconf }) {
         'subject',
         'altnames',
         'renew-offset',
+        'subscriber-email',
+        'customer-email',
         'server-key-type',
+        'challenge-http-01',
+        'challenge-http-01-xxxx',
+        'challenge-dns-01',
+        'challenge-dns-01-xxxx',
+        'challenge-tls-alpn-01',
+        'challenge-tls-alpn-01-xxxx',
         'challenge',
         'challenge-xxxx',
         'challenge-json',
@@ -25,20 +33,19 @@ Flags.init().then(function({ flagOptions, rc, greenlock, mconf }) {
 
     cli.parse(myFlags);
     cli.main(function(argList, flags) {
-        main(argList, flags, rc, greenlock, mconf);
+        Flags.mangleFlags(flags, mconf);
+        main(argList, flags, rc, greenlock);
     }, args);
 });
 
-async function main(_, flags, rc, greenlock, mconf) {
-    if (!flags.subject) {
+async function main(_, flags, rc, greenlock) {
+    if (!flags.subject || !flags.altnames) {
         console.error(
-            '--subject must be provided as the id of the site/certificate'
+            '--subject and --altnames must be provided and should be valid domains'
         );
         process.exit(1);
         return;
     }
-
-    Flags.mangleFlags(flags, mconf);
 
     greenlock
         .add(flags)
@@ -46,6 +53,7 @@ async function main(_, flags, rc, greenlock, mconf) {
             console.error();
             console.error('error:', err.message);
             console.error();
+            process.exit(1);
         })
         .then(function() {
             return greenlock
@@ -65,10 +73,8 @@ async function main(_, flags, rc, greenlock, mconf) {
                         process.exit(1);
                         return;
                     }
-                    console.info();
-                    console.info('Created config!');
-                    console.info();
 
+                    console.info();
                     Object.keys(site).forEach(function(k) {
                         if ('defaults' === k) {
                             console.info(k + ':');
@@ -80,7 +86,6 @@ async function main(_, flags, rc, greenlock, mconf) {
                             console.info(k + ': ' + JSON.stringify(site[k]));
                         }
                     });
-                    console.info();
                 });
         });
 }

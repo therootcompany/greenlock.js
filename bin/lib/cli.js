@@ -12,6 +12,13 @@ CLI.parse = function(conf) {
 
     Object.keys(conf).forEach(function(k) {
         var v = conf[k];
+        if (!v) {
+            console.error(
+                'Developer Error: missing config value for',
+                JSON.stringify(k)
+            );
+            process.exit(1);
+        }
         var aliases = v[5];
         var bag;
         var bagName;
@@ -85,7 +92,6 @@ CLI.main = function(cb, args) {
         if (bag !== flag.slice(0, bag.length)) {
             return false;
         }
-        console.log(bagName, toCamel(flag.slice(bag.length)));
         opts[bagName][toCamel(flag.slice(bag.length))] = args.shift();
         return true;
     }

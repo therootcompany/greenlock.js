@@ -10,9 +10,7 @@ var Flags = require('./lib/flags.js');
 
 Flags.init().then(function({ flagOptions, rc, greenlock, mconf }) {
     var myFlags = {};
-    ['subject', 'servername' /*, 'servernames', 'altnames'*/].forEach(function(
-        k
-    ) {
+    ['subject'].forEach(function(k) {
         myFlags[k] = flagOptions[k];
     });
 
@@ -24,28 +22,14 @@ Flags.init().then(function({ flagOptions, rc, greenlock, mconf }) {
 });
 
 async function main(_, flags, rc, greenlock) {
-    var servernames = [flags.subject]
-        .concat([flags.servername])
-        //.concat(flags.servernames)
-        //.concat(flags.altnames)
-        .filter(Boolean);
-    delete flags.subject;
-    delete flags.altnames;
-    flags.servernames = servernames;
-    if (flags.servernames.length > 1) {
-        console.error('Error: should only have one servername');
-        process.exit(1);
-        return;
-    } else if (flags.servernames.length !== 1) {
-        console.error('Error: need a servername to check');
+    if (!flags.subject) {
+        console.error('--subject must be provided as a valid domain');
         process.exit(1);
         return;
     }
-    flags.servername = flags.servernames[0];
-    delete flags.servernames;
 
     greenlock
-        ._config(flags)
+        .remove(flags)
         .catch(function(err) {
             console.error();
             console.error('error:', err.message);
@@ -56,16 +40,16 @@ async function main(_, flags, rc, greenlock) {
         .then(function(site) {
             if (!site) {
                 console.info();
-                console.info('No config found for', flags.servername);
+                console.info('No config found for', flags.subject);
                 console.info();
                 process.exit(1);
                 return;
             }
-
             console.info();
             console.info(
-                'Config for ' + JSON.stringify(flags.servername) + ':'
+                'Deleted config for ' + JSON.stringify(flags.subject) + ':'
             );
             console.info(JSON.stringify(site, null, 2));
+            console.info();
         });
 }

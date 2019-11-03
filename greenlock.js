@@ -77,6 +77,8 @@ G.create = function(gconf) {
         // The goal here is to reduce boilerplate, such as error checking
         // and duration parsing, that a manager must implement
         greenlock.sites.add = greenlock.add = greenlock.manager.add;
+        greenlock.sites.update = greenlock.update = greenlock.manager.update;
+        greenlock.sites.remove = greenlock.remove = greenlock.manager.remove;
 
         // Exports challenges.get for Greenlock Express HTTP-01,
         // and whatever odd use case pops up, I suppose

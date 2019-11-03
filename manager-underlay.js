@@ -87,7 +87,7 @@ module.exports.wrap = function(greenlock, manager, gconf) {
         });
     };
 
-    greenlock.add = greenlock.manager.add = function(args) {
+    greenlock.manager.add = function(args) {
         if (!args || !Array.isArray(args.altnames) || !args.altnames.length) {
             throw new Error(
                 'you must specify `altnames` when adding a new site'
@@ -158,9 +158,21 @@ module.exports.wrap = function(greenlock, manager, gconf) {
     };
 
     greenlock.manager.remove = function(args) {
-        args.subject = checkSubject(args);
-        // TODO check no altnames
-        return manager.remove(args);
+        return Promise.resolve().then(function() {
+            args.subject = checkSubject(args);
+            if (args.servername) {
+                throw new Error(
+                    'remove() should be called with `subject` only, if you wish to remove altnames use `update()`'
+                );
+            }
+            if (args.altnames) {
+                throw new Error(
+                    'remove() should be called with `subject` only, not `altnames`'
+                );
+            }
+            // TODO check no altnames
+            return manager.remove(args);
+        });
     };
 
     /*

@@ -1,8 +1,8 @@
 'use strict';
 
 var args = process.argv.slice(3);
-var cli = require('./cli.js');
-var Flags = require('./flags.js');
+var cli = require('./lib/cli.js');
+var Flags = require('./lib/flags.js');
 
 Flags.init().then(function({ flagOptions, rc, greenlock, mconf }) {
     var myFlags = {};
@@ -10,7 +10,15 @@ Flags.init().then(function({ flagOptions, rc, greenlock, mconf }) {
         'subject',
         'altnames',
         'renew-offset',
+        'subscriber-email',
+        'customer-email',
         'server-key-type',
+        'challenge-http-01',
+        'challenge-http-01-xxxx',
+        'challenge-dns-01',
+        'challenge-dns-01-xxxx',
+        'challenge-tls-alpn-01',
+        'challenge-tls-alpn-01-xxxx',
         'challenge',
         'challenge-xxxx',
         'challenge-json',
@@ -20,41 +28,41 @@ Flags.init().then(function({ flagOptions, rc, greenlock, mconf }) {
     });
 
     cli.parse(myFlags);
-    cli.main(function(argList, flags) {
-        main(argList, flags, rc, greenlock, mconf);
+    cli.main(async function(argList, flags) {
+        var sconf = await greenlock._config({ servername: flags.subject });
+        Flags.mangleFlags(flags, mconf, sconf);
+        main(argList, flags, rc, greenlock);
     }, args);
 });
 
-async function main(_, flags, rc, greenlock, mconf) {
-    if (!flags.subject || !flags.altnames) {
-        console.error(
-            '--subject and --altnames must be provided and should be valid domains'
-        );
+async function main(_, flags, rc, greenlock) {
+    if (!flags.subject) {
+        console.error('--subject must be provided as a valid domain');
         process.exit(1);
         return;
     }
 
-    Flags.mangleFlags(flags, mconf);
-
-    greenlock.update(flags).catch(function(err) {
-        console.error();
-        console.error('error:', err.message);
-        console.error();
-    })        .then(function() {
+    greenlock
+        .update(flags)
+        .catch(function(err) {
+            console.error();
+            console.error('error:', err.message);
+            console.error();
+            process.exit(1);
+        })
+        .then(function() {
             return greenlock
                 ._config({ servername: flags.subject })
                 .then(function(site) {
                     if (!site) {
                         console.info();
-                        console.info('No config found for ');
+                        console.info('No config found for', flags.subject);
                         console.info();
                         process.exit(1);
                         return;
                     }
-                    console.info();
-                    console.info("Updated config!");
-                    console.info();
 
+                    console.info();
                     Object.keys(site).forEach(function(k) {
                         if ('defaults' === k) {
                             console.info(k + ':');
@@ -66,7 +74,6 @@ async function main(_, flags, rc, greenlock, mconf) {
                             console.info(k + ': ' + JSON.stringify(site[k]));
                         }
                     });
-                    console.info();
                 });
         });
 }
