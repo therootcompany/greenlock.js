@@ -31,6 +31,7 @@ P._loadHelper = function(modname) {
         console.error("Could not load '%s'", modname);
         console.error('Did you install it?');
         console.error('\tnpm install --save %s', modname);
+        e.context = 'load_plugin';
         throw e;
 
         // Fun experiment, bad idea
@@ -193,6 +194,7 @@ P._loadSync = function(modname) {
         console.error("Could not load '%s'", modname);
         console.error('Did you install it?');
         console.error('\tnpm install --save %s', modname);
+        e.context = 'load_plugin';
         throw e;
     }
     /*

@@ -128,9 +128,13 @@ G.create = function(gconf) {
                 });
             })
             .catch(function(err) {
-                console.error('Fatal error during greenlock init:');
-                console.error(err);
-                process.exit(1);
+                if ('load_plugin' !== err.context) {
+                    console.error('Fatal error during greenlock init:');
+                    console.error(err.message);
+                }
+                if (!gconf._bin_mode) {
+                    process.exit(1);
+                }
             });
         return p;
     };
@@ -247,8 +251,14 @@ G.create = function(gconf) {
                 .split('.')
                 .slice(1)
                 .join('.');
+        if (args.wildname.split('.').length < 3) {
+            // No '*.com'
+            args.wildname = '';
+        }
         if (
             args.servernames ||
+            //TODO I think we need to block altnames as well, but I don't want to break anything
+            //args.altnames ||
             args.subject ||
             args.renewBefore ||
             args.issueBefore ||
@@ -279,12 +289,16 @@ G.create = function(gconf) {
                 if (site.store && site.challenges) {
                     return site;
                 }
+                var dconf = site;
+                if (gconf._bin_mode) {
+                    dconf = site.defaults = {};
+                }
                 return manager.defaults().then(function(mconf) {
                     if (!site.store) {
-                        site.store = mconf.store;
+                        dconf.store = mconf.store;
                     }
                     if (!site.challenges) {
-                        site.challenges = mconf.challenges;
+                        dconf.challenges = mconf.challenges;
                     }
                     return site;
                 });
@@ -483,6 +497,7 @@ function normalizeManager(gconf) {
             // wrap this to be safe for greenlock-manager-fs
             m = require(gconf.manager).create(gconf);
         } catch (e) {
+            console.error('Error loading manager:');
             console.error(e.code);
             console.error(e.message);
         }
@@ -592,6 +607,7 @@ function mergeDefaults(MCONF, gconf) {
             };
         }
     }
+
     // just to test that it loads
     P._loadSync(MCONF.store.module);
 

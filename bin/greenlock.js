@@ -5,7 +5,7 @@ var args = process.argv.slice(2);
 var arg0 = args[0];
 //console.log(args);
 
-var found = ['certonly', 'add', 'config', 'defaults', 'remove'].some(function(
+var found = ['certonly', 'add', 'update', 'config', 'defaults', 'remove'].some(function(
     k
 ) {
     if (k === arg0) {
