@@ -30,7 +30,8 @@ function getGreenlockRc() {
     // The RC file is also used by the (optional) CLI and (optional) Web GUI.
     // You are free to forego CLI and GUI support.
     var fs = require('fs');
-    var rcPath = '.greenlockrc';
+    var path = require('path');
+    var rcPath = path.join(__dirname, '.greenlockrc');
     var rc = fs.readFileSync(rcPath, 'utf8');
     return JSON.parse(rc);
 }
