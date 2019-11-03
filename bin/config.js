@@ -10,7 +10,7 @@ var Flags = require('./lib/flags.js');
 
 Flags.init().then(function({ flagOptions, rc, greenlock, mconf }) {
     var myFlags = {};
-    ['subject', 'servername' /*, 'servernames', 'altnames'*/].forEach(function(
+    ['all', 'subject', 'servername' /*, 'servernames', 'altnames'*/].forEach(function(
         k
     ) {
         myFlags[k] = flagOptions[k];
