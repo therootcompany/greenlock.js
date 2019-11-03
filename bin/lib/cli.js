@@ -119,7 +119,7 @@ CLI.main = function(cb, args) {
 
         // only long names are actually used
         if ('--' !== flag.slice(0, 2)) {
-            console.error("Unrecognized argument '" + flag + "'");
+            console.error("error: unrecognized flag '" + flag + "'");
             process.exit(1);
         }
 
@@ -131,7 +131,7 @@ CLI.main = function(cb, args) {
             }
 
             // other arbitrary args are not used
-            console.error("Unrecognized flag '" + flag + "'");
+            console.error("unrecognized elided flag '" + flag + "'");
             process.exit(1);
         }
 

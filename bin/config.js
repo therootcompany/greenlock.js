@@ -10,11 +10,11 @@ var Flags = require('./lib/flags.js');
 
 Flags.init().then(function({ flagOptions, rc, greenlock, mconf }) {
     var myFlags = {};
-    ['all', 'subject', 'servername' /*, 'servernames', 'altnames'*/].forEach(function(
-        k
-    ) {
-        myFlags[k] = flagOptions[k];
-    });
+    ['all', 'subject', 'servername' /*, 'servernames', 'altnames'*/].forEach(
+        function(k) {
+            myFlags[k] = flagOptions[k];
+        }
+    );
 
     cli.parse(myFlags);
     cli.main(function(argList, flags) {
@@ -51,8 +51,15 @@ async function main(_, flags, rc, greenlock) {
     }
     delete flags.servernames;
 
-    greenlock
-        ._config(flags)
+    var getter = function() {
+        return greenlock._config(flags);
+    };
+    if (flags.all) {
+        getter = function() {
+            return greenlock._configAll(flags);
+        };
+    }
+    return getter()
         .catch(function(err) {
             console.error();
             console.error('error:', err.message);
@@ -60,19 +67,30 @@ async function main(_, flags, rc, greenlock) {
             console.error();
             process.exit(1);
         })
-        .then(function(site) {
-            if (!site) {
+        .then(function(sites) {
+            if (!sites) {
                 console.info();
-                console.info('No config found for', flags.servername);
+                if (flags.all) {
+                    console.info('No configs found');
+                } else {
+                    console.info('No config found for', flags.servername);
+                }
                 console.info();
                 process.exit(1);
                 return;
             }
+            if (!Array.isArray(sites)) {
+                sites = [sites];
+            }
 
-            console.info();
-            console.info(
-                'Config for ' + JSON.stringify(flags.servername) + ':'
-            );
-            console.info(JSON.stringify(site, null, 2));
+            sites.forEach(function(site) {
+                console.info();
+                console.info(
+                    'Config for ' +
+                        JSON.stringify(flags.servername || site.subject) +
+                        ':'
+                );
+                console.info(JSON.stringify(site, null, 2));
+            });
         });
 }

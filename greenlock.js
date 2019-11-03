@@ -278,7 +278,9 @@ G.create = function(gconf) {
 
     greenlock._config = function(args) {
         return greenlock._single(args).then(function() {
-            return greenlock._configAll(args);
+            return greenlock._configAll(args).then(function (sites) {
+                return sites[0];
+            });
         });
     };
     greenlock._configAll = function(args) {
@@ -286,24 +288,25 @@ G.create = function(gconf) {
             if (!sites || !sites.length) {
                 return null;
             }
-            var site = sites[0];
-            site = JSON.parse(JSON.stringify(site));
-            if (site.store && site.challenges) {
-                return site;
-            }
-            var dconf = site;
-            // TODO make cli and api mode the same
-            if (gconf._bin_mode) {
-                dconf = site.defaults = {};
-            }
+            sites = JSON.parse(JSON.stringify(sites));
             return manager.defaults().then(function(mconf) {
-                if (!site.store) {
-                    dconf.store = mconf.store;
-                }
-                if (!site.challenges) {
-                    dconf.challenges = mconf.challenges;
-                }
-                return site;
+                return sites.map(function(site) {
+                    if (site.store && site.challenges) {
+                        return site;
+                    }
+                    var dconf = site;
+                    // TODO make cli and api mode the same
+                    if (gconf._bin_mode) {
+                        dconf = site.defaults = {};
+                    }
+                    if (!site.store) {
+                        dconf.store = mconf.store;
+                    }
+                    if (!site.challenges) {
+                        dconf.challenges = mconf.challenges;
+                    }
+                    return site;
+                });
             });
         });
     };
