@@ -12,6 +12,7 @@ git checkout master -- package.json
 git checkout master -- README.md
 sed -i '' -e 's|"name": ".root.greenlock"|"name": "greenlock"|' package.json
 sed -i '' -e 's|.root.greenlock|greenlock|' README.md
+sed -i '' '/bin.greenlock.js/d' package.json
 npm install --save @root/greenlock@latest
 git add package* README.md || true
 git commit -m "bump" || true
