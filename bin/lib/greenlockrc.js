@@ -93,10 +93,11 @@ module.exports = async function(pkgpath, manager, rc) {
         });
     }
 
-    if (!_rc.manager) {
-        changed = true;
-        _rc.manager = 'greenlock-manager-fs';
-        console.info('Using default manager ' + _rc.manager);
+    if (['@greenlock/manager', 'greenlock-manager-fs'].includes(_rc.manager)) {
+        if (!_rc.configFile) {
+            changed = true;
+            _rc.configFile = path.join(pkgdir, 'greenlock.json');
+        }
     }
 
     if (!changed) {

@@ -33,5 +33,6 @@ function getGreenlockRc() {
     var path = require('path');
     var rcPath = path.join(__dirname, '.greenlockrc');
     var rc = fs.readFileSync(rcPath, 'utf8');
-    return JSON.parse(rc);
+    rc = JSON.parse(rc);
+    rc.packageRoot = __dirname;
 }

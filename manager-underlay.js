@@ -5,7 +5,15 @@ var E = require('./errors.js');
 
 var warned = {};
 
-module.exports.wrap = function(greenlock, manager, gconf) {
+// The purpose of this file is to try to auto-build
+// partial managers so that the external API can be smaller.
+
+module.exports.wrap = function(greenlock, gconf) {
+    var myFind = gconf.find;
+    delete gconf.find;
+
+    var mega = mergeManager(gconf);
+
     greenlock.manager = {};
     greenlock.sites = {};
     //greenlock.accounts = {};
@@ -31,7 +39,7 @@ module.exports.wrap = function(greenlock, manager, gconf) {
     greenlock.manager.defaults = function(conf) {
         return greenlock._init().then(function() {
             if (!conf) {
-                return manager.defaults();
+                return mega.defaults();
             }
 
             if (conf.sites) {
@@ -83,9 +91,10 @@ module.exports.wrap = function(greenlock, manager, gconf) {
                 }
             });
 
-            return manager.defaults(conf);
+            return mega.defaults(conf);
         });
     };
+    greenlock.manager._defaults = mega.defaults;
 
     greenlock.manager.add = function(args) {
         if (!args || !Array.isArray(args.altnames) || !args.altnames.length) {
@@ -142,7 +151,7 @@ module.exports.wrap = function(greenlock, manager, gconf) {
                     args.renewStagger = U._parseDuration(args.renewStagger);
                 }
 
-                return manager.set(args).then(function(result) {
+                return mega.set(args).then(function(result) {
                     if (!gconf._bin_mode) {
                         greenlock.renew({}).catch(function(err) {
                             if (!err.context) {
@@ -154,6 +163,22 @@ module.exports.wrap = function(greenlock, manager, gconf) {
                     return result;
                 });
             });
+        });
+    };
+
+    greenlock.manager.get = greenlock.sites.get = function(args) {
+        return Promise.resolve().then(function() {
+            if (args.subject) {
+                throw new Error(
+                    'get({ servername }) searches certificates by altnames, not by subject specifically'
+                );
+            }
+            if (args.servernames || args.altnames || args.renewBefore) {
+                throw new Error(
+                    'get({ servername }) does not take arguments that could lead to multiple results'
+                );
+            }
+            return mega.get(args);
         });
     };
 
@@ -171,57 +196,137 @@ module.exports.wrap = function(greenlock, manager, gconf) {
                 );
             }
             // TODO check no altnames
-            return manager.remove(args);
+            return mega.remove(args);
         });
     };
 
     /*
-  {
-    subject: site.subject,
-    altnames: site.altnames,
-    //issuedAt: site.issuedAt,
-    //expiresAt: site.expiresAt,
-    renewOffset: site.renewOffset,
-    renewStagger: site.renewStagger,
-    renewAt: site.renewAt,
-    subscriberEmail: site.subscriberEmail,
-    customerEmail: site.customerEmail,
-    challenges: site.challenges,
-    store: site.store
-  };
-  */
+    {
+        subject: site.subject,
+        altnames: site.altnames,
+        //issuedAt: site.issuedAt,
+        //expiresAt: site.expiresAt,
+        renewOffset: site.renewOffset,
+        renewStagger: site.renewStagger,
+        renewAt: site.renewAt,
+        subscriberEmail: site.subscriberEmail,
+        customerEmail: site.customerEmail,
+        challenges: site.challenges,
+        store: site.store
+    };
+    */
 
-    greenlock._find = function(args) {
-        var servernames = (args.servernames || [])
-            .concat(args.altnames || [])
-            .filter(Boolean)
-            .slice(0);
-        var modified = servernames.slice(0);
+    // no transaction promise here because it calls set
+    greenlock._find = async function(args) {
+        args = _mangleFindArgs(args);
+        var ours = await mega.find(args);
+        if (!myFind) {
+            return ours;
+        }
 
-        // servername, wildname, and altnames are all the same
-        ['wildname', 'servername'].forEach(function(k) {
-            var altname = args[k] || '';
-            if (altname && !modified.includes(altname)) {
-                modified.push(altname);
+        // if the user has an overlay find function we'll do a diff
+        // between the managed state and the overlay, and choose
+        // what was found.
+        var theirs = await myFind(args);
+        theirs = theirs.filter(function(site) {
+            if (!site || 'string' !== typeof site.subject) {
+                throw new Error('found site is missing subject');
+            }
+            if (
+                !Array.isArray(site.altnames) ||
+                !site.altnames.length ||
+                !site.altnames[0] ||
+                site.altnames[0] !== site.subject
+            ) {
+                throw new Error('missing or malformed altnames');
+            }
+            ['renewAt', 'issuedAt', 'expiresAt'].forEach(function(k) {
+                if (site[k]) {
+                    throw new Error(
+                        '`' +
+                            k +
+                            '` should be updated by `set()`, not by `find()`'
+                    );
+                }
+            });
+            if (!site) {
+                return;
+            }
+            if (args.subject && site.subject !== args.subject) {
+                return false;
+            }
+
+            var servernames = args.servernames || args.altnames;
+            if (
+                servernames &&
+                !site.altnames.some(function(altname) {
+                    return servernames.includes(altname);
+                })
+            ) {
+                return false;
+            }
+
+            return site.renewAt < (args.renewBefore || Infinity);
+        });
+        return _mergeFind(ours, theirs);
+    };
+
+    function _mergeFind(ours, theirs) {
+        var toUpdate = [];
+        theirs.forEach(function(_newer) {
+            var hasCurrent = ours.some(function(_older) {
+                var changed = false;
+                if (_newer.subject !== _older.subject) {
+                    return false;
+                }
+
+                // BE SURE TO SET THIS UNDEFINED AFTERWARDS
+                _older._exists = true;
+
+                _newer.deletedAt = _newer.deletedAt || 0;
+                Object.keys(_newer).forEach(function(k) {
+                    if (_older[k] !== _newer[k]) {
+                        changed = true;
+                        _older[k] = _newer[k];
+                    }
+                });
+                if (changed) {
+                    toUpdate.push(_older);
+                }
+
+                // handled the (only) match
+                return true;
+            });
+            if (!hasCurrent) {
+                toUpdate.push(_newer);
             }
         });
 
-        if (modified.length) {
-            servernames = modified;
-            servernames = servernames.altnames.map(U._encodeName);
-            args.altnames = servernames;
-            args.servernames = args.altnames = checkAltnames(false, args);
-        }
+        // delete the things that are gone
+        ours.forEach(function(_older) {
+            if (!_older._exists) {
+                _older.deletedAt = Date.now();
+                toUpdate.push(_older);
+            }
+            _older._exists = undefined;
+        });
 
-        // documented as args.servernames
-        // preserved as args.altnames for v3 beta backwards compat
-        // my only hesitancy in this choice is that a "servername"
-        // may NOT contain '*.', in which case `altnames` is a better choice.
-        // However, `altnames` is ambiguous - as if it means to find a
-        // certificate by that specific collection of altnames.
-        // ... perhaps `domains` could work?
-        return manager.find(args);
-    };
+        Promise.all(
+            toUpdate.map(function(site) {
+                return greenlock.sites.update(site).catch(function(err) {
+                    console.error(
+                        'Developer Error: cannot update sites from user-supplied `find()`:'
+                    );
+                    console.error(err);
+                });
+            })
+        );
+
+        // ours is updated from theirs
+        return ours;
+    }
+
+    greenlock.manager.init = mega.init;
 };
 
 function checkSubject(args) {
@@ -283,4 +388,186 @@ function checkAltnames(subject, args) {
     */
 
     return altnames;
+}
+
+function loadManager(gconf) {
+    var m;
+    // 1. Get the manager
+    // 2. Figure out if we need to wrap it
+
+    if (!gconf.manager) {
+        gconf.manager = '@greenlock/manager';
+    }
+
+    if ('string' !== typeof gconf.manager) {
+        throw new Error(
+            '`manager` should be a string representing the npm name or file path of the module'
+        );
+    }
+    try {
+        // wrap this to be safe for @greenlock/manager
+        m = require(gconf.manager).create(gconf);
+    } catch (e) {
+        console.error('Error loading manager:');
+        console.error(e.code);
+        console.error(e.message);
+    }
+
+    if (!m) {
+        console.error();
+        console.error(
+            'Failed to load manager plugin ',
+            JSON.stringify(gconf.manager)
+        );
+        console.error();
+        process.exit(1);
+    }
+
+    return m;
+}
+
+function mergeManager(gconf) {
+    var mng;
+    function m() {
+        if (mng) {
+            return mng;
+        }
+        mng = require('@greenlock/manager').create(gconf);
+        return mng;
+    }
+
+    var mini = loadManager(gconf);
+    var mega = {};
+    // optional
+    if (mini.defaults) {
+        mega.defaults = function(opts) {
+            return mini.defaults(opts);
+        };
+    } else {
+        mega.defaults = m().defaults;
+    }
+
+    // optional
+    if (mini.remove) {
+        mega.remove = function(opts) {
+            return mini.remove(opts);
+        };
+    } else {
+        mega.remove = function(opts) {
+            mega.get(opts).then(function(site) {
+                if (!site) {
+                    return null;
+                }
+                site.deletedAt = Date.now();
+                return mega.set(site).then(function() {
+                    return site;
+                });
+            });
+        };
+    }
+
+    if (mini.find) {
+        // without this there cannot be fully automatic renewal
+        mega.find = function(opts) {
+            return mini.find(opts);
+        };
+    }
+
+    // set and (find and/or get) should be from the same set
+    if (mini.set) {
+        mega.set = function(opts) {
+            if (!mini.find) {
+                // TODO create the list so that find can be implemented
+            }
+            return mini.set(opts);
+        };
+    } else {
+        mega.set = m().set;
+        mega.get = m().get;
+    }
+
+    if (mini.get) {
+        mega.get = function(opts) {
+            return mini.get(opts);
+        };
+    } else if (mini.find) {
+        mega.get = function(opts) {
+            var servername = opts.servername;
+            delete opts.servername;
+            opts.servernames = (servername && [servername]) || undefined;
+            return mini.find(opts).then(function(sites) {
+                return sites.filter(function(site) {
+                    return site.altnames.include(servername);
+                })[0];
+            });
+        };
+    } else if (mini.set) {
+        throw new Error(
+            gconf.manager + ' implements `set()`, but not `get()` or `find()`'
+        );
+    } else {
+        mega.find = m().find;
+        mega.get = m().get;
+    }
+
+    if (!mega.get) {
+        mega.get = function(opts) {
+            var servername = opts.servername;
+            delete opts.servername;
+            opts.servernames = (servername && [servername]) || undefined;
+            return mega.find(opts).then(function(sites) {
+                return sites.filter(function(site) {
+                    return site.altnames.include(servername);
+                })[0];
+            });
+        };
+    }
+
+    mega.init = function(deps) {
+        if (mini.init) {
+            return mini.init(deps).then(function() {
+                if (mng) {
+                    return mng.init(deps);
+                }
+            });
+        } else if (mng) {
+            return mng.init(deps);
+        } else {
+            return Promise.resolve(null);
+        }
+    };
+
+    return mega;
+}
+
+function _mangleFindArgs(args) {
+    var servernames = (args.servernames || [])
+        .concat(args.altnames || [])
+        .filter(Boolean)
+        .slice(0);
+    var modified = servernames.slice(0);
+
+    // servername, wildname, and altnames are all the same
+    ['wildname', 'servername'].forEach(function(k) {
+        var altname = args[k] || '';
+        if (altname && !modified.includes(altname)) {
+            modified.push(altname);
+        }
+    });
+
+    if (modified.length) {
+        servernames = modified;
+        servernames = servernames.map(U._encodeName);
+        args.altnames = servernames;
+        args.servernames = args.altnames = checkAltnames(false, args);
+    }
+
+    // documented as args.servernames
+    // preserved as args.altnames for v3 beta backwards compat
+    // my only hesitancy in this choice is that a "servername"
+    // may NOT contain '*.', in which case `altnames` is a better choice.
+    // However, `altnames` is ambiguous - as if it means to find a
+    // certificate by that specific collection of altnames.
+    // ... perhaps `domains` could work?
+    return args;
 }

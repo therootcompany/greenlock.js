@@ -23,7 +23,6 @@ G.create = function(gconf) {
     if (!gconf) {
         gconf = {};
     }
-    var manager;
 
     greenlock._create = function() {
         if (!gconf._bin_mode) {
@@ -65,15 +64,14 @@ G.create = function(gconf) {
         }
         console.info('ACME Directory URL:', gdefaults.directoryUrl);
 
-        manager = normalizeManager(gconf);
-
         // Wraps each of the following with appropriate error checking
         // greenlock.manager.defaults
-        // greenlock.manager.add
-        // greenlock.manager.update
-        // greenlock.manager.remove
-        // greenlock.manager.find
-        require('./manager-underlay.js').wrap(greenlock, manager, gconf);
+        // greenlock.sites.add
+        // greenlock.sites.update
+        // greenlock.sites.remove
+        // greenlock.sites.find
+        // greenlock.sites.get
+        require('./manager-underlay.js').wrap(greenlock, gconf);
         // The goal here is to reduce boilerplate, such as error checking
         // and duration parsing, that a manager must implement
         greenlock.sites.add = greenlock.add = greenlock.manager.add;
@@ -83,7 +81,7 @@ G.create = function(gconf) {
         // Exports challenges.get for Greenlock Express HTTP-01,
         // and whatever odd use case pops up, I suppose
         // greenlock.challenges.get
-        require('./challenges-underlay.js').wrap(greenlock, manager, gconf);
+        require('./challenges-underlay.js').wrap(greenlock);
 
         greenlock._defaults = gdefaults;
         greenlock._defaults.debug = gconf.debug;
@@ -108,25 +106,20 @@ G.create = function(gconf) {
             return p;
         };
 
-        if (manager.init) {
-            // TODO punycode?
-            p = manager.init({
+        p = greenlock.manager
+            .init({
                 request: request
                 //punycode: require('punycode')
-            });
-        } else {
-            p = Promise.resolve();
-        }
-        p = p
+            })
             .then(function() {
-                return manager.defaults().then(function(MCONF) {
+                return greenlock.manager._defaults().then(function(MCONF) {
                     mergeDefaults(MCONF, gconf);
                     if (true === MCONF.agreeToTerms) {
                         gdefaults.agreeToTerms = function(tos) {
                             return Promise.resolve(tos);
                         };
                     }
-                    return manager.defaults(MCONF);
+                    return greenlock.manager._defaults(MCONF);
                 });
             })
             .catch(function(err) {
@@ -278,7 +271,7 @@ G.create = function(gconf) {
 
     greenlock._config = function(args) {
         return greenlock._single(args).then(function() {
-            return greenlock._configAll(args).then(function (sites) {
+            return greenlock._configAll(args).then(function(sites) {
                 return sites[0];
             });
         });
@@ -289,7 +282,7 @@ G.create = function(gconf) {
                 return null;
             }
             sites = JSON.parse(JSON.stringify(sites));
-            return manager.defaults().then(function(mconf) {
+            return greenlock.manager._defaults().then(function(mconf) {
                 return sites.map(function(site) {
                     if (site.store && site.challenges) {
                         return site;
@@ -314,7 +307,7 @@ G.create = function(gconf) {
     // needs to get info about the renewal, such as which store and challenge(s) to use
     greenlock.renew = function(args) {
         return greenlock._init().then(function() {
-            return manager.defaults().then(function(mconf) {
+            return greenlock.manager._defaults().then(function(mconf) {
                 return greenlock._renew(mconf, args);
             });
         });
@@ -418,7 +411,7 @@ G.create = function(gconf) {
 
     greenlock.order = function(args) {
         return greenlock._init().then(function() {
-            return manager.defaults().then(function(mconf) {
+            return greenlock.manager._defaults().then(function(mconf) {
                 return greenlock._order(mconf, args);
             });
         });
@@ -483,106 +476,6 @@ function errorToJSON(e) {
         error[k] = e[k];
     });
     return error;
-}
-
-function normalizeManager(gconf) {
-    var m;
-    // 1. Get the manager
-    // 2. Figure out if we need to wrap it
-
-    if (!gconf.manager) {
-        gconf.manager = 'greenlock-manager-fs';
-        if (gconf.find) {
-            // { manager: 'greenlock-manager-fs', find: function () { } }
-            warpFind(gconf);
-        }
-    }
-
-    if ('string' === typeof gconf.manager) {
-        try {
-            // wrap this to be safe for greenlock-manager-fs
-            m = require(gconf.manager).create(gconf);
-        } catch (e) {
-            console.error('Error loading manager:');
-            console.error(e.code);
-            console.error(e.message);
-        }
-    } else {
-        m = gconf.manager;
-    }
-
-    if (!m) {
-        console.error();
-        console.error(
-            'Failed to load manager plugin ',
-            JSON.stringify(gconf.manager)
-        );
-        console.error();
-        process.exit(1);
-    }
-
-    if (
-        ['set', 'remove', 'find', 'defaults'].every(function(k) {
-            return 'function' === typeof m[k];
-        })
-    ) {
-        return m;
-    }
-
-    // { manager: { find: function () {  } } }
-    if (m.find) {
-        warpFind(m);
-    }
-    // m.configFile could also be set
-    m = require('greenlock-manager-fs').create(m);
-
-    if ('function' !== typeof m.find) {
-        console.error();
-        console.error(
-            JSON.stringify(gconf.manager),
-            'must implement `find()` and should implement `set()`, `remove()`, `defaults()`, and `init()`'
-        );
-        console.error();
-        process.exit(1);
-    }
-
-    return m;
-}
-
-function warpFind(gconf) {
-    gconf.__gl_find = gconf.find;
-    gconf.find = function(args) {
-        // the incoming args will be normalized by greenlock
-        return gconf.__gl_find(args).then(function(sites) {
-            // we also need to error check the incoming sites,
-            // as if they were being passed through `add()` or `set()`
-            // (effectively they are) because the manager assumes that
-            // they're not bad
-            sites.forEach(function(s) {
-                if (!s || 'string' !== typeof s.subject) {
-                    throw new Error('missing subject');
-                }
-                if (
-                    !Array.isArray(s.altnames) ||
-                    !s.altnames.length ||
-                    !s.altnames[0] ||
-                    s.altnames[0] !== s.subject
-                ) {
-                    throw new Error('missing or malformed altnames');
-                }
-                ['renewAt', 'issuedAt', 'expiresAt'].forEach(function(k) {
-                    if (s[k]) {
-                        throw new Error(
-                            '`' +
-                                k +
-                                '` should be updated by `set()`, not by `find()`'
-                        );
-                    }
-                });
-            });
-            return sites;
-        });
-    };
 }
 
 function mergeDefaults(MCONF, gconf) {
