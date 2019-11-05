@@ -16,6 +16,7 @@ Flags.init({ forceSave: true }).then(function({
 }) {
     var myFlags = {};
     [
+        'agree-to-terms',
         'account-key-type',
         'server-key-type',
         'subscriber-email',
@@ -29,7 +30,7 @@ Flags.init({ forceSave: true }).then(function({
         'challenge-tls-alpn-01-xxxx',
         'challenge',
         'challenge-xxxx',
-        'challenge-http-01',
+        'challenge-http-01'
     ].forEach(function(k) {
         myFlags[k] = flagOptions[k];
     });

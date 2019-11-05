@@ -26,6 +26,11 @@ Flags.flags = function(mconf, myOpts) {
             'search all site configs rather than by --subject or --servernames',
             'boolean'
         ],
+        'agree-to-terms': [
+            false,
+            "agree to the Let's Encrypts Subscriber Agreement and Greenlock Terms of Use",
+            'boolean'
+        ],
         subject: [
             false,
             'the "subject" (primary domain) of the certificate',
