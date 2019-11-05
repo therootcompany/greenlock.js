@@ -94,7 +94,10 @@ module.exports.wrap = function(greenlock, gconf) {
             return mega.defaults(conf);
         });
     };
-    greenlock.manager._defaults = mega.defaults;
+
+    greenlock.manager._defaults = function(opts) {
+        return mega.defaults(opts);
+    };
 
     greenlock.manager.add = function(args) {
         if (!args || !Array.isArray(args.altnames) || !args.altnames.length) {

@@ -127,7 +127,10 @@ C._rawOrder = function(gnlck, mconf, db, acme, chs, acc, email, args) {
     var query = {
         subject: args.subject,
         certificate: args.certificate || {},
-        directoryUrl: args.directoryUrl || gnlck._defaults.directoryUrl
+        directoryUrl:
+            args.directoryUrl ||
+            mconf.directoryUrl ||
+            gnlck._defaults.directoryUrl
     };
     rawPending[id] = U._getOrCreateKeypair(db, args.subject, query, keyType)
         .then(function(kresult) {
@@ -208,7 +211,10 @@ C._check = function(gnlck, mconf, db, args) {
         subject: args.subject,
         // may contain certificate.id
         certificate: args.certificate,
-        directoryUrl: args.directoryUrl || gnlck._defaults.directoryUrl
+        directoryUrl:
+            args.directoryUrl ||
+            mconf.directoryUrl ||
+            gnlck._defaults.directoryUrl
     };
     return db.check(query).then(function(pems) {
         if (!pems) {

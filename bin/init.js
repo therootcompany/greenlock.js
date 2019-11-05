@@ -49,7 +49,7 @@ cli.main(async function(argList, flags) {
         }
     }
 
-    var GreenlockRc = require('./lib/greenlockrc.js');
+    var GreenlockRc = require('../greenlockrc.js');
     //var rc = await GreenlockRc(pkgpath, manager, flags.manager);
     await GreenlockRc(pkgpath, manager, flags.manager);
     writeGreenlockJs(pkgdir, flags);

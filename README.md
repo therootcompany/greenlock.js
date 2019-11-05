@@ -464,7 +464,7 @@ This is what keeps the mapping of domains <-> certificates.
 In many cases it will interact with the same database as the Key & Cert Store, and probably the code as well.
 
 -   set({ subject, altnames, renewAt })
--   find({ altnames, renewBefore })
+-   find({ servernames, renewBefore })
     ```js
     // should return a list of site configs:
     [

@@ -13,6 +13,7 @@ var P = require('./plugins.js');
 var A = require('./accounts.js');
 var C = require('./certificates.js');
 var UserEvents = require('./user-events.js');
+var GreenlockRc = require('./greenlockrc.js');
 
 var caches = {};
 
@@ -42,27 +43,21 @@ G.create = function(gconf) {
             });
         }
 
+        if (!gconf.packageRoot) {
+            gconf.packageRoot = process.cwd();
+            console.warn(
+                '`packageRoot` not defined, trying ' + gconf.packageRoot
+            );
+        }
+
         if ('function' === typeof gconf.notify) {
             gdefaults.notify = gconf.notify;
         } else {
             gdefaults.notify = _notify;
         }
 
-        if (gconf.directoryUrl) {
-            gdefaults = gconf.directoryUrl;
-            if (gconf.staging) {
-                throw new Error(
-                    'supply `directoryUrl` or `staging`, but not both'
-                );
-            }
-        } else if (gconf.staging) {
-            gdefaults.directoryUrl =
-                'https://acme-staging-v02.api.letsencrypt.org/directory';
-        } else {
-            gdefaults.directoryUrl =
-                'https://acme-v02.api.letsencrypt.org/directory';
-        }
-        console.info('ACME Directory URL:', gdefaults.directoryUrl);
+        var rc = GreenlockRc.resolve(gconf);
+        gconf = Object.assign(rc, gconf);
 
         // Wraps each of the following with appropriate error checking
         // greenlock.manager.defaults
@@ -83,10 +78,31 @@ G.create = function(gconf) {
         // greenlock.challenges.get
         require('./challenges-underlay.js').wrap(greenlock);
 
+        if (gconf.directoryUrl) {
+            gdefaults.directoryUrl = gconf.directoryUrl;
+            if (gconf.staging) {
+                throw new Error(
+                    'supply `directoryUrl` or `staging`, but not both'
+                );
+            }
+        } else if (
+            gconf.staging ||
+            process.argv.includes('--staging') ||
+            /DEV|STAG/i.test(process.env.ENV)
+        ) {
+            greenlock.staging = true;
+            gdefaults.directoryUrl =
+                'https://acme-staging-v02.api.letsencrypt.org/directory';
+        } else {
+            greenlock.live = true;
+            gdefaults.directoryUrl =
+                'https://acme-v02.api.letsencrypt.org/directory';
+        }
+
         greenlock._defaults = gdefaults;
         greenlock._defaults.debug = gconf.debug;
 
-        if (!gconf._bin_mode) {
+        if (!gconf._bin_mode && false !== gconf.renew) {
             // renew every 90-ish minutes (random for staggering)
             // the weak setTimeout (unref) means that when run as a CLI process this
             // will still finish as expected, and not wait on the timeout
@@ -371,7 +387,7 @@ G.create = function(gconf) {
         });
     };
 
-    greenlock._acme = function(args) {
+    greenlock._acme = function(mconf, args) {
         var packageAgent = gconf.packageAgent || '';
         // because Greenlock_Express/v3.x Greenlock/v3 is redundant
         if (!/greenlock/i.test(packageAgent)) {
@@ -383,7 +399,15 @@ G.create = function(gconf) {
             notify: greenlock._notify,
             debug: greenlock._defaults.debug || args.debug
         });
-        var dirUrl = args.directoryUrl || greenlock._defaults.directoryUrl;
+        var dirUrl = args.directoryUrl || mconf.directoryUrl;
+        var showDir = false;
+        if (!dirUrl) {
+            showDir = true;
+            dirUrl = greenlock._defaults.directoryUrl;
+        }
+        if (showDir || /staging/.test(dirUrl)) {
+            console.info('ACME Directory URL:', gdefaults.directoryUrl);
+        }
 
         var dir = caches[dirUrl];
 
@@ -409,17 +433,17 @@ G.create = function(gconf) {
             });
     };
 
-    greenlock.order = function(args) {
+    greenlock.order = function(siteConf) {
         return greenlock._init().then(function() {
             return greenlock.manager._defaults().then(function(mconf) {
-                return greenlock._order(mconf, args);
+                return greenlock._order(mconf, siteConf);
             });
         });
     };
-    greenlock._order = function(mconf, args) {
+    greenlock._order = function(mconf, siteConf) {
         // packageAgent, maintainerEmail
-        return greenlock._acme(args).then(function(acme) {
-            var storeConf = args.store || mconf.store;
+        return greenlock._acme(mconf, siteConf).then(function(acme) {
+            var storeConf = siteConf.store || mconf.store;
             storeConf = JSON.parse(JSON.stringify(storeConf));
             storeConf.packageRoot = gconf.packageRoot;
             if (storeConf.basePath) {
@@ -435,9 +459,10 @@ G.create = function(gconf) {
                     mconf,
                     store.accounts,
                     acme,
-                    args
+                    siteConf
                 ).then(function(account) {
-                    var challengeConfs = args.challenges || mconf.challenges;
+                    var challengeConfs =
+                        siteConf.challenges || mconf.challenges;
                     return Promise.all(
                         Object.keys(challengeConfs).map(function(typ01) {
                             return P._loadChallenge(challengeConfs, typ01);
@@ -454,7 +479,7 @@ G.create = function(gconf) {
                             acme,
                             challenges,
                             account,
-                            args
+                            siteConf
                         ).then(function(pems) {
                             if (!pems) {
                                 throw new Error('no order result');

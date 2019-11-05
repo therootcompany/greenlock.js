@@ -5,7 +5,7 @@ var Flags = module.exports;
 var path = require('path');
 //var pkgpath = path.join(__dirname, '..', 'package.json');
 var pkgpath = path.join(process.cwd(), 'package.json');
-var GreenlockRc = require('./greenlockrc.js');
+var GreenlockRc = require('../../greenlockrc.js');
 
 // These are ALL options
 // The individual CLI files each select a subset of them
@@ -168,21 +168,21 @@ Flags.flags = function(mconf, myOpts) {
     };
 };
 
-Flags.init = function(myOpts) {
-    return GreenlockRc(pkgpath).then(async function(rc) {
-        rc._bin_mode = true;
-        var Greenlock = require('../../');
-        // this is a copy, so it's safe to modify
-        var greenlock = Greenlock.create(rc);
-        var mconf = await greenlock.manager.defaults();
-        var flagOptions = Flags.flags(mconf, myOpts);
-        return {
-            flagOptions,
-            rc,
-            greenlock,
-            mconf
-        };
-    });
+Flags.init = async function(myOpts) {
+    var rc = await GreenlockRc(pkgpath);
+    rc._bin_mode = true;
+    var Greenlock = require('../../');
+    // this is a copy, so it's safe to modify
+    rc.packageRoot = path.dirname(pkgpath);
+    var greenlock = Greenlock.create(rc);
+    var mconf = await greenlock.manager.defaults();
+    var flagOptions = Flags.flags(mconf, myOpts);
+    return {
+        flagOptions,
+        rc,
+        greenlock,
+        mconf
+    };
 };
 
 Flags.mangleFlags = function(flags, mconf, sconf, extras) {

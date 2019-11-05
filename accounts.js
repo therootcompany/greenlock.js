@@ -117,7 +117,7 @@ A._newAccount = function(gnlck, mconf, db, acme, args, email, fullAccount) {
 						/^https?:\/\//i,
 						''
 					);
-          */
+                    */
                     keyP = db.setKeypair(query, keypair);
                 }
 
@@ -145,7 +145,7 @@ A._newAccount = function(gnlck, mconf, db, acme, args, email, fullAccount) {
 									/^https?:\/\//i,
 									''
 								)
-                */
+                                */
                             },
                             reg
                         );
