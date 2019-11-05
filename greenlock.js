@@ -399,15 +399,21 @@ G.create = function(gconf) {
             notify: greenlock._notify,
             debug: greenlock._defaults.debug || args.debug
         });
+
+        // The user has explicitly set the directoryUrl, great!
         var dirUrl = args.directoryUrl || mconf.directoryUrl;
+
+        // The directoryUrl is implicit
         var showDir = false;
         if (!dirUrl) {
             showDir = true;
             dirUrl = greenlock._defaults.directoryUrl;
         }
-        if (showDir || (/staging/.test(dirUrl) && !gdefaults.shownDirectory)) {
+
+        // Show the directory if implicit
+        if (showDir && !gdefaults.shownDirectory) {
             gdefaults.shownDirectory = true;
-            console.info('ACME Directory URL:', gdefaults.directoryUrl);
+            console.info('ACME Directory URL:', dirUrl);
         }
 
         var dir = caches[dirUrl];
