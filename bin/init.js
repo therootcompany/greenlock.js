@@ -83,12 +83,6 @@ function writeGreenlockJs(pkgdir, flags) {
         // continue
     }
 
-    if (flags.cluster) {
-        tmpl = tmpl.replace(
-            /options.cluster = false/g,
-            'options.cluster = true'
-        );
-    }
     if (flags.maintainerEmail) {
         tmpl = tmpl.replace(
             /pkg.author/g,
@@ -117,17 +111,9 @@ function writeServerJs(pkgdir, flags) {
     }
 
     if (flags.cluster) {
-        tmpl = tmpl.replace(
-            /options.cluster = false/g,
-            'options.cluster = true'
-        );
+        tmpl = tmpl.replace(/cluster: false/g, 'cluster: true');
     }
-    if (flags.maintainerEmail) {
-        tmpl = tmpl.replace(
-            /pkg.author/g,
-            JSON.stringify(flags.maintainerEmail)
-        );
-    }
+
     fs.writeFileSync(path.join(pkgdir, serverJs), tmpl);
     console.info("created '%s'", serverJs);
 }
