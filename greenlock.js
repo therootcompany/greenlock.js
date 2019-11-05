@@ -420,6 +420,15 @@ G.create = function(gconf) {
         // packageAgent, maintainerEmail
         return greenlock._acme(args).then(function(acme) {
             var storeConf = args.store || mconf.store;
+            storeConf = JSON.parse(JSON.stringify(storeConf));
+            storeConf.packageRoot = gconf.packageRoot;
+            if (storeConf.basePath) {
+                var path = require('path');
+                storeConf.basePath = path.resolve(
+                    gconf.packageRoot || process.cwd(),
+                    'greenlock'
+                );
+            }
             return P._loadStore(storeConf).then(function(store) {
                 return A._getOrCreate(
                     greenlock,
@@ -493,17 +502,23 @@ function mergeDefaults(MCONF, gconf) {
         MCONF.subscriberEmail = gconf.subscriberEmail;
     }
 
-    var homedir;
     // Load the default store module
     if (!MCONF.store) {
         if (gconf.store) {
             MCONF.store = gconf.store;
         } else {
-            homedir = require('os').homedir();
             MCONF.store = {
-                module: 'greenlock-store-fs',
-                basePath: homedir + '/.config/greenlock/'
+                module: 'greenlock-store-fs'
             };
+        }
+    }
+
+    if ('greenlock-store-fs' === MCONF.store.module && !MCONF.store.basePath) {
+        //homedir = require('os').homedir();
+        if (gconf.configFile) {
+            MCONF.store.basePath = gconf.configFile.replace(/\.json$/i, '.d');
+        } else {
+            MCONF.store.basePath = './greenlock.d';
         }
     }
 
