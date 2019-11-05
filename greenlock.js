@@ -405,7 +405,8 @@ G.create = function(gconf) {
             showDir = true;
             dirUrl = greenlock._defaults.directoryUrl;
         }
-        if (showDir || /staging/.test(dirUrl)) {
+        if (showDir || (/staging/.test(dirUrl) && !gdefaults.shownDirectory)) {
+            gdefaults.shownDirectory = true;
             console.info('ACME Directory URL:', gdefaults.directoryUrl);
         }
 
@@ -446,13 +447,15 @@ G.create = function(gconf) {
             var storeConf = siteConf.store || mconf.store;
             storeConf = JSON.parse(JSON.stringify(storeConf));
             storeConf.packageRoot = gconf.packageRoot;
-            if (storeConf.basePath) {
-                var path = require('path');
-                storeConf.basePath = path.resolve(
-                    gconf.packageRoot || process.cwd(),
-                    'greenlock'
-                );
+
+            var path = require('path');
+            if (!storeConf.basePath) {
+                storeConf.basePath = 'greenlock';
             }
+            storeConf.basePath = path.resolve(
+                gconf.packageRoot || process.cwd(),
+                storeConf.basePath
+            );
             return P._loadStore(storeConf).then(function(store) {
                 return A._getOrCreate(
                     greenlock,

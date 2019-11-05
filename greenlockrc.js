@@ -162,7 +162,7 @@ module.exports._read = function(pkgdir) {
             throw err;
         }
         try {
-            require(path.join(pkgdir, 'package.json'));
+            require(path.resolve(path.join(pkgdir, './package.json')));
         } catch (e) {
             e.context = 'package.json';
             e.desc =
