@@ -295,7 +295,7 @@ G.create = function(gconf) {
     greenlock._configAll = function(args) {
         return greenlock._find(args).then(function(sites) {
             if (!sites || !sites.length) {
-                return null;
+                return [];
             }
             sites = JSON.parse(JSON.stringify(sites));
             return greenlock.manager._defaults().then(function(mconf) {
