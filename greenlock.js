@@ -12,6 +12,8 @@ var E = require('./errors.js');
 var P = require('./plugins.js');
 var A = require('./accounts.js');
 var C = require('./certificates.js');
+var DIR = require('./lib/directory-url.js');
+
 var UserEvents = require('./user-events.js');
 var GreenlockRc = require('./greenlockrc.js');
 
@@ -78,25 +80,9 @@ G.create = function(gconf) {
         // greenlock.challenges.get
         require('./challenges-underlay.js').wrap(greenlock);
 
+        DIR._getStagingDirectoryUrl('', gconf.staging);
         if (gconf.directoryUrl) {
             gdefaults.directoryUrl = gconf.directoryUrl;
-            if (gconf.staging) {
-                throw new Error(
-                    'supply `directoryUrl` or `staging`, but not both'
-                );
-            }
-        } else if (
-            gconf.staging ||
-            process.argv.includes('--staging') ||
-            /DEV|STAG/i.test(process.env.ENV)
-        ) {
-            greenlock.staging = true;
-            gdefaults.directoryUrl =
-                'https://acme-staging-v02.api.letsencrypt.org/directory';
-        } else {
-            greenlock.live = true;
-            gdefaults.directoryUrl =
-                'https://acme-v02.api.letsencrypt.org/directory';
         }
 
         greenlock._defaults = gdefaults;
@@ -135,6 +121,7 @@ G.create = function(gconf) {
                             return Promise.resolve(tos);
                         };
                     }
+
                     return greenlock.manager._defaults(MCONF);
                 });
             })
@@ -387,7 +374,7 @@ G.create = function(gconf) {
         });
     };
 
-    greenlock._acme = function(mconf, args) {
+    greenlock._acme = async function(mconf, args) {
         var packageAgent = gconf.packageAgent || '';
         // because Greenlock_Express/v3.x Greenlock/v3 is redundant
         if (!/greenlock/i.test(packageAgent)) {
@@ -400,44 +387,29 @@ G.create = function(gconf) {
             debug: greenlock._defaults.debug || args.debug
         });
 
-        // The user has explicitly set the directoryUrl, great!
-        var dirUrl = args.directoryUrl || mconf.directoryUrl;
-
-        // The directoryUrl is implicit
-        var showDir = false;
-        if (!dirUrl) {
-            showDir = true;
-            dirUrl = greenlock._defaults.directoryUrl;
-        }
-
-        // Show the directory if implicit
-        if (showDir && !gdefaults.shownDirectory) {
-            gdefaults.shownDirectory = true;
-            console.info('ACME Directory URL:', dirUrl);
-        }
+        var dirUrl = DIR._getDirectoryUrl(
+            args.directoryUrl || mconf.directoryUrl
+        );
 
         var dir = caches[dirUrl];
-
         // don't cache more than an hour
         if (dir && Date.now() - dir.ts < 1 * 60 * 60 * 1000) {
             return dir.promise;
         }
 
-        return acme
-            .init(dirUrl)
-            .then(function(/*meta*/) {
-                caches[dirUrl] = {
-                    promise: Promise.resolve(acme),
-                    ts: Date.now()
-                };
-                return acme;
-            })
-            .catch(function(err) {
-                // TODO
-                // let's encrypt is possibly down for maintenaince...
-                // this is a special kind of failure mode
-                throw err;
-            });
+        await acme.init(dirUrl).catch(function(err) {
+            // TODO this is a special kind of failure mode. What should we do?
+            console.error(
+                "[debug] Let's Encrypt may be down for maintenance or `directoryUrl` may be wrong"
+            );
+            throw err;
+        });
+
+        caches[dirUrl] = {
+            promise: Promise.resolve(acme),
+            ts: Date.now()
+        };
+        return acme;
     };
 
     greenlock.order = function(siteConf) {
@@ -544,6 +516,7 @@ function mergeDefaults(MCONF, gconf) {
             MCONF.store = {
                 module: 'greenlock-store-fs'
             };
+            console.info('[default] store.module: ' + MCONF.store.module);
         }
     }
 
@@ -566,6 +539,10 @@ function mergeDefaults(MCONF, gconf) {
     }
     if (!challenges['http-01'] && !challenges['dns-01']) {
         challenges['http-01'] = { module: 'acme-http-01-standalone' };
+        console.info(
+            '[default] challenges.http-01.module: ' +
+                challenges['http-01'].module
+        );
     }
     if (challenges['http-01']) {
         if ('string' !== typeof challenges['http-01'].module) {
@@ -589,16 +566,34 @@ function mergeDefaults(MCONF, gconf) {
 
     if (!MCONF.renewOffset) {
         MCONF.renewOffset = gconf.renewOffset || '-45d';
+        console.info('[default] renewOffset: ' + MCONF.renewOffset);
     }
     if (!MCONF.renewStagger) {
         MCONF.renewStagger = gconf.renewStagger || '3d';
+        console.info('[default] renewStagger: ' + MCONF.renewStagger);
     }
 
     if (!MCONF.accountKeyType) {
         MCONF.accountKeyType = gconf.accountKeyType || 'EC-P256';
+        console.info('[default] accountKeyType: ' + MCONF.accountKeyType);
     }
     if (!MCONF.serverKeyType) {
         MCONF.serverKeyType = gconf.serverKeyType || 'RSA-2048';
+        console.info('[default] serverKeyType: ' + MCONF.serverKeyType);
+    }
+
+    if (false !== MCONF.subscriberEmail) {
+        MCONF.subscriberEmail =
+            gconf.subscriberEmail || gconf.maintainerEmail || undefined;
+        MCONF.subscriberEmail = gconf.agreeToTerms || undefined;
+        console.info('');
+        console.info('[default] subscriberEmail: ' + MCONF.subscriberEmail);
+        console.info(
+            '[default] agreeToTerms: ' +
+                (MCONF.agreeToTerms ||
+                    gconf.agreeToTerms ||
+                    '(show notice on use)')
+        );
     }
 }
 
