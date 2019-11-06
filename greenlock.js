@@ -113,17 +113,16 @@ G.create = function(gconf) {
                 request: request
                 //punycode: require('punycode')
             })
-            .then(function() {
-                return greenlock.manager._defaults().then(function(MCONF) {
-                    mergeDefaults(MCONF, gconf);
-                    if (true === MCONF.agreeToTerms) {
-                        gdefaults.agreeToTerms = function(tos) {
-                            return Promise.resolve(tos);
-                        };
-                    }
+            .then(async function() {
+                var MCONF = await greenlock.manager._defaults();
+                mergeDefaults(MCONF, gconf);
+                if (true === MCONF.agreeToTerms) {
+                    gdefaults.agreeToTerms = function(tos) {
+                        return Promise.resolve(tos);
+                    };
+                }
 
-                    return greenlock.manager._defaults(MCONF);
-                });
+                return greenlock.manager._defaults(MCONF);
             })
             .catch(function(err) {
                 if ('load_plugin' !== err.context) {
@@ -196,51 +195,47 @@ G.create = function(gconf) {
     };
 
     // certs.get
-    greenlock.get = function(args) {
-        return greenlock
-            ._single(args)
-            .then(function() {
-                args._includePems = true;
-                return greenlock.renew(args);
-            })
-            .then(function(results) {
-                if (!results || !results.length) {
-                    // TODO throw an error here?
-                    return null;
-                }
+    greenlock.get = async function(args) {
+        greenlock._single(args);
+        args._includePems = true;
+        var results = await greenlock.renew(args);
+        if (!results || !results.length) {
+            // TODO throw an error here?
+            return null;
+        }
 
-                // just get the first one
-                var result = results[0];
+        // just get the first one
+        var result = results[0];
 
-                // (there should be only one, ideally)
-                if (results.length > 1) {
-                    var err = new Error(
-                        "a search for '" +
-                            args.servername +
-                            "' returned multiple certificates"
-                    );
-                    err.context = 'duplicate_certs';
-                    err.servername = args.servername;
-                    err.subjects = results.map(function(r) {
-                        return (r.site || {}).subject || 'N/A';
-                    });
-
-                    greenlock._notify('warning', err);
-                }
-
-                if (result.error) {
-                    return Promise.reject(result.error);
-                }
-
-                // site for plugin options, such as http-01 challenge
-                // pems for the obvious reasons
-                return result;
+        // (there should be only one, ideally)
+        if (results.length > 1) {
+            var err = new Error(
+                "a search for '" +
+                    args.servername +
+                    "' returned multiple certificates"
+            );
+            err.context = 'duplicate_certs';
+            err.servername = args.servername;
+            err.subjects = results.map(function(r) {
+                return (r.site || {}).subject || 'N/A';
             });
+
+            greenlock._notify('warning', err);
+        }
+
+        if (result.error) {
+            return Promise.reject(result.error);
+        }
+
+        // site for plugin options, such as http-01 challenge
+        // pems for the obvious reasons
+        return result;
     };
 
-    greenlock._single = function(args) {
+    // TODO remove async here, it doesn't matter
+    greenlock._single = async function(args) {
         if ('string' !== typeof args.servername) {
-            return Promise.reject(new Error('no `servername` given'));
+            throw new Error('no `servername` given');
         }
         // www.example.com => *.example.com
         args.wildname =
@@ -262,116 +257,107 @@ G.create = function(gconf) {
             args.issueBefore ||
             args.expiresBefore
         ) {
-            return Promise.reject(
-                new Error(
-                    'bad arguments, did you mean to call greenlock.renew()?'
-                )
+            throw new Error(
+                'bad arguments, did you mean to call greenlock.renew()?'
             );
         }
         // duplicate, force, and others still allowed
-        return Promise.resolve(args);
+        return args;
     };
 
-    greenlock._config = function(args) {
-        return greenlock._single(args).then(function() {
-            return greenlock._configAll(args).then(function(sites) {
-                return sites[0];
-            });
-        });
+    greenlock._config = async function(args) {
+        greenlock._single(args);
+        var sites = await greenlock._configAll(args);
+        return sites[0];
     };
-    greenlock._configAll = function(args) {
-        return greenlock._find(args).then(function(sites) {
-            if (!sites || !sites.length) {
-                return [];
+    greenlock._configAll = async function(args) {
+        var sites = await greenlock._find(args);
+        if (!sites || !sites.length) {
+            return [];
+        }
+        sites = JSON.parse(JSON.stringify(sites));
+        var mconf = await greenlock.manager._defaults();
+        return sites.map(function(site) {
+            if (site.store && site.challenges) {
+                return site;
             }
-            sites = JSON.parse(JSON.stringify(sites));
-            return greenlock.manager._defaults().then(function(mconf) {
-                return sites.map(function(site) {
-                    if (site.store && site.challenges) {
-                        return site;
-                    }
-                    var dconf = site;
-                    // TODO make cli and api mode the same
-                    if (gconf._bin_mode) {
-                        dconf = site.defaults = {};
-                    }
-                    if (!site.store) {
-                        dconf.store = mconf.store;
-                    }
-                    if (!site.challenges) {
-                        dconf.challenges = mconf.challenges;
-                    }
-                    return site;
-                });
-            });
+
+            var dconf = site;
+            // TODO make cli and api mode the same
+            if (gconf._bin_mode) {
+                dconf = site.defaults = {};
+            }
+            if (!site.store) {
+                dconf.store = mconf.store;
+            }
+            if (!site.challenges) {
+                dconf.challenges = mconf.challenges;
+            }
+            return site;
         });
     };
 
     // needs to get info about the renewal, such as which store and challenge(s) to use
-    greenlock.renew = function(args) {
-        return greenlock._init().then(function() {
-            return greenlock.manager._defaults().then(function(mconf) {
-                return greenlock._renew(mconf, args);
-            });
-        });
+    greenlock.renew = async function(args) {
+        await greenlock._init();
+        var mconf = await greenlock.manager._defaults();
+        return greenlock._renew(mconf, args);
     };
-    greenlock._renew = function(mconf, args) {
+    greenlock._renew = async function(mconf, args) {
         if (!args) {
             args = {};
         }
 
         var renewedOrFailed = [];
         //console.log('greenlock._renew find', args);
-        return greenlock._find(args).then(function(sites) {
-            // Note: the manager must guaranteed that these are mutable copies
-            //console.log('greenlock._renew found', sites);;
+        var sites = await greenlock._find(args);
+        // Note: the manager must guaranteed that these are mutable copies
+        //console.log('greenlock._renew found', sites);;
 
-            if (!Array.isArray(sites)) {
-                throw new Error(
-                    'Developer Error: not an array of sites returned from find: ' +
-                        JSON.stringify(sites)
-                );
-            }
-            function next() {
-                var site = sites.shift();
-                if (!site) {
-                    return Promise.resolve(null);
-                }
+        if (!Array.isArray(sites)) {
+            throw new Error(
+                'Developer Error: not an array of sites returned from find: ' +
+                    JSON.stringify(sites)
+            );
+        }
 
-                var order = { site: site };
-                renewedOrFailed.push(order);
-                // TODO merge args + result?
-                return greenlock
-                    ._order(mconf, site)
-                    .then(function(pems) {
-                        if (args._includePems) {
-                            order.pems = pems;
-                        }
-                    })
-                    .catch(function(err) {
-                        order.error = err;
-
-                        // For greenlock express serialization
-                        err.toJSON = errorToJSON;
-                        err.context = err.context || 'cert_order';
-                        err.subject = site.subject;
-                        if (args.servername) {
-                            err.servername = args.servername;
-                        }
-                        // for debugging, but not to be relied on
-                        err._site = site;
-                        // TODO err.context = err.context || 'renew_certificate'
-                        greenlock._notify('error', err);
-                    })
-                    .then(function() {
-                        return next();
-                    });
+        await (async function next() {
+            var site = sites.shift();
+            if (!site) {
+                return null;
             }
 
-            return next().then(function() {
-                return renewedOrFailed;
-            });
-        });
+            var order = { site: site };
+            renewedOrFailed.push(order);
+            // TODO merge args + result?
+            return greenlock
+                ._order(mconf, site)
+                .then(function(pems) {
+                    if (args._includePems) {
+                        order.pems = pems;
+                    }
+                })
+                .catch(function(err) {
+                    order.error = err;
+
+                    // For greenlock express serialization
+                    err.toJSON = errorToJSON;
+                    err.context = err.context || 'cert_order';
+                    err.subject = site.subject;
+                    if (args.servername) {
+                        err.servername = args.servername;
+                    }
+                    // for debugging, but not to be relied on
+                    err._site = site;
+                    // TODO err.context = err.context || 'renew_certificate'
+                    greenlock._notify('error', err);
+                })
+                .then(function() {
+                    return next();
+                });
+        })();
+
+        return renewedOrFailed;
     };
 
     greenlock._acme = async function(mconf, args) {
@@ -412,70 +398,62 @@ G.create = function(gconf) {
         return acme;
     };
 
-    greenlock.order = function(siteConf) {
-        return greenlock._init().then(function() {
-            return greenlock.manager._defaults().then(function(mconf) {
-                return greenlock._order(mconf, siteConf);
-            });
-        });
+    greenlock.order = async function(siteConf) {
+        await greenlock._init();
+        var mconf = await greenlock.manager._defaults();
+        return greenlock._order(mconf, siteConf);
     };
-    greenlock._order = function(mconf, siteConf) {
+    greenlock._order = async function(mconf, siteConf) {
         // packageAgent, maintainerEmail
-        return greenlock._acme(mconf, siteConf).then(function(acme) {
-            var storeConf = siteConf.store || mconf.store;
-            storeConf = JSON.parse(JSON.stringify(storeConf));
-            storeConf.packageRoot = gconf.packageRoot;
+        var acme = await greenlock._acme(mconf, siteConf);
+        var storeConf = siteConf.store || mconf.store;
+        storeConf = JSON.parse(JSON.stringify(storeConf));
+        storeConf.packageRoot = gconf.packageRoot;
 
-            var path = require('path');
-            if (!storeConf.basePath) {
-                storeConf.basePath = 'greenlock';
-            }
-            storeConf.basePath = path.resolve(
-                gconf.packageRoot || process.cwd(),
-                storeConf.basePath
-            );
-            return P._loadStore(storeConf).then(function(store) {
-                return A._getOrCreate(
-                    greenlock,
-                    mconf,
-                    store.accounts,
-                    acme,
-                    siteConf
-                ).then(function(account) {
-                    var challengeConfs =
-                        siteConf.challenges || mconf.challenges;
-                    return Promise.all(
-                        Object.keys(challengeConfs).map(function(typ01) {
-                            return P._loadChallenge(challengeConfs, typ01);
-                        })
-                    ).then(function(arr) {
-                        var challenges = {};
-                        arr.forEach(function(el) {
-                            challenges[el._type] = el;
-                        });
-                        return C._getOrOrder(
-                            greenlock,
-                            mconf,
-                            store.certificates,
-                            acme,
-                            challenges,
-                            account,
-                            siteConf
-                        ).then(function(pems) {
-                            if (!pems) {
-                                throw new Error('no order result');
-                            }
-                            if (!pems.privkey) {
-                                throw new Error(
-                                    'missing private key, which is kinda important'
-                                );
-                            }
-                            return pems;
-                        });
-                    });
-                });
-            });
+        var path = require('path');
+        if (!storeConf.basePath) {
+            storeConf.basePath = 'greenlock';
+        }
+        storeConf.basePath = path.resolve(
+            gconf.packageRoot || process.cwd(),
+            storeConf.basePath
+        );
+        var store = await P._loadStore(storeConf);
+        var account = await A._getOrCreate(
+            greenlock,
+            mconf,
+            store.accounts,
+            acme,
+            siteConf
+        );
+        var challengeConfs = siteConf.challenges || mconf.challenges;
+        var challenges = {};
+        var arr = await Promise.all(
+            Object.keys(challengeConfs).map(function(typ01) {
+                return P._loadChallenge(challengeConfs, typ01);
+            })
+        );
+        arr.forEach(function(el) {
+            challenges[el._type] = el;
         });
+
+        var pems = await C._getOrOrder(
+            greenlock,
+            mconf,
+            store.certificates,
+            acme,
+            challenges,
+            account,
+            siteConf
+        );
+        if (!pems) {
+            throw new Error('no order result');
+        }
+        if (!pems.privkey) {
+            throw new Error('missing private key, which is kinda important');
+        }
+
+        return pems;
     };
 
     greenlock._create();
