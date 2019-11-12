@@ -3,7 +3,7 @@
 require('greenlock-express')
     .init(function() {
         return {
-            greenlock: require('./greenlock.js'),
+            packageRoot: __dirname,
 
             // whether or not to run at cloudscale
             cluster: false

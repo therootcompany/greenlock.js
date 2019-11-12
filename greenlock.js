@@ -12,7 +12,10 @@ var E = require('./errors.js');
 var P = require('./plugins.js');
 var A = require('./accounts.js');
 var C = require('./certificates.js');
+
 var DIR = require('./lib/directory-url.js');
+var ChWrapper = require('./lib/challenges-wrapper.js');
+var MngWrapper = require('./lib/manager-wrapper.js');
 
 var UserEvents = require('./user-events.js');
 var GreenlockRc = require('./greenlockrc.js');
@@ -61,6 +64,13 @@ G.create = function(gconf) {
         var rc = GreenlockRc.resolve(gconf);
         gconf = Object.assign(rc, gconf);
 
+        // OK: /path/to/blah
+        // OK: npm-name-blah
+        // NOT OK: ./rel/path/to/blah
+        if ('.' === (gconf.manager || '')[0]) {
+            gconf.manager = gconf.packageRoot + '/' + gconf.manager;
+        }
+
         // Wraps each of the following with appropriate error checking
         // greenlock.manager.defaults
         // greenlock.sites.add
@@ -68,7 +78,7 @@ G.create = function(gconf) {
         // greenlock.sites.remove
         // greenlock.sites.find
         // greenlock.sites.get
-        require('./manager-underlay.js').wrap(greenlock, gconf);
+        MngWrapper.wrap(greenlock, gconf);
         // The goal here is to reduce boilerplate, such as error checking
         // and duration parsing, that a manager must implement
         greenlock.sites.add = greenlock.add = greenlock.manager.add;
@@ -78,9 +88,9 @@ G.create = function(gconf) {
         // Exports challenges.get for Greenlock Express HTTP-01,
         // and whatever odd use case pops up, I suppose
         // greenlock.challenges.get
-        require('./challenges-underlay.js').wrap(greenlock);
+        ChWrapper.wrap(greenlock);
 
-        DIR._getStagingDirectoryUrl('', gconf.staging);
+        DIR._getDefaultDirectoryUrl('', gconf.staging);
         if (gconf.directoryUrl) {
             gdefaults.directoryUrl = gconf.directoryUrl;
         }
