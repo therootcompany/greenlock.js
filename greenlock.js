@@ -18,7 +18,7 @@ var ChWrapper = require('./lib/challenges-wrapper.js');
 var MngWrapper = require('./lib/manager-wrapper.js');
 
 var UserEvents = require('./user-events.js');
-var GreenlockRc = require('./greenlockrc.js');
+var Init = require('./lib/init.js');
 
 var caches = {};
 
@@ -48,27 +48,30 @@ G.create = function(gconf) {
             });
         }
 
-        if (!gconf.packageRoot) {
-            gconf.packageRoot = process.cwd();
-            console.warn(
-                '`packageRoot` not defined, trying ' + gconf.packageRoot
-            );
-        }
-
         if ('function' === typeof gconf.notify) {
             gdefaults.notify = gconf.notify;
         } else {
             gdefaults.notify = _notify;
         }
 
-        var rc = GreenlockRc.resolve(gconf);
-        gconf = Object.assign(rc, gconf);
+        /*
+        if (!gconf.packageRoot) {
+            gconf.packageRoot = process.cwd();
+            console.warn(
+                '`packageRoot` not defined, trying ' + gconf.packageRoot
+            );
+        }
+        */
+
+        gconf = Init._init(gconf);
 
         // OK: /path/to/blah
         // OK: npm-name-blah
         // NOT OK: ./rel/path/to/blah
-        if ('.' === (gconf.manager || '')[0]) {
-            gconf.manager = gconf.packageRoot + '/' + gconf.manager;
+        // Error: .blah
+        if ('.' === (gconf.manager.module || '')[0]) {
+            gconf.manager.module =
+                gconf.packageRoot + '/' + gconf.manager.module.slice(2);
         }
 
         // Wraps each of the following with appropriate error checking
@@ -573,7 +576,7 @@ function mergeDefaults(MCONF, gconf) {
     if (false !== MCONF.subscriberEmail) {
         MCONF.subscriberEmail =
             gconf.subscriberEmail || gconf.maintainerEmail || undefined;
-        MCONF.subscriberEmail = gconf.agreeToTerms || undefined;
+        MCONF.agreeToTerms = gconf.agreeToTerms || undefined;
         console.info('');
         console.info('[default] subscriberEmail: ' + MCONF.subscriberEmail);
         console.info(
