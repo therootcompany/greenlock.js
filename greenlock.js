@@ -581,7 +581,7 @@ function mergeDefaults(MCONF, gconf) {
         console.info('[default] serverKeyType: ' + MCONF.serverKeyType);
     }
 
-    if (false !== MCONF.subscriberEmail) {
+    if (!MCONF.subscriberEmail && false !== MCONF.subscriberEmail) {
         MCONF.subscriberEmail =
             gconf.subscriberEmail || gconf.maintainerEmail || undefined;
         MCONF.agreeToTerms = gconf.agreeToTerms || undefined;
