@@ -5,6 +5,7 @@ var pkg = require('./package.json');
 var ACME = require('@root/acme');
 var Greenlock = module.exports;
 var request = require('@root/request');
+var process = require('process');
 
 var G = Greenlock;
 var U = require('./utils.js');
@@ -566,8 +567,13 @@ function mergeDefaults(MCONF, gconf) {
         console.info('[default] renewStagger: ' + MCONF.renewStagger);
     }
 
+    var vers = process.versions.node.split('.');
+    var defaultKeyType = 'EC-P256';
+    if (vers[0] < 10 || (vers[0] === '10' && vers[1] < '12')) {
+        defaultKeyType = 'RSA-2048';
+    }
     if (!MCONF.accountKeyType) {
-        MCONF.accountKeyType = gconf.accountKeyType || 'EC-P256';
+        MCONF.accountKeyType = gconf.accountKeyType || defaultKeyType;
         console.info('[default] accountKeyType: ' + MCONF.accountKeyType);
     }
     if (!MCONF.serverKeyType) {
@@ -587,6 +593,7 @@ function mergeDefaults(MCONF, gconf) {
                     gconf.agreeToTerms ||
                     '(show notice on use)')
         );
+        console.info('');
     }
 }
 

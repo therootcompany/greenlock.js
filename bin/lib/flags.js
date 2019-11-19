@@ -2,9 +2,9 @@
 
 var Flags = module.exports;
 
-var path = require('path');
+//var path = require('path');
 var pkgRoot = process.cwd();
-var Init = require('../../lib/init.js');
+//var Init = require('../../lib/init.js');
 
 // These are ALL options
 // The individual CLI files each select a subset of them

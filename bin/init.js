@@ -4,6 +4,7 @@ var P = require('../plugins.js');
 var args = process.argv.slice(3);
 var cli = require('./lib/cli.js');
 var Init = require('../lib/init.js');
+var Greenlock = require('../');
 
 var Flags = require('./lib/flags.js');
 
@@ -44,16 +45,17 @@ cli.main(async function(argList, flags) {
         }
     }
 
-    var opts = Init._init({
+    var greenlock = Greenlock.create({
         packageRoot: pkgRoot,
         manager: flags.manager,
         maintainerEmail: flags.maintainerEmail,
         _mustPackage: true
     });
+    await greenlock.manager.defaults();
 
     //writeGreenlockJs(pkgdir, flags);
-    writeServerJs(opts.packageRoot, flags);
-    writeAppJs(opts.packageRoot);
+    writeServerJs(pkgRoot, flags);
+    writeAppJs(pkgRoot);
 
     /*
     rc._bin_mode = true;
