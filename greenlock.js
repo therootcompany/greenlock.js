@@ -425,7 +425,7 @@ G.create = function(gconf) {
 
         var path = require('path');
         if (!storeConf.basePath) {
-            storeConf.basePath = 'greenlock';
+            storeConf.basePath = gconf.configDir;
         }
         storeConf.basePath = path.resolve(
             gconf.packageRoot || process.cwd(),
@@ -511,6 +511,7 @@ function mergeDefaults(MCONF, gconf) {
         }
     }
 
+    /*
     if ('greenlock-store-fs' === MCONF.store.module && !MCONF.store.basePath) {
         //homedir = require('os').homedir();
         if (gconf.configFile) {
@@ -519,6 +520,7 @@ function mergeDefaults(MCONF, gconf) {
             MCONF.store.basePath = './greenlock.d';
         }
     }
+    */
 
     // just to test that it loads
     P._loadSync(MCONF.store.module);

@@ -99,7 +99,7 @@ Flags.flags = function(mconf, myOpts) {
             false,
             'the module name or file path of the manager module to use',
             'string',
-            'greenlock-manager-fs'
+            '@greenlock/manager'
         ],
         'manager-xxxx': [
             false,
