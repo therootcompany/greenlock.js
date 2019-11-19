@@ -4,7 +4,7 @@ var args = process.argv.slice(3);
 var cli = require('./lib/cli.js');
 var Flags = require('./lib/flags.js');
 
-Flags.init().then(function({ flagOptions, rc, greenlock, mconf }) {
+Flags.init().then(function({ flagOptions, greenlock, mconf }) {
     var myFlags = {};
     [
         'subject',
@@ -31,11 +31,11 @@ Flags.init().then(function({ flagOptions, rc, greenlock, mconf }) {
     cli.main(async function(argList, flags) {
         var sconf = await greenlock._config({ servername: flags.subject });
         Flags.mangleFlags(flags, mconf, sconf);
-        main(argList, flags, rc, greenlock);
+        main(argList, flags, greenlock);
     }, args);
 });
 
-async function main(_, flags, rc, greenlock) {
+async function main(_, flags, greenlock) {
     if (!flags.subject) {
         console.error('--subject must be provided as a valid domain');
         process.exit(1);

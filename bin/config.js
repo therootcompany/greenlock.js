@@ -8,7 +8,7 @@ var cli = require('./lib/cli.js');
 
 var Flags = require('./lib/flags.js');
 
-Flags.init().then(function({ flagOptions, rc, greenlock, mconf }) {
+Flags.init().then(function({ flagOptions, greenlock, mconf }) {
     var myFlags = {};
     ['all', 'subject', 'servername' /*, 'servernames', 'altnames'*/].forEach(
         function(k) {
@@ -19,11 +19,11 @@ Flags.init().then(function({ flagOptions, rc, greenlock, mconf }) {
     cli.parse(myFlags);
     cli.main(function(argList, flags) {
         Flags.mangleFlags(flags, mconf);
-        main(argList, flags, rc, greenlock);
+        main(argList, flags, greenlock);
     }, args);
 });
 
-async function main(_, flags, rc, greenlock) {
+async function main(_, flags, greenlock) {
     var servernames = [flags.subject]
         .concat([flags.servername])
         //.concat(flags.servernames)

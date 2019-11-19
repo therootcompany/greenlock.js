@@ -10,7 +10,6 @@ var Flags = require('./lib/flags.js');
 
 Flags.init({ forceSave: true }).then(function({
     flagOptions,
-    rc,
     greenlock,
     mconf
 }) {
@@ -38,11 +37,11 @@ Flags.init({ forceSave: true }).then(function({
     cli.parse(myFlags);
     cli.main(function(argList, flags) {
         Flags.mangleFlags(flags, mconf, null, { forceSave: true });
-        main(argList, flags, rc, greenlock);
+        main(argList, flags, greenlock);
     }, args);
 });
 
-async function main(_, flags, rc, greenlock) {
+async function main(_, flags, greenlock) {
     greenlock.manager
         .defaults(flags)
         .catch(function(err) {

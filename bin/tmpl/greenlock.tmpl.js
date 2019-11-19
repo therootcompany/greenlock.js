@@ -6,7 +6,7 @@ module.exports = require('@root/greenlock').create({
     packageAgent: pkg.name + '/' + pkg.version,
 
     // contact for security and critical bug notices
-    maintainerEmail: pkg.author,
+    //maintainerEmail: pkg.author,
 
     // where to find .greenlockrc and set default paths
     packageRoot: __dirname

@@ -1,18 +1,20 @@
 'use strict';
 
+var app = require('./app.js');
+
 require('greenlock-express')
-    .init(function() {
-        return {
-            packageRoot: __dirname,
+    .init({
+        packageRoot: __dirname,
 
-            // whether or not to run at cloudscale
-            cluster: false
-        };
+        // contact for security and critical bug notices
+        //maintainerEmail: pkg.author,
+
+        // contact for security and critical bug notices
+        configDir: './greenlock.d',
+
+        // whether or not to run at cloudscale
+        cluster: false
     })
-    .ready(function(glx) {
-        var app = require('./app.js');
-
-        // Serves on 80 and 443
-        // Get's SSL certificates magically!
-        glx.serveApp(app);
-    });
+    // Serves on 80 and 443
+    // Get's SSL certificates magically!
+    .serve(app);

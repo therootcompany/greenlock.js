@@ -8,7 +8,7 @@ var cli = require('./lib/cli.js');
 
 var Flags = require('./lib/flags.js');
 
-Flags.init().then(function({ flagOptions, rc, greenlock, mconf }) {
+Flags.init().then(function({ flagOptions, greenlock, mconf }) {
     var myFlags = {};
     ['subject'].forEach(function(k) {
         myFlags[k] = flagOptions[k];
@@ -17,11 +17,11 @@ Flags.init().then(function({ flagOptions, rc, greenlock, mconf }) {
     cli.parse(myFlags);
     cli.main(function(argList, flags) {
         Flags.mangleFlags(flags, mconf);
-        main(argList, flags, rc, greenlock);
+        main(argList, flags, greenlock);
     }, args);
 });
 
-async function main(_, flags, rc, greenlock) {
+async function main(_, flags, greenlock) {
     if (!flags.subject) {
         console.error('--subject must be provided as a valid domain');
         process.exit(1);

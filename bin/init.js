@@ -3,9 +3,7 @@
 var P = require('../plugins.js');
 var args = process.argv.slice(3);
 var cli = require('./lib/cli.js');
-//var path = require('path');
-//var pkgpath = path.join(__dirname, '..', 'package.json');
-//var pkgpath = path.join(process.cwd(), 'package.json');
+var Init = require('../lib/init.js');
 
 var Flags = require('./lib/flags.js');
 
@@ -17,10 +15,7 @@ var myFlags = {};
 
 cli.parse(myFlags);
 cli.main(async function(argList, flags) {
-    var path = require('path');
-    var pkgpath = path.join(process.cwd(), 'package.json');
-    var pkgdir = path.dirname(pkgpath);
-    //var rcpath = path.join(pkgpath, '.greenlockrc');
+    var pkgRoot = process.cwd();
     var manager = flags.manager;
 
     if (['fs', 'cloud'].includes(manager)) {
@@ -32,7 +27,7 @@ cli.main(async function(argList, flags) {
 
     flags.manager = flags.managerOpts;
     delete flags.managerOpts;
-    flags.manager.manager = manager;
+    flags.manager.module = manager;
 
     try {
         P._loadSync(manager);
@@ -49,12 +44,16 @@ cli.main(async function(argList, flags) {
         }
     }
 
-    var GreenlockRc = require('../greenlockrc.js');
-    //var rc = await GreenlockRc(pkgpath, manager, flags.manager);
-    await GreenlockRc(pkgpath, manager, flags.manager);
-    writeGreenlockJs(pkgdir, flags);
-    writeServerJs(pkgdir, flags);
-    writeAppJs(pkgdir);
+    var opts = Init._init({
+        packageRoot: pkgRoot,
+        manager: flags.manager,
+        maintainerEmail: flags.maintainerEmail,
+        _mustPackage: true
+    });
+
+    //writeGreenlockJs(pkgdir, flags);
+    writeServerJs(opts.packageRoot, flags);
+    writeAppJs(opts.packageRoot);
 
     /*
     rc._bin_mode = true;
@@ -66,6 +65,7 @@ cli.main(async function(argList, flags) {
     */
 }, args);
 
+/*
 function writeGreenlockJs(pkgdir, flags) {
     var greenlockJs = 'greenlock.js';
     var fs = require('fs');
@@ -92,15 +92,13 @@ function writeGreenlockJs(pkgdir, flags) {
     fs.writeFileSync(path.join(pkgdir, greenlockJs), tmpl);
     console.info("created '%s'", greenlockJs);
 }
+*/
 
 function writeServerJs(pkgdir, flags) {
     var serverJs = 'server.js';
     var fs = require('fs');
     var path = require('path');
-    var tmpl = fs.readFileSync(
-        path.join(__dirname, 'tmpl/server.tmpl.js'),
-        'utf8'
-    );
+    var tmpl;
 
     try {
         fs.accessSync(path.join(pkgdir, serverJs));
@@ -111,7 +109,22 @@ function writeServerJs(pkgdir, flags) {
     }
 
     if (flags.cluster) {
+        tmpl = fs.readFileSync(
+            path.join(__dirname, 'tmpl/cluster.tmpl.js'),
+            'utf8'
+        );
         tmpl = tmpl.replace(/cluster: false/g, 'cluster: true');
+    } else {
+        tmpl = fs.readFileSync(
+            path.join(__dirname, 'tmpl/server.tmpl.js'),
+            'utf8'
+        );
+    }
+
+    if (flags.maintainerEmail) {
+        tmpl = tmpl
+            .replace(/pkg.author/g, JSON.stringify(flags.maintainerEmail))
+            .replace(/\/\/maintainerEmail/g, 'maintainerEmail');
     }
 
     fs.writeFileSync(path.join(pkgdir, serverJs), tmpl);
