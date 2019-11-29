@@ -94,7 +94,7 @@ G.create = function(gconf) {
         // greenlock.challenges.get
         ChWrapper.wrap(greenlock);
 
-        DIR._getDefaultDirectoryUrl('', gconf.staging);
+        DIR._getDefaultDirectoryUrl('', gconf.staging, '');
         if (gconf.directoryUrl) {
             gdefaults.directoryUrl = gconf.directoryUrl;
         }
@@ -388,7 +388,8 @@ G.create = function(gconf) {
         });
 
         var dirUrl = DIR._getDirectoryUrl(
-            args.directoryUrl || mconf.directoryUrl
+            args.directoryUrl || mconf.directoryUrl,
+            args.servername
         );
 
         var dir = caches[dirUrl];
