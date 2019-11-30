@@ -374,7 +374,7 @@ G.create = function(gconf) {
         return renewedOrFailed;
     };
 
-    greenlock._acme = async function(mconf, args) {
+    greenlock._acme = async function(mconf, args, dirUrl) {
         var packageAgent = gconf.packageAgent || '';
         // because Greenlock_Express/v3.x Greenlock/v3 is redundant
         if (!/greenlock/i.test(packageAgent)) {
@@ -386,11 +386,6 @@ G.create = function(gconf) {
             notify: greenlock._notify,
             debug: greenlock._defaults.debug || args.debug
         });
-
-        var dirUrl = DIR._getDirectoryUrl(
-            args.directoryUrl || mconf.directoryUrl,
-            args.servername
-        );
 
         var dir = caches[dirUrl];
         // don't cache more than an hour
@@ -420,7 +415,13 @@ G.create = function(gconf) {
     };
     greenlock._order = async function(mconf, siteConf) {
         // packageAgent, maintainerEmail
-        var acme = await greenlock._acme(mconf, siteConf);
+
+        var dirUrl = DIR._getDirectoryUrl(
+            siteConf.directoryUrl || mconf.directoryUrl,
+            siteConf.subject
+        );
+
+        var acme = await greenlock._acme(mconf, siteConf, dirUrl);
         var storeConf = siteConf.store || mconf.store;
         storeConf = JSON.parse(JSON.stringify(storeConf));
         storeConf.packageRoot = gconf.packageRoot;
@@ -433,6 +434,7 @@ G.create = function(gconf) {
             gconf.packageRoot || process.cwd(),
             storeConf.basePath
         );
+        storeConf.directoryUrl = dirUrl;
         var store = await P._loadStore(storeConf);
         var account = await A._getOrCreate(
             greenlock,
