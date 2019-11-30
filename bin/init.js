@@ -3,14 +3,19 @@
 var P = require('../plugins.js');
 var args = process.argv.slice(3);
 var cli = require('./lib/cli.js');
-var Init = require('../lib/init.js');
 var Greenlock = require('../');
 
 var Flags = require('./lib/flags.js');
 
 var flagOptions = Flags.flags();
 var myFlags = {};
-['maintainer-email', 'cluster', 'manager', 'manager-xxxx'].forEach(function(k) {
+[
+    'config-dir',
+    'maintainer-email',
+    'cluster',
+    'manager',
+    'manager-xxxx'
+].forEach(function(k) {
     myFlags[k] = flagOptions[k];
 });
 
@@ -48,6 +53,7 @@ cli.main(async function(argList, flags) {
     var greenlock = Greenlock.create({
         packageRoot: pkgRoot,
         manager: flags.manager,
+        configDir: flags.configDir,
         maintainerEmail: flags.maintainerEmail,
         _mustPackage: true
     });

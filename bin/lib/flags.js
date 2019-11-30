@@ -67,6 +67,11 @@ Flags.flags = function(mconf, myOpts) {
             "the email address of the Let's Encrypt or ACME Account subscriber (not necessarily the domain owner)",
             'string'
         ],
+        'config-dir': [
+            false,
+            'the directory in which config.json and other config and storage files should be written',
+            'string'
+        ],
         'maintainer-email': [
             false,
             'the maintainance contact for security and critical bug notices',
