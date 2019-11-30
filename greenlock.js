@@ -55,15 +55,6 @@ G.create = function(gconf) {
             gdefaults.notify = _notify;
         }
 
-        /*
-        if (!gconf.packageRoot) {
-            gconf.packageRoot = process.cwd();
-            console.warn(
-                '`packageRoot` not defined, trying ' + gconf.packageRoot
-            );
-        }
-        */
-
         gconf = Init._init(gconf);
 
         // OK: /path/to/blah
@@ -71,6 +62,12 @@ G.create = function(gconf) {
         // NOT OK: ./rel/path/to/blah
         // Error: .blah
         if ('.' === (gconf.manager.module || '')[0]) {
+            if (!gconf.packageRoot) {
+                gconf.packageRoot = process.cwd();
+                console.warn(
+                    '`packageRoot` not defined, trying ' + gconf.packageRoot
+                );
+            }
             gconf.manager.module =
                 gconf.packageRoot + '/' + gconf.manager.module.slice(2);
         }
@@ -426,14 +423,23 @@ G.create = function(gconf) {
         storeConf = JSON.parse(JSON.stringify(storeConf));
         storeConf.packageRoot = gconf.packageRoot;
 
-        var path = require('path');
         if (!storeConf.basePath) {
             storeConf.basePath = gconf.configDir;
         }
-        storeConf.basePath = path.resolve(
-            gconf.packageRoot || process.cwd(),
-            storeConf.basePath
-        );
+
+        if ('.' === (storeConf.basePath || '')[0]) {
+            if (!gconf.packageRoot) {
+                gconf.packageRoot = process.cwd();
+                console.warn(
+                    '`packageRoot` not defined, trying ' + gconf.packageRoot
+                );
+            }
+            storeConf.basePath = require('path').resolve(
+                gconf.packageRoot || '',
+                storeConf.basePath
+            );
+        }
+
         storeConf.directoryUrl = dirUrl;
         var store = await P._loadStore(storeConf);
         var account = await A._getOrCreate(

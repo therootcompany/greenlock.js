@@ -1,12 +1,10 @@
-# New Documentation &amp; [v2/v3 Migration Guide](https://git.rootprojects.org/root/greenlock.js/src/branch/v3/MIGRATION_GUIDE_V2_V3.md)
-
-Greenlock v3 was just released from private beta **today** (Nov 1st, 2019).
+# New Documentation &amp; [v4 Migration Guide](https://git.rootprojects.org/root/greenlock.js/src/branch/master/MIGRATION_GUIDE.md)
 
 We're still working on the full documentation for this new version,
 so please be patient.
 
 To start, check out the
-[Migration Guide](https://git.rootprojects.org/root/greenlock.js/src/branch/v3/MIGRATION_GUIDE_V2_V3.md).
+[Migration Guide](https://git.rootprojects.org/root/greenlock.js/src/branch/master/MIGRATION_GUIDE.md).
 
 !["Greenlock Logo"](https://git.rootprojects.org/root/greenlock.js/raw/branch/master/logo/greenlock-1063x250.png 'Greenlock lock logo and work mark')
 
@@ -85,12 +83,10 @@ Certificates are renewed every 45 days by default, and renewal checks will happe
 var pkg = require('./package.json');
 var Greenlock = require('greenlock');
 var greenlock = Greenlock.create({
+    configDir: './greenlock.d/config.json',
     packageAgent: pkg.name + '/' + pkg.version,
     maintainerEmail: pkg.author,
     staging: true,
-    manager: require('greenlock-manager-fs').create({
-        configFile: '~/.config/greenlock/manager.json'
-    }),
     notify: function(event, details) {
         if ('error' === event) {
             // `details` is an error object in this case
@@ -171,7 +167,7 @@ greenlock
 -->
 
 <details>
-<summary>Greenlock.create({ packageAgent, maintainerEmail, staging })</summary>
+<summary>Greenlock.create({ configDir, packageAgent, maintainerEmail, staging })</summary>
 
 ## Greenlock.create()
 
@@ -181,12 +177,15 @@ Creates an instance of greenlock with _environment_-level values.
 
 var pkg = require('./package.json');
 var gl = Greenlock.create({
+    configDir: './greenlock.d/config.json',
+
     // Staging for testing environments
     staging: true,
 
     // This should be the contact who receives critical bug and security notifications
     // Optionally, you may receive other (very few) updates, such as important new features
     maintainerEmail: 'jon@example.com',
+
     // for an RFC 8555 / RFC 7231 ACME client user agent
     packageAgent: pkg.name + '/' pkg.version
 });
@@ -194,6 +193,7 @@ var gl = Greenlock.create({
 
 | Parameter       | Description                                                                          |
 | --------------- | ------------------------------------------------------------------------------------ |
+| configDir       | the directory to use for file-based plugins                                          |
 | maintainerEmail | the developer contact for critical bug and security notifications                    |
 | packageAgent    | if you publish your package for others to use, `require('./package.json').name` here |
 | staging         | use the Let's Encrypt staging URL instead of the production URL                      |

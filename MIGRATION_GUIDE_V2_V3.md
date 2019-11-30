@@ -1,4 +1,36 @@
-# Migrating from Greenlock v2 to v3
+# Migrating Guide
+
+Greenlock v4 is the current version.
+
+# v3 to v4
+
+v4 is a very minor, but breaking, change from v3
+
+### `configFile` is replaced with `configDir`
+
+The default config file `./greenlock.json` is now `./greenlock.d/config.json`.
+
+This was change was mode to eliminate unnecessary configuration that was inadvertantly introduced in v3.
+
+### `.greenlockrc` is auto-generated
+
+`.greenlockrc` exists for the sake of tooling - so that the CLI, Web API, and your code naturally stay in sync.
+
+It looks like this:
+
+```json
+{
+    "manager": {
+        "module": "@greenlock/manager"
+    },
+    "configDir": "./greenlock.d"
+}
+```
+
+If you deploy to a read-only filesystem, it is best that you create the `.greenlockrc` file as part
+of your image and use that rather than including any configuration in your code.
+
+# v2 to v4
 
 **Greenlock Express** uses Greenlock directly, the same as before.
 
@@ -195,11 +227,11 @@ as well as a set of callbacks for easy configurability.
 
 ### Default Manager
 
-The default manager is `greenlock-manager-fs` and the default `configFile` is `~/.config/greenlock/manager.json`.
+The default manager is `@greenlock/manager` and the default `configDir` is `./.greenlock.d`.
 
 The config file should look something like this:
 
-`~/.config/greenlock/manager.json`:
+`./greenlock.d/config.json`:
 
 ```json
 {
@@ -256,28 +288,19 @@ The same is true with `greenlock-store-*` plugins:
 
 ### Customer Manager, the lazy way
 
-At the very least you have to implement `find({ servername })`.
-
-Since this is a very common use case, it's supported out of the box as part of the default manager plugin:
+At the very least you have to implement `get({ servername, wildname })`.
 
 ```js
 var greenlock = Greenlock.create({
     packageAgent: pkg.name + '/' + pkg.version,
     maintainerEmail: 'jon@example.com',
     notify: notify,
-    find: find
+
+    packageRoot: __dirname,
+    manager: {
+        module: './manager.js'
+    }
 });
-
-// In the simplest case you can ignore all incoming options
-// and return a single site config in the same format as the config file
-
-function find(options) {
-    var servername = options.servername; // www.example.com
-    var wildname = options.wildname; // *.example.com
-    return Promise.resolve([
-        { subject: 'example.com', altnames: ['example.com', 'www.example.com'] }
-    ]);
-}
 
 function notify(ev, args) {
     if ('error' === ev || 'warning' === ev) {
@@ -288,101 +311,60 @@ function notify(ev, args) {
 }
 ```
 
-If you want to use wildcards or local domains, you must specify the `dns-01` challenge plugin to use:
+In the simplest case you can ignore all incoming options
+and return a single site config in the same format as the config file
 
-```js
-function find(options) {
-    var subject = options.subject;
-    // may include wildcard
-    var altnames = options.altnames;
-    var wildname = options.wildname; // *.example.com
-    return Promise.resolve([
-        {
-            subject: 'example.com',
-            altnames: ['example.com', 'www.example.com'],
-            challenges: {
-                'dns-01': { module: 'acme-dns-01-namedotcom', apikey: 'xxxx' }
-            }
-        }
-    ]);
-}
-```
-
-### Customer Manager, complete
-
-To use a fully custom manager, you give the npm package name, or absolute path to the file to load
-
-```js
-Greenlock.create({
-    // Greenlock Options
-    maintainerEmail: 'jon@example.com',
-    packageAgent: 'my-package/v2.1.1',
-    notify: notify,
-
-    // file path or npm package name
-    manager: '/path/to/manager.js',
-    // options that get passed to the manager
-    myFooOption: 'whatever'
-});
-```
-
-The manager itself is, again relatively simple:
-
--   find(options)
--   set(siteConfig)
--   remove(options)
--   defaults(globalOptions) (as setter)
-    -   defaults() => globalOptions (as getter)
-
-`/path/to/manager.js`:
+`./manager.js`:
 
 ```js
 'use strict';
 
 module.exports.create = function() {
-    var manager = {};
+    return {
+        get: async function({ servername }) {
+            // do something to fetch the site
+            var site = {
+                subject: 'example.com',
+                altnames: ['example.com', 'www.example.com']
+            };
 
-    manager.find = async function({ subject, altnames, renewBefore }) {
-        if (subject) {
-            return getSiteConfigBySubject(subject);
+            return site;
         }
-
-        if (altnames) {
-            // may include wildcards
-            return getSiteConfigByAnyAltname(altnames);
-        }
-
-        if (renewBefore) {
-            return getSiteConfigsWhereRenewAtIsLessThan(renewBefore);
-        }
-
-        return [];
-    };
-
-    manage.set = function(opts) {
-        // this is called by greenlock.add({ subject, altnames })
-        // it's also called by greenlock._update({ subject, renewAt })
-
-        return mergSiteConfig(subject, opts);
-    };
-
-    manage.remove = function({ subject, altname }) {
-        if (subject) {
-            return removeSiteConfig(subject);
-        }
-
-        return removeFromSiteConfigAndResetRenewAtToZero(altname);
-    };
-
-    // set the global config
-    manage.defaults = function(options) {
-        if (!options) {
-            return getGlobalConfig();
-        }
-        return mergeGlobalConfig(options);
     };
 };
 ```
+
+If you want to use wildcards or local domains for a specific domain, you must specify the `dns-01` challenge plugin to use:
+
+```js
+'use strict';
+
+module.exports.create = function() {
+    return {
+        get: async function({ servername }) {
+            // do something to fetch the site
+            var site = {
+                subject: 'example.com',
+                altnames: ['example.com', 'www.example.com'],
+
+                // dns-01 challenge
+                challenges: {
+                    'dns-01': {
+                        module: 'acme-dns-01-namedotcom',
+                        apikey: 'xxxx'
+                    }
+                }
+            };
+
+            return site;
+        }
+    };
+};
+```
+
+### Customer Manager, Complete
+
+See <https://git.rootprojects.org/root/greenlock-manager-test.js#quick-start>
 
 # ACME Challenge Plugins
 
@@ -419,99 +401,3 @@ They are described here:
 -   [greenlock store documentation](https://git.rootprojects.org/root/greenlock-store-test.js)
 
 If you are just implenting in-house and are not going to publish a module, you can also do some hack things like this:
-
-### Custome Store, The hacky / lazy way
-
-`/path/to/project/my-hacky-store.js`:
-
-```js
-'use strict';
-
-module.exports.create = function(options) {
-    // ex: /path/to/account.ecdsa.jwk.json
-    var accountJwk = require(options.accountJwkPath);
-    // ex: /path/to/privkey.rsa.pem
-    var serverPem = fs.readFileSync(options.serverPemPath, 'ascii');
-    var accounts = {};
-    var certificates = {};
-    var store = { accounts, certificates };
-
-    // bare essential account callbacks
-    accounts.checkKeypair = function() {
-        // ignore all options and just return a single, global keypair
-
-        return Promise.resolve({
-            privateKeyJwk: accountJwk
-        });
-    };
-    accounts.setKeypair = function() {
-        // this will never get called if checkKeypair always returns
-
-        return Promise.resolve({});
-    };
-
-    // bare essential cert and key callbacks
-    certificates.checkKeypair = function() {
-        // ignore all options and just return a global server keypair
-
-        return {
-            privateKeyPem: serverPem
-        };
-    };
-    certificates.setKeypair = function() {
-        // never gets called if checkKeypair always returns an existing key
-
-        return Promise.resolve(null);
-    };
-
-    certificates.check = function(args) {
-        var subject = args.subject;
-        // make a database call or whatever to get a certificate
-        return goGetCertBySubject(subject).then(function() {
-            return {
-                pems: {
-                    chain: '<PEM>',
-                    cert: '<PEM>'
-                }
-            };
-        });
-    };
-    certificates.set = function(args) {
-        var subject = args.subject;
-        var cert = args.pems.cert;
-        var chain = args.pems.chain;
-
-        // make a database call or whatever to get a certificate
-        return goSaveCert({
-            subject,
-            cert,
-            chain
-        });
-    };
-};
-```
-
-### Using the hacky / lazy store plugin
-
-That sort of implementation won't pass the test suite, but it'll work just fine a use case where you only have one subscriber email (most of the time),
-you only have one server key (not recommended, but works), and you only really want to worry about storing cetificates.
-
-Then you could assign it as the default for all of your sites:
-
-```json
-{
-    "subscriberEmail": "jon@example.com",
-    "agreeToTerms": true,
-    "sites": {
-        "example.com": {
-            "subject": "example.com",
-            "altnames": ["example.com", "www.example.com"]
-        }
-    },
-    "store": {
-        "module": "/path/to/project/my-hacky-store.js",
-        "accountJwkPath": "/path/to/account.ecdsa.jwk.json",
-        "serverPemPath": "/path/to/privkey.rsa.pem"
-    }
-}
-```
