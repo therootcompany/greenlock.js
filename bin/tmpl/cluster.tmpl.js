@@ -14,7 +14,7 @@ require('greenlock-express')
             // contact for security and critical bug notices
             //maintainerEmail: pkg.author,
 
-            // contact for security and critical bug notices
+            // where to look for configuration
             configDir: './greenlock.d',
 
             // whether or not to run at cloudscale
