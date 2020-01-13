@@ -36,6 +36,9 @@ cli.main(async function(argList, flags) {
     flags.manager.module = manager;
 
     try {
+        if ('.' === String(manager)[0]) {
+            manager = require('path').resolve(pkgRoot, manager);
+        }
         P._loadSync(manager);
     } catch (e) {
         try {
