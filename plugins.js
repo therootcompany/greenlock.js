@@ -146,7 +146,7 @@ P._normalizeChallenge = function(name, ch) {
         };
     }
 
-    // init, zones, set, get, remove
+    // init, zones, set, get, remove, propagationDelay
     if (ch.init) {
         if (2 === ch.init.length) {
             warn();
@@ -182,6 +182,9 @@ P._normalizeChallenge = function(name, ch) {
             ch.get = promisify(ch._thunk_get);
         }
         gch.get = wrappy(ch.get);
+    }
+    if("number" === typeof ch.propagationDelay) {
+        gch.propagationDelay = ch.propagationDelay;
     }
 
     return gch;
