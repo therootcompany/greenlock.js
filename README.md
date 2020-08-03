@@ -83,7 +83,8 @@ Certificates are renewed every 45 days by default, and renewal checks will happe
 var pkg = require('./package.json');
 var Greenlock = require('greenlock');
 var greenlock = Greenlock.create({
-    configDir: './greenlock.d/config.json',
+    packageRoot: __dirname,
+    configDir: "./greenlock.d/",
     packageAgent: pkg.name + '/' + pkg.version,
     maintainerEmail: pkg.author,
     staging: true,
@@ -177,7 +178,7 @@ Creates an instance of greenlock with _environment_-level values.
 
 var pkg = require('./package.json');
 var gl = Greenlock.create({
-    configDir: './greenlock.d/config.json',
+    configDir: './greenlock.d/',
 
     // Staging for testing environments
     staging: true,
