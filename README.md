@@ -1,3 +1,10 @@
+# Mirror of git.rootprojects.org/root/greenlock.js
+
+Github does not expose the ability to automatically update mirrors,
+so this may lag behind the official repository which is found at:
+
+-   <https://git.rootprojects.org/root/greenlock.js>
+
 # New Documentation &amp; [v4 Migration Guide](https://git.rootprojects.org/root/greenlock.js/src/branch/master/MIGRATION_GUIDE.md)
 
 We're still working on the full documentation for this new version,
@@ -87,7 +94,7 @@ var greenlock = Greenlock.create({
     packageAgent: pkg.name + '/' + pkg.version,
     maintainerEmail: pkg.author,
     staging: true,
-    notify: function(event, details) {
+    notify: function (event, details) {
         if ('error' === event) {
             // `details` is an error object in this case
             console.error(details);
@@ -100,7 +107,7 @@ greenlock.manager
         agreeToTerms: true,
         subscriberEmail: 'webhosting@example.com'
     })
-    .then(function(fullConfig) {
+    .then(function (fullConfig) {
         // ...
     });
 ```
@@ -122,7 +129,7 @@ greenlock
         subject: altnames[0],
         altnames: altnames
     })
-    .then(function() {
+    .then(function () {
         // saved config to db (or file system)
     });
 ```
@@ -145,13 +152,13 @@ or wait for the renewal to complete (or for it to fail again).
 ```js
 greenlock
     .get({ servername: subject })
-    .then(function(pems) {
+    .then(function (pems) {
         if (pems && pems.privkey && pems.cert && pems.chain) {
             console.info('Success');
         }
         //console.log(pems);
     })
-    .catch(function(e) {
+    .catch(function (e) {
         console.error('Big bad error:', e.code);
         console.error(e);
     });
@@ -300,7 +307,7 @@ of certificate requests.
 -   [Store Callback Documentation](https://git.rootprojects.org/root/greenlock-store-test.js)
 
 ```js
-return greenlock.get({ servername }).then(function(site) {
+return greenlock.get({ servername }).then(function (site) {
     if (!site) {
         console.log(servername + ' was not found in any site config');
         return;
@@ -331,8 +338,8 @@ You are not required to call it. If you implement the `store` callbacks, the cer
 will automatically be saved (and if you don't implement them, they all get saved to disk).
 
 ```js
-return greenlock.renew({}).then(function(results) {
-    results.forEach(function(site) {
+return greenlock.renew({}).then(function (results) {
+    results.forEach(function (site) {
         if (site.error) {
             console.error(site.subject, site.error);
             return;
@@ -368,7 +375,7 @@ If you are implementing your own `manager` callbacks, I recommend that you mark 
 ```js
 gl.remove({
     subject: 'example.com'
-}).then(function(siteConfig) {
+}).then(function (siteConfig) {
     // save the old site config elsewhere, just in case you need it again
 });
 ```
